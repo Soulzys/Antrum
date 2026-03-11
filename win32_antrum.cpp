@@ -184,13 +184,36 @@ WGPULimits Win32_WGPU_GetLimits(WGPUAdapter Adapter)
 
 
 	// Project settings, update whenever needed
-	limits.maxVertexAttributes          = 2;
-	limits.maxVertexBuffers             = 1;
-	limits.maxBufferSize                = 6 * 5 * sizeof(float);
-	limits.maxVertexBufferArrayStride   = 5 * sizeof(float);
-	limits.maxInterStageShaderVariables = 3;
+	limits.maxVertexAttributes             = 2;
+	limits.maxVertexBuffers                = 1;
+	limits.maxBufferSize                   = 6 * 5 * sizeof(float);
+	limits.maxVertexBufferArrayStride      = 5 * sizeof(float);
+	limits.maxInterStageShaderVariables    = 3;
+	limits.maxBindGroups                   = 1;
+	limits.maxUniformBuffersPerShaderStage = 1;
+	limits.maxUniformBufferBindingSize     = 16 * 4;
 
 	return limits;
+}
+
+void Win32_WGPU_GetDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout)
+{
+	bindingLayout.buffer.nextInChain           = nullptr;
+	bindingLayout.buffer.type                  = WGPUBufferBindingType_Undefined;
+	bindingLayout.buffer.hasDynamicOffset      = false;
+
+	bindingLayout.sampler.nextInChain          = nullptr;
+	bindingLayout.sampler.type                 = WGPUSamplerBindingType_BindingNotUsed;
+
+	bindingLayout.storageTexture.nextInChain   = nullptr;
+	bindingLayout.storageTexture.access        = WGPUStorageTextureAccess_BindingNotUsed;
+	bindingLayout.storageTexture.format        = WGPUTextureFormat_Undefined;
+	bindingLayout.storageTexture.viewDimension = WGPUTextureViewDimension_Undefined;
+
+	bindingLayout.texture.nextInChain          = nullptr;
+	bindingLayout.texture.multisampled         = false;
+	bindingLayout.texture.sampleType           = WGPUTextureSampleType_BindingNotUsed;
+	bindingLayout.texture.viewDimension        = WGPUTextureViewDimension_Undefined;
 }
 
 
@@ -258,7 +281,25 @@ void Win32_WGPU_GetShaderModule(WGPUDevice Device, WGPUShaderModule& OutShaderMo
 	OutShaderModule = wgpuDeviceCreateShaderModule(Device, &shaderModuleDesc);
 }
 
-void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPURenderPipeline& OutRenderPipeline)
+void Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindGroupLayout)
+{
+	// Create a bind group
+	//
+	WGPUBindGroupLayoutEntry bindingLayoutEntry = {};
+	Win32_WGPU_GetDefaultBindingLayout(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
+	bindingLayoutEntry.binding = 0; // This is the binding index we use in our shader
+	bindingLayoutEntry.visibility = WGPUShaderStage_Vertex; // This is the stage that needs to access this resource
+	bindingLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
+	bindingLayoutEntry.buffer.minBindingSize = 4 * sizeof(float);
+
+	WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
+	bindGroupLayoutDesc.nextInChain = nullptr;
+	bindGroupLayoutDesc.entryCount = 1;
+	bindGroupLayoutDesc.entries = &bindingLayoutEntry;
+	BindGroupLayout = wgpuDeviceCreateBindGroupLayout(Device, &bindGroupLayoutDesc);
+}
+
+void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPUBindGroupLayout BindGroupLayout, WGPURenderPipeline& OutRenderPipeline)
 {
 	//std::vector<WGPUVertexAttribute> VertexAttributes(2);
 
@@ -309,6 +350,16 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 
 
 
+
+
+	
+
+	WGPUPipelineLayoutDescriptor layoutDesc = {};
+	layoutDesc.nextInChain = nullptr;
+	layoutDesc.bindGroupLayoutCount = 1;
+	layoutDesc.bindGroupLayouts = &BindGroupLayout;
+	WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
+
 	WGPURenderPipelineDescriptor pipelineDesc       = {};
 	pipelineDesc.nextInChain                        = nullptr;
 	pipelineDesc.vertex.bufferCount                 = 1;
@@ -329,7 +380,7 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	pipelineDesc.multisample.count                  = 1;
 	pipelineDesc.multisample.mask                   = ~0u; // Default value for the mask. It means "all bits on"
 	pipelineDesc.multisample.alphaToCoverageEnabled = false; // Default value as well. It is irrelevant for count = 1 anyways
-	pipelineDesc.layout                             = nullptr;
+	pipelineDesc.layout                             = layout;
 
 	OutRenderPipeline = wgpuDeviceCreateRenderPipeline(Device, &pipelineDesc);
 }
@@ -401,6 +452,7 @@ WGPUUncapturedErrorCallbackInfo Win32_WGPU_Callback_UncapturedError()
 		}
 
 		wsprintf(buffer, "ERROR | UncapturedErrorCallback | ERROR - Type: %s\n\tERROR - Message: %s", Win32_Util_Stringify_WGPUErrorType(Type), Message.data);
+		OutputDebugString(buffer);
 	};
 
 	return callbackInfo;
@@ -617,13 +669,14 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	// WGPU initialization
 	//
 	WGPUMaster wgpu = {};
-	Win32_WGPU_GetInstance       (wgpu.instance);
-	Win32_WGPU_GetAdapter        (wgpu.instance, wgpu.adapter);
-	Win32_WGPU_GetDevice         (wgpu.adapter, wgpu.device);
-	Win32_WGPU_GetSurface        (&wndClass, wndHandle, wgpu.instance, wgpu.surface);
-	Win32_WGPU_GetSurfaceFormat  (wgpu.surface, wgpu.adapter, wgpu.surfaceFormat);
-	Win32_WGPU_GetShaderModule   (wgpu.device, wgpu.shaderModule, &gameMemory);
-	Win32_WGPU_GetRenderPipeline (wgpu.device, wgpu.shaderModule, wgpu.surfaceFormat, wgpu.renderPipeline);
+	Win32_WGPU_GetInstance        (wgpu.instance);
+	Win32_WGPU_GetAdapter         (wgpu.instance, wgpu.adapter);
+	Win32_WGPU_GetDevice          (wgpu.adapter, wgpu.device);
+	Win32_WGPU_GetSurface         (&wndClass, wndHandle, wgpu.instance, wgpu.surface);
+	Win32_WGPU_GetSurfaceFormat   (wgpu.surface, wgpu.adapter, wgpu.surfaceFormat);
+	Win32_WGPU_GetShaderModule    (wgpu.device, wgpu.shaderModule, &gameMemory);
+	Win32_WGPU_GetBindGroupLayout (wgpu.device, wgpu.bindGroupLayout);
+	Win32_WGPU_GetRenderPipeline  (wgpu.device, wgpu.shaderModule, wgpu.surfaceFormat, wgpu.bindGroupLayout, wgpu.renderPipeline);
 
 	Win32_WGPU_ConfigureSurface(wgpu.surface, wgpu.surfaceFormat, wgpu.device, wgpu.adapter);
 	wgpuAdapterRelease(wgpu.adapter);
@@ -669,14 +722,47 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	bufferDesc.label.data = "Index buffer";
 	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
+	bufferDesc.mappedAtCreation = false;
 	WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
 	wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
 
+	bufferDesc.size = 4 * sizeof(float);
+	bufferDesc.label.data = "Uniform buffer";
+	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+	bufferDesc.mappedAtCreation = false;
+	WGPUBuffer uniformBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
+	//float currentTime = 1.0f;
+	//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &currentTime, sizeof(float));
+
+
+
+
+	// Initialize bind groups (it must come from AFTER the creation of the buffer and other resources !)
+	//
+	WGPUBindGroupEntry binding = {};
+	binding.nextInChain = nullptr;
+	binding.binding = 0; // The index of the binding
+	binding.buffer = uniformBuffer; // The buffer it is bound to
+	binding.offset = 0; // A buffer can contain multiple uniforms
+	binding.size = 4 * sizeof(float); // i.e. the size of the buffer
+	WGPUBindGroupDescriptor bindGroupDesc = {};
+	bindGroupDesc.nextInChain = nullptr;
+	bindGroupDesc.layout = wgpu.bindGroupLayout;
+	bindGroupDesc.entryCount = 1;
+	bindGroupDesc.entries = &binding;
+	WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(wgpu.device, &bindGroupDesc);
+
+
+	float fakeTime = 0.0f;
 
 	gRunning = true;
 	while (gRunning)
 	{
 		Win32_ProcessPendingMessages();
+
+		fakeTime += 0.1f;
+		wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &fakeTime, sizeof(float));
 
 		WGPUTextureView targetView = Win32_WGPU_GetNextSurfaceTextureView(wgpu.surface);
 		if (!targetView) return 0;
@@ -713,6 +799,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		wgpuRenderPassEncoderSetPipeline(renderPass, wgpu.renderPipeline);
 		wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, pointBuffer, 0, wgpuBufferGetSize(pointBuffer));
 		wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuBufferGetSize(indexBuffer));
+		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, bindGroup, 0, nullptr);
 		wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
 		wgpuRenderPassEncoderEnd(renderPass);
 		wgpuRenderPassEncoderRelease(renderPass);
@@ -739,8 +826,11 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	wgpuQueueRelease(wgpu.queue);
 	wgpuSurfaceRelease(wgpu.surface);
 	wgpuDeviceRelease(wgpu.device);
+	wgpuBindGroupRelease(bindGroup);
+	wgpuBindGroupLayoutRelease(wgpu.bindGroupLayout);
 	wgpuBufferRelease(pointBuffer);
 	wgpuBufferRelease(indexBuffer);
+	wgpuBufferRelease(uniformBuffer);
 
 	return 0;
 }

@@ -37,14 +37,15 @@ typedef int32    bool32 ;
 
 struct WGPUMaster
 {
-	WGPUInstance       instance;
-	WGPUAdapter        adapter;
-	WGPUDevice         device;
-	WGPUSurface        surface;
-	WGPUTextureFormat  surfaceFormat;
-	WGPUShaderModule   shaderModule;
-	WGPURenderPipeline renderPipeline;
-	WGPUQueue          queue;
+	WGPUInstance        instance;
+	WGPUAdapter         adapter;
+	WGPUDevice          device;
+	WGPUSurface         surface;
+	WGPUTextureFormat   surfaceFormat;
+	WGPUShaderModule    shaderModule;
+	WGPUBindGroupLayout bindGroupLayout;
+	WGPURenderPipeline  renderPipeline;
+	WGPUQueue           queue;
 };
 
 struct GameMemory
@@ -76,13 +77,16 @@ void                            Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDe
 void                            Win32_WGPU_GetSurface(WNDCLASS* WndClass, HWND WndHandle, WGPUInstance Instance, WGPUSurface& OutSurface);
 void                            Win32_WGPU_GetSurfaceFormat(WGPUSurface Surface, WGPUAdapter Adapter, WGPUTextureFormat& OutSurfaceFormat);
 void                            Win32_WGPU_GetShaderModule(WGPUDevice Device, WGPUShaderModule& OutShaderModule, GameMemory* Memory);
-void                            Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPURenderPipeline& OutRenderPipeline);
+void                            Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindGroupLayout);
+void                            Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPUBindGroupLayout bindGroupLayout, WGPURenderPipeline& OutRenderPipeline);
+void						    Win32_WGPU_GetDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout);
 
 WGPUAdapter                     Win32_WGPU_Sync_RequestAdapter(WGPUInstance Instance, WGPURequestAdapterOptions const* Options);
 WGPUDevice                      Win32_WGPU_Sync_RequestDevice(WGPUAdapter Adapter, const WGPUDeviceDescriptor* Descriptor);
 
 WGPUDeviceLostCallbackInfo      Win32_WGPU_Callback_DeviceLost();
 WGPUUncapturedErrorCallbackInfo Win32_WGPU_Callback_UncapturedError();
+
 
 WGPULimits                      Win32_WGPU_GetLimits(WGPUAdapter Adapter);
 void                            Win32_WGPU_ConfigureSurface(WGPUSurface Surface, WGPUTextureFormat SurfaceFormat, WGPUDevice Device, WGPUAdapter Adapter);
