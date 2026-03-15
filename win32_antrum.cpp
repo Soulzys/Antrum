@@ -46,7 +46,16 @@ void Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDevice& OutDevice)
 {
 	// GPU Features
 	//
-	WGPULimits limits = Win32_WGPU_GetLimits(Adapter);
+	WGPULimits limits = Win32_WGPU_GetDefaultLimits(Adapter);
+	limits.maxVertexAttributes             = 2;
+	limits.maxVertexBuffers                = 1;
+	limits.maxBufferSize                   = 6 * 5 * sizeof(real32);
+	limits.maxVertexBufferArrayStride      = 5 * sizeof(real32);
+	limits.maxInterStageShaderVariables    = 3;
+	limits.maxBindGroups                   = 1;
+	limits.maxUniformBuffersPerShaderStage = 1;
+	limits.maxUniformBufferBindingSize     = 16 * 4;
+	limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 
 	// Requesting a device
 	//
@@ -138,7 +147,7 @@ WGPUDevice Win32_WGPU_Sync_RequestDevice(WGPUAdapter Adapter, const WGPUDeviceDe
 	return requestDataResult.device;
 }
 
-WGPULimits Win32_WGPU_GetLimits(WGPUAdapter Adapter)
+WGPULimits Win32_WGPU_GetDefaultLimits(WGPUAdapter Adapter)
 {
 	WGPULimits adapterLimits = {};
 	wgpuAdapterGetLimits(Adapter, &adapterLimits);
@@ -182,17 +191,6 @@ WGPULimits Win32_WGPU_GetLimits(WGPUAdapter Adapter)
 	limits.minUniformBufferOffsetAlignment           = adapterLimits.minUniformBufferOffsetAlignment;
 	limits.minStorageBufferOffsetAlignment           = adapterLimits.minStorageBufferOffsetAlignment;
 
-
-	// Project settings, update whenever needed
-	limits.maxVertexAttributes             = 2;
-	limits.maxVertexBuffers                = 1;
-	limits.maxBufferSize                   = 6 * 5 * sizeof(float);
-	limits.maxVertexBufferArrayStride      = 5 * sizeof(float);
-	limits.maxInterStageShaderVariables    = 3;
-	limits.maxBindGroups                   = 1;
-	limits.maxUniformBuffersPerShaderStage = 1;
-	limits.maxUniformBufferBindingSize     = 16 * 4;
-
 	return limits;
 }
 
@@ -214,6 +212,12 @@ void Win32_WGPU_GetDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout)
 	bindingLayout.texture.multisampled         = false;
 	bindingLayout.texture.sampleType           = WGPUTextureSampleType_BindingNotUsed;
 	bindingLayout.texture.viewDimension        = WGPUTextureViewDimension_Undefined;
+}
+
+uint32 Win32_WGPU_Util_CeilToNextMultiple(uint32 Value, uint32 Multiple)
+{
+	uint32 step = Value / Multiple + (Value % Multiple == 0 ? 0 : 1);
+	return step * Multiple;
 }
 
 
@@ -288,9 +292,10 @@ void Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindG
 	WGPUBindGroupLayoutEntry bindingLayoutEntry = {};
 	Win32_WGPU_GetDefaultBindingLayout(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
 	bindingLayoutEntry.binding = 0; // This is the binding index we use in our shader
-	bindingLayoutEntry.visibility = WGPUShaderStage_Vertex; // This is the stage that needs to access this resource
+	bindingLayoutEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
 	bindingLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
-	bindingLayoutEntry.buffer.minBindingSize = 4 * sizeof(float);
+	bindingLayoutEntry.buffer.minBindingSize = sizeof(ShaderUniform);
+	bindingLayoutEntry.buffer.hasDynamicOffset = true;
 
 	WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
 	bindGroupLayoutDesc.nextInChain = nullptr;
@@ -299,7 +304,16 @@ void Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindG
 	BindGroupLayout = wgpuDeviceCreateBindGroupLayout(Device, &bindGroupLayoutDesc);
 }
 
-void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPUBindGroupLayout BindGroupLayout, WGPURenderPipeline& OutRenderPipeline)
+void Win32_WGPU_GetPipelineLayout(WGPUDevice Device, WGPUBindGroupLayout BindGroupLayout, WGPUPipelineLayout& PipelineLayout)
+{
+	WGPUPipelineLayoutDescriptor layoutDesc = {};
+	layoutDesc.nextInChain = nullptr;
+	layoutDesc.bindGroupLayoutCount = 1;
+	layoutDesc.bindGroupLayouts = &BindGroupLayout;
+	PipelineLayout = wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
+}
+
+void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPUBindGroupLayout BindGroupLayout, WGPUPipelineLayout PipelineLayout, WGPURenderPipeline& OutRenderPipeline)
 {
 	//std::vector<WGPUVertexAttribute> VertexAttributes(2);
 
@@ -311,14 +325,14 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	WGPUVertexAttribute colorAttrib;
 	colorAttrib.shaderLocation = 1;
 	colorAttrib.format         = WGPUVertexFormat_Float32x3;
-	colorAttrib.offset         = 2 * sizeof(float);
+	colorAttrib.offset         = 2 * sizeof(real32);
 
 	WGPUVertexAttribute vertexAttributes[2] = { pointAttrib, colorAttrib };
 
 	WGPUVertexBufferLayout vertexBufferLayout = {};
 	vertexBufferLayout.attributeCount         = 2; //(uint32)VertexAttributes.size();
 	vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
-	vertexBufferLayout.arrayStride            = 5 * sizeof(float);
+	vertexBufferLayout.arrayStride            = 5 * sizeof(real32);
 	vertexBufferLayout.stepMode               = WGPUVertexStepMode_Vertex;
 
 
@@ -349,16 +363,7 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	fragmentState.nextInChain       = nullptr;
 
 
-
-
-
 	
-
-	WGPUPipelineLayoutDescriptor layoutDesc = {};
-	layoutDesc.nextInChain = nullptr;
-	layoutDesc.bindGroupLayoutCount = 1;
-	layoutDesc.bindGroupLayouts = &BindGroupLayout;
-	WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
 
 	WGPURenderPipelineDescriptor pipelineDesc       = {};
 	pipelineDesc.nextInChain                        = nullptr;
@@ -380,7 +385,7 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	pipelineDesc.multisample.count                  = 1;
 	pipelineDesc.multisample.mask                   = ~0u; // Default value for the mask. It means "all bits on"
 	pipelineDesc.multisample.alphaToCoverageEnabled = false; // Default value as well. It is irrelevant for count = 1 anyways
-	pipelineDesc.layout                             = layout;
+	pipelineDesc.layout                             = PipelineLayout;
 
 	OutRenderPipeline = wgpuDeviceCreateRenderPipeline(Device, &pipelineDesc);
 }
@@ -503,6 +508,70 @@ size_t Win32_Util_StringSize(const char* Str)
 	return counter;
 }
 
+uint8 Win32_Util_ConvertCharToDigit(char Char)
+{
+	return uint8(Char - '0');
+}
+
+float Win32_Util_ConvertStringToFloat(const char* String)
+{
+	bool negative   = *String == '-';
+	bool reachedDot = false;
+	int  integer    = 0;
+	int  divider    = 1;
+	int  counter    = negative ? 1 : 0;
+
+	while (String[counter] != '\0')
+	{
+		if (String[counter] == '.')
+		{
+			reachedDot = true;
+			counter++;
+			continue;
+		}
+
+		integer = integer * 10 + Win32_Util_ConvertCharToDigit(String[counter]);
+		counter++;
+
+		if (reachedDot)
+		{
+			divider *= 10;
+		}
+	}
+
+	float res = (float)(integer) / divider;
+	if (negative)
+	{
+		res *= -1.0f;
+	}
+
+	return res;
+}
+
+void Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory)
+{
+	ReadFileResult res = Win32_Util_ReadFile(Filename, Memory);
+
+	OutputDebugString("--------------------------\n");
+	OutputDebugString(static_cast<const char*>(res.content));
+	OutputDebugString("--------------------------\n");
+
+	Vector3 vec = {};
+
+	for (size_t i = 0; i < res.contentSize; i++)
+	{
+		//char c = res.content[i];
+		//if (c == 'v')
+		//{
+			//real32* pReal32 = static_cast<float*>(res.content[i]);
+			//real32 = *pReal32;
+		//}
+		//OutputDebugString(&c);
+	}
+
+	float* t = nullptr;
+}
+
 ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
 {
 	ReadFileResult res = {};
@@ -522,7 +591,7 @@ ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
 	}
 
 	uint32 fileSize32 = Win32_Util_SafeTruncate_uin64(fileSize.QuadPart);
-	res.content = Win32_Util_AllocateIOMemory(Memory, fileSize32);
+	res.content = Win32_Util_AllocateReadFileMemory(Memory, fileSize32);
 	if (!res.content)
 	{
 		res.message = "ERROR | Win32_Util_ReadFile() | Your file is too big !\n";
@@ -533,17 +602,21 @@ ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
 	if (!ReadFile(fileHandle, res.content, fileSize32, &bytesRead, 0))
 	{
 		res.message = "ERROR | Win32_Util_ReadFile() | Could not read the file !\n";
-		Memory->IOMemory.offset -= fileSize32; // Deallocate
+		Memory->ReadFileMemory.offset -= fileSize32; // Deallocate
 		return res;
 	}
 	if (bytesRead != fileSize32)
 	{
 		res.message = "ERROR | Win32_Util_ReadFile() | We did not read all of the bytes we expected !\n";
-		Memory->IOMemory.offset -= fileSize32; // Deallocate
+		Memory->ReadFileMemory.offset -= fileSize32; // Deallocate
 		return res;
 	}
 
 	res.contentSize = fileSize32;
+
+	// Deallocate
+	//Memory->ReadFileMemory.offset = 0;
+	//Memory->ReadFileMemory.memory = nullptr;
 
 	CloseHandle(fileHandle);
 
@@ -558,16 +631,16 @@ uint32 Win32_Util_SafeTruncate_uin64(uint64 Value)
 	return res;
 }
 
-char* Win32_Util_AllocateIOMemory(GameMemory* Memory, size_t Size)
+char* Win32_Util_AllocateReadFileMemory(GameMemory* Memory, size_t Size)
 {
-	if (Memory->IOMemory.offset + Size >= Memory->IOMemory.size)
+	if (Memory->ReadFileMemory.offset + Size >= Memory->ReadFileMemory.size)
 	{
-		OutputDebugString("ERROR | Win32_Util_AllocateIOMemory | You asked for too much !\n");
+		OutputDebugString("ERROR | Win32_Util_AllocateReadFileMemory | You asked for too much !\n");
 		return nullptr;
 	}
 
-	char* ptr = Memory->IOMemory.memory + Memory->IOMemory.offset;
-	Memory->IOMemory.offset += Size;
+	char* ptr = Memory->ReadFileMemory.memory + Memory->ReadFileMemory.offset;
+	Memory->ReadFileMemory.offset += Size;
 
 	return ptr;
 }
@@ -658,12 +731,16 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		0
 	);
 
-	GameMemory gameMemory      = {};
-	gameMemory.size            = MEMSIZE_GAME;
-	gameMemory.memory          = static_cast<char*>(VirtualAlloc(0, gameMemory.size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
-	gameMemory.IOMemory.size   = MEMSIZE_IO;
-	gameMemory.IOMemory.memory = gameMemory.memory;
+	GameMemory gameMemory            = {};
+	gameMemory.size                  = MEMSIZE_GAME;
+	gameMemory.memory                = static_cast<char*>(VirtualAlloc(0, gameMemory.size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
+	gameMemory.ReadFileMemory.size   = MEMSIZE_READ_FILE;
+	gameMemory.ReadFileMemory.memory = gameMemory.memory;
 
+
+	Win32_Util_ConvertStringToFloat("-1.000000");
+
+	//Win32_Util_ReadFile_OBJ("../resource/Triangle.obj", &gameMemory);
 
 
 	// WGPU initialization
@@ -676,7 +753,8 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	Win32_WGPU_GetSurfaceFormat   (wgpu.surface, wgpu.adapter, wgpu.surfaceFormat);
 	Win32_WGPU_GetShaderModule    (wgpu.device, wgpu.shaderModule, &gameMemory);
 	Win32_WGPU_GetBindGroupLayout (wgpu.device, wgpu.bindGroupLayout);
-	Win32_WGPU_GetRenderPipeline  (wgpu.device, wgpu.shaderModule, wgpu.surfaceFormat, wgpu.bindGroupLayout, wgpu.renderPipeline);
+	Win32_WGPU_GetPipelineLayout  (wgpu.device, wgpu.bindGroupLayout, wgpu.pipelineLayout);
+	Win32_WGPU_GetRenderPipeline  (wgpu.device, wgpu.shaderModule, wgpu.surfaceFormat, wgpu.bindGroupLayout, wgpu.pipelineLayout, wgpu.renderPipeline);
 
 	Win32_WGPU_ConfigureSurface(wgpu.surface, wgpu.surfaceFormat, wgpu.device, wgpu.adapter);
 	wgpuAdapterRelease(wgpu.adapter);
@@ -689,13 +767,13 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 
 	// Buffer stuff
 	//
-	std::vector<float> pointData =
+	std::vector<real32> pointData =
 	{
 		// First triangle
-		-0.5, -0.5, 1.0, 0.0, 0.0,
-		+0.5, -0.5, 0.0, 1.0, 0.0,
-		+0.5, +0.5, 0.0, 0.0, 1.0,
-		-0.5, +0.5, 1.0, 1.0, 0.0,
+		-0.2f, -0.2f, 1.0f, 0.0f, 0.0f,
+		+0.2f, -0.2f, 0.0f, 1.0f, 0.0f,
+		+0.2f, +0.2f, 0.0f, 0.0f, 1.0f,
+		-0.2f, +0.2f, 1.0f, 1.0f, 0.0f,
 	};
 
 	std::vector<uint16> indexData =
@@ -707,12 +785,21 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 
 	uint32 indexCount = (uint32)(indexData.size());
 
+
+	ShaderUniform shaderUniform = {};
+	shaderUniform.time = 2.0f;
+	shaderUniform.color[0] = 0.0f;
+	shaderUniform.color[1] = 1.0f;
+	shaderUniform.color[2] = 0.4f;
+	shaderUniform.color[3] = 1.0f;
+
+
 	WGPUBufferDescriptor bufferDesc = {};
 	bufferDesc.nextInChain = nullptr;
 	bufferDesc.label.data = "Point buffer";
 	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-	bufferDesc.size = pointData.size() * sizeof(float); // round up to the next multiple of 4
+	bufferDesc.size = pointData.size() * sizeof(real32); // round up to the next multiple of 4
 	bufferDesc.mappedAtCreation = false;
 	WGPUBuffer pointBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
 	wgpuQueueWriteBuffer(wgpu.queue, pointBuffer, 0, pointData.data(), bufferDesc.size);
@@ -726,15 +813,21 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
 	wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
 
-	bufferDesc.size = 4 * sizeof(float);
+	WGPULimits supportedLimits = Win32_WGPU_GetDefaultLimits(wgpu.adapter);
+	uint32 uniformBufferStride = Win32_WGPU_Util_CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
+	bufferDesc.size = uniformBufferStride + sizeof(ShaderUniform);
 	bufferDesc.label.data = "Uniform buffer";
 	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
 	bufferDesc.mappedAtCreation = false;
 	WGPUBuffer uniformBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
-	//float currentTime = 1.0f;
-	//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &currentTime, sizeof(float));
-
+	wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &shaderUniform, sizeof(ShaderUniform));
+	
+	shaderUniform.color[0] = 1.0f;
+	shaderUniform.color[1] = 0.2f;
+	shaderUniform.color[2] = 0.8f;
+	shaderUniform.time = -1.2f;
+	wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, uniformBufferStride, &shaderUniform, sizeof(ShaderUniform));
 
 
 
@@ -745,24 +838,30 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	binding.binding = 0; // The index of the binding
 	binding.buffer = uniformBuffer; // The buffer it is bound to
 	binding.offset = 0; // A buffer can contain multiple uniforms
-	binding.size = 4 * sizeof(float); // i.e. the size of the buffer
+	binding.size = sizeof(ShaderUniform); // i.e. the size of the buffer
 	WGPUBindGroupDescriptor bindGroupDesc = {};
 	bindGroupDesc.nextInChain = nullptr;
 	bindGroupDesc.layout = wgpu.bindGroupLayout;
 	bindGroupDesc.entryCount = 1;
 	bindGroupDesc.entries = &binding;
-	WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(wgpu.device, &bindGroupDesc);
+	wgpu.bindGroup = wgpuDeviceCreateBindGroup(wgpu.device, &bindGroupDesc);
 
 
-	float fakeTime = 0.0f;
+	real32 fakeTime = 1.0f;
 
 	gRunning = true;
 	while (gRunning)
 	{
 		Win32_ProcessPendingMessages();
 
-		fakeTime += 0.1f;
-		wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &fakeTime, sizeof(float));
+		//fakeTime += 0.02f;
+		//shaderUniform.time = fakeTime;
+		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), &shaderUniform.time, sizeof(real32));
+
+		//shaderUniform.color[1] = (real32)sin(fakeTime);
+		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), &shaderUniform.color, sizeof(ShaderUniform::color));
+		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, sizeof(real32) * 2, &shaderUniform.color[1], sizeof(real32));
+
 
 		WGPUTextureView targetView = Win32_WGPU_GetNextSurfaceTextureView(wgpu.surface);
 		if (!targetView) return 0;
@@ -796,10 +895,15 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 
 		// Use Render Pass
 		//
+		uint32 dynamicOffset = 0;
+		dynamicOffset = 0 * uniformBufferStride;
 		wgpuRenderPassEncoderSetPipeline(renderPass, wgpu.renderPipeline);
 		wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, pointBuffer, 0, wgpuBufferGetSize(pointBuffer));
 		wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuBufferGetSize(indexBuffer));
-		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, bindGroup, 0, nullptr);
+		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
+		wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
+		dynamicOffset = 1 * uniformBufferStride;
+		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
 		wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
 		wgpuRenderPassEncoderEnd(renderPass);
 		wgpuRenderPassEncoderRelease(renderPass);
@@ -826,7 +930,8 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	wgpuQueueRelease(wgpu.queue);
 	wgpuSurfaceRelease(wgpu.surface);
 	wgpuDeviceRelease(wgpu.device);
-	wgpuBindGroupRelease(bindGroup);
+	wgpuPipelineLayoutRelease(wgpu.pipelineLayout);
+	wgpuBindGroupRelease(wgpu.bindGroup);
 	wgpuBindGroupLayoutRelease(wgpu.bindGroupLayout);
 	wgpuBufferRelease(pointBuffer);
 	wgpuBufferRelease(indexBuffer);
