@@ -11,6 +11,185 @@ bool gRunning = false;
 
 
 
+WGPUShaderModule WGPU::Device::createShaderModule(WGPUShaderModuleDescriptor const* descriptor)
+{
+	return wgpuDeviceCreateShaderModule(device, descriptor);
+}
+
+WGPUBindGroupLayout WGPU::Device::createBindGroupLayout(WGPUBindGroupLayoutDescriptor const* descriptor)
+{
+	return wgpuDeviceCreateBindGroupLayout(device, descriptor);
+}
+
+WGPUPipelineLayout WGPU::Device::createPipelineLayout(WGPUPipelineLayoutDescriptor const* descriptor)
+{
+	return wgpuDeviceCreatePipelineLayout(device, descriptor);
+}
+
+WGPURenderPipeline WGPU::Device::createRenderPipeline(WGPURenderPipelineDescriptor const* descriptor)
+{
+	return wgpuDeviceCreateRenderPipeline(device, descriptor);
+}
+
+WGPUQueue WGPU::Device::getQueue()
+{
+	return wgpuDeviceGetQueue(device);
+}
+
+WGPUBuffer WGPU::Device::createBuffer(WGPUBufferDescriptor const* descriptor)
+{
+	return wgpuDeviceCreateBuffer(device, descriptor);
+}
+
+WGPUBindGroup WGPU::Device::createBindGroup(WGPUBindGroupDescriptor const* descriptor)
+{
+	return wgpuDeviceCreateBindGroup(device, descriptor);
+}
+
+WGPUCommandEncoder WGPU::Device::createCommandEncoder(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor)
+{
+	return wgpuDeviceCreateCommandEncoder(device, descriptor);
+}
+
+void WGPU::Device::tick()
+{
+	wgpuDeviceTick(device);
+}
+
+WGPUFuture WGPU::Adapter::requestDevice(WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor, WGPURequestDeviceCallbackInfo callbackInfo)
+{
+	return wgpuAdapterRequestDevice(adapter, descriptor, callbackInfo);
+}
+
+WGPUStatus WGPU::Adapter::getLimits(WGPULimits* limits)
+{
+	return wgpuAdapterGetLimits(adapter, limits);
+}
+
+void WGPU::Adapter::release()
+{
+	wgpuAdapterRelease(adapter);
+}
+
+WGPUFuture WGPU::Instance::requestAdapter(WGPU_NULLABLE WGPURequestAdapterOptions const* options, WGPURequestAdapterCallbackInfo callbackInfo)
+{
+	return wgpuInstanceRequestAdapter(instance, options, callbackInfo);
+}
+
+WGPUSurface WGPU::Instance::createSurface(WGPUSurfaceDescriptor const* descriptor)
+{
+	return wgpuInstanceCreateSurface(instance, descriptor);
+}
+
+WGPU::Instance WGPU::createInstance(WGPU_NULLABLE WGPUInstanceDescriptor const* descriptor)
+{
+	Instance wInstance = {};
+	wInstance.instance = wgpuCreateInstance(descriptor);
+	return wInstance;
+}
+
+WGPUStatus WGPU::Surface::getCapabilities(WGPUAdapter adapter, WGPUSurfaceCapabilities* capabilities)
+{
+	return wgpuSurfaceGetCapabilities(surface, adapter, capabilities);
+}
+
+void WGPU::Surface::configure(WGPUSurfaceConfiguration const* config)
+{
+	wgpuSurfaceConfigure(surface, config);
+}
+
+void WGPU::Surface::getCurrentTexture(WGPUSurfaceTexture* surfaceTexture)
+{
+	wgpuSurfaceGetCurrentTexture(surface, surfaceTexture);
+}
+
+WGPUStatus WGPU::Surface::present()
+{
+	return wgpuSurfacePresent(surface);
+}
+
+WGPUTextureFormat WGPU::Texture::getFormat()
+{
+	return wgpuTextureGetFormat(texture);
+}
+
+WGPUTextureView WGPU::Texture::createView(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor)
+{
+	return wgpuTextureCreateView(texture, descriptor);
+}
+
+void WGPU::Texture::release()
+{
+	wgpuTextureRelease(texture);
+}
+
+void WGPU::ShaderModule::release()
+{
+	wgpuShaderModuleRelease(shaderModule);
+}
+
+void WGPU::Queue::writeBuffer(WGPUBuffer buffer, uint64_t bufferOffset, void const* data, size_t size)
+{
+	wgpuQueueWriteBuffer(queue, buffer, bufferOffset, data, size);
+}
+
+void WGPU::Queue::submit(size_t commandCount, WGPUCommandBuffer const* commands)
+{
+	wgpuQueueSubmit(queue, commandCount, commands);
+}
+
+WGPURenderPassEncoder WGPU::CommandEncoder::beginRenderPass(WGPURenderPassDescriptor const* descriptor)
+{
+	return wgpuCommandEncoderBeginRenderPass(commandEncoder, descriptor);
+}
+
+WGPUCommandBuffer WGPU::CommandEncoder::finish(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor)
+{
+	return wgpuCommandEncoderFinish(commandEncoder, descriptor);
+}
+
+void WGPU::CommandEncoder::release()
+{
+	wgpuCommandEncoderRelease(commandEncoder);
+}
+
+void WGPU::RenderPassEncoder::setPipeline(WGPURenderPipeline pipeline)
+{
+	wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipeline);
+}
+
+void WGPU::RenderPassEncoder::setVertexBuffer(uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size)
+{
+	wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, slot, buffer, offset, size);
+}
+
+void WGPU::RenderPassEncoder::setIndexBuffer(WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size)
+{
+	wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, buffer, format, offset, size);
+}
+
+void WGPU::RenderPassEncoder::setBindGroup(uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const* dynamicOffsets)
+{
+	wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
+}
+
+void WGPU::RenderPassEncoder::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance)
+{
+	wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
+}
+
+void WGPU::RenderPassEncoder::end()
+{
+	wgpuRenderPassEncoderEnd(renderPassEncoder);
+}
+
+void WGPU::RenderPassEncoder::release()
+{
+	wgpuRenderPassEncoderRelease(renderPassEncoder);
+}
+
+
+
 bool CharUtil::IsDigit(char c)
 {
 	int cInt = (int)c;

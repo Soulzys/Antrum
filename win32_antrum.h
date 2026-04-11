@@ -250,6 +250,99 @@ struct FileReader
 };
 
 
+namespace WGPU
+{
+	struct Device
+	{
+		WGPUShaderModule createShaderModule(WGPUShaderModuleDescriptor const* descriptor);
+		WGPUBindGroupLayout createBindGroupLayout(WGPUBindGroupLayoutDescriptor const* descriptor);
+		WGPUPipelineLayout createPipelineLayout(WGPUPipelineLayoutDescriptor const* descriptor);
+		WGPURenderPipeline createRenderPipeline(WGPURenderPipelineDescriptor const* descriptor);
+		WGPUQueue getQueue();
+		WGPUBuffer createBuffer(WGPUBufferDescriptor const* descriptor);
+		WGPUBindGroup createBindGroup(WGPUBindGroupDescriptor const* descriptor);
+		WGPUCommandEncoder createCommandEncoder(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor);
+		void tick();
+
+		WGPUDevice device;
+	};
+
+	struct Adapter
+	{
+		WGPUFuture requestDevice (WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor, WGPURequestDeviceCallbackInfo callbackInfo);
+		WGPUStatus getLimits     (WGPULimits* limits);
+		void release();
+
+		WGPUAdapter adapter;
+	};
+
+	struct Instance
+	{
+		WGPUFuture requestAdapter(WGPU_NULLABLE WGPURequestAdapterOptions const* options, WGPURequestAdapterCallbackInfo callbackInfo);
+		WGPUSurface createSurface(WGPUSurfaceDescriptor const* descriptor);
+
+		WGPUInstance instance;
+	};
+
+	struct Surface
+	{
+		WGPUStatus getCapabilities(WGPUAdapter adapter, WGPUSurfaceCapabilities* capabilities);
+		void configure(WGPUSurfaceConfiguration const* config);
+		void getCurrentTexture(WGPUSurfaceTexture* surfaceTexture);
+		WGPUStatus present();
+
+		WGPUSurface surface;
+	};
+
+	struct Texture
+	{
+		WGPUTextureFormat getFormat();
+		WGPUTextureView createView(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor);
+		void release();
+
+		WGPUTexture texture;
+	};
+
+	struct ShaderModule
+	{
+		void release();
+
+		WGPUShaderModule shaderModule;
+	};
+
+	struct Queue
+	{
+		void writeBuffer(WGPUBuffer buffer, uint64_t bufferOffset, void const* data, size_t size);
+		void submit(size_t commandCount, WGPUCommandBuffer const* commands);
+
+		WGPUQueue queue;
+	};
+
+	struct CommandEncoder
+	{
+		WGPURenderPassEncoder beginRenderPass(WGPURenderPassDescriptor const* descriptor);
+		WGPUCommandBuffer finish(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor);
+		void release();
+
+		WGPUCommandEncoder commandEncoder;
+	};
+
+	struct RenderPassEncoder
+	{
+		void setPipeline(WGPURenderPipeline pipeline);
+		void setVertexBuffer(uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size);
+		void setIndexBuffer(WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size);
+		void setBindGroup(uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const* dynamicOffsets);
+		void drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance);
+		void end();
+		void release();
+
+		WGPURenderPassEncoder renderPassEncoder;
+	};
+
+	Instance createInstance(WGPU_NULLABLE WGPUInstanceDescriptor const* descriptor);
+}
+
 
 
 
