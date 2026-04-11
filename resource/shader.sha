@@ -1,13 +1,13 @@
 struct VertexInput
 {
-	@location(0) position: vec2f, 
-	@location(1) color: vec3f,
+	@location(0) position: vec3f, 
+	//@location(1) color: vec3f,
 };
 
 struct VertexOutput
 {
 	@builtin(position) position: vec4f, 
-	@location(0) color: vec3f,
+	//@location(0) color: vec3f,
 };
 
 struct ShaderUniform
@@ -24,20 +24,22 @@ fn vs_main(in: VertexInput) -> VertexOutput
 	var out: VertexOutput;
 	let ratio = 1200.0 / 800.0;
 	var offset = vec2f(0, 0);
-	offset += 0.1 * vec2f(cos(uUniforms.time), sin(uUniforms.time));
+	//offset += 0.1 * vec2f(cos(uUniforms.time), sin(uUniforms.time));
 
 	out.position = vec4f(in.position.x + offset.x, (in.position.y + offset.y) * ratio, 0.0, 1.0);
-	out.color = in.color;
+	//out.color = in.color;
 	return out;
 }
 
 @fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4f 
+fn fs_main(in: VertexOutput) -> @location(0) vec4f
 {
-	let color = in.color * uUniforms.color.rgb;
+	//let color = in.color * uUniforms.color.rgb;
+	let color = uUniforms.color.rgb;
 
 	// Gamma-correction
 	//
 	let linear_color = pow(color, vec3f(2.2));
 	return vec4f(linear_color, 1.0);
+	//return vec4f(in.color, 1.0);
 }

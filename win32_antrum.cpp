@@ -11,6 +11,220 @@ bool gRunning = false;
 
 
 
+bool CharUtil::IsDigit(char c)
+{
+	int cInt = (int)c;
+	return (cInt >= 48 && cInt <= 57);
+}
+
+bool CharUtil::IsNewline(char c)
+{
+	return c == '\n';
+}
+
+bool CharUtil::IsTab(char c)
+{
+	return c == '\t';
+}
+
+bool CharUtil::IsSpace(char c)
+{
+	return c == ' ';
+}
+
+bool CharUtil::IsArithmeticSign(char c)
+{
+	return (c == '+' || c == '-' || c == '/' || c == '*');
+}
+
+bool CharUtil::IsDot(char c)
+{
+	return c == '.';
+}
+
+void* MemoryChunk::allocate(size_t Amount)
+{
+	if (offset + Amount > size)
+	{
+		OutputDebugString("ERROR | GameMemory::allocate | You attempted to allocate too much memory !\n");
+		return nullptr;
+	}
+
+	void* memPtr = memory + offset;
+	offset += Amount;
+
+	return memPtr;
+}
+
+ParseNumberResult Win32_Util_ParseNumber(const char* reader, DataType dataType, char endChar)
+{
+	ParseNumberResult result = {};
+	bool negative = false;
+	if (*reader == '-')
+	{
+		negative = true;
+		reader++;
+	}
+
+	switch (dataType)
+	{
+		case DataType::INTEGER:
+		{
+			while (*reader != endChar)
+			{
+				if (!CharUtil::IsDigit(*reader)) return result;
+
+				result.number.i = result.number.i * 10 + Win32_Util_ConvertCharToDigit(*reader);
+				reader++;
+			}
+
+			if (negative)
+			{
+				result.number.i *= -1;
+			}
+		} break;
+
+
+		case DataType::REAL32:
+		{
+			bool hitDot = false;
+			real32 divider = 0.f;
+
+			while (*reader != endChar)
+			{
+				if (!CharUtil::IsDigit(*reader) && !CharUtil::IsDot(*reader)) return result;
+
+				if (*reader == '.')
+				{
+					hitDot = true;
+					reader++;
+					continue;
+				}
+
+				if (hitDot)
+				{
+					divider *= 10.f;
+				}
+
+				result.number.r32 = result.number.r32 * 10.f + Win32_Util_ConvertCharToDigit(*reader);
+				reader++;
+			}
+
+			result.number.r32 /= divider;
+
+			if (negative)
+			{
+				result.number.r32 *= -1.f;
+			}
+		} break;
+	}
+
+	result.valid = true;
+	return result;
+}
+
+OBJParser::Vec3ILineResult OBJParser::parseFaceLine(FileReader& fileReader)
+{
+	Vec3ILineResult res = {};
+
+	//counter += 2;
+	fileReader += 2;// +2 is the offset, so we start right onto the correct char
+	bool hitSpace = true; // We start with true because we're onto the first char's number
+	uint8 inputCounter = 0;
+
+	while (*fileReader.reader != '\n') 
+	{
+		if (hitSpace)
+		{
+			ParseNumberResult parsingRes = Win32_Util_ParseNumber(fileReader.reader, DataType::INTEGER, '/');
+			if (!parsingRes.valid) return res;
+
+			if (inputCounter == 0)
+			{
+				res.vector.a = parsingRes.number.i;
+				res.vector.a--;
+			}
+			else if (inputCounter == 1)
+			{
+				res.vector.b = parsingRes.number.i;
+				res.vector.b--;
+			}
+			else
+			{
+				res.vector.c = parsingRes.number.i;
+				res.vector.c--;
+			}
+
+			inputCounter++;
+			hitSpace = false;
+			continue;
+		}
+
+		if (*fileReader.reader == ' ')
+		{
+			hitSpace = true;
+			//counter++;
+			//reader++;
+			fileReader++;
+			continue;
+		}
+
+		//counter++;
+		//reader++;
+		fileReader++;
+	}
+
+	return res;
+}
+
+
+OBJParser::Vec3LineResult OBJParser::parseVec3Line(FileReader& fileReader)
+{
+	Vec3LineResult res = {};
+	String         floatString = {};
+	bool           isCurrentlyOntoFloat = false;
+	int            floatHeadCounter = 0;
+	uint8          floatCounter = 0;
+
+	while (*fileReader.reader != '\n')
+	{
+		bool wasPreviouslyOntoFloat = isCurrentlyOntoFloat;
+		isCurrentlyOntoFloat = (CharUtil::IsArithmeticSign(*fileReader.reader) || CharUtil::IsDigit(*fileReader.reader) || CharUtil::IsDot(*fileReader.reader));
+
+		// First float char
+		if (!wasPreviouslyOntoFloat && isCurrentlyOntoFloat)
+		{
+			floatString.head = fileReader.reader;
+			floatHeadCounter = 0;
+		}
+
+		// Last float char
+		if (wasPreviouslyOntoFloat && !isCurrentlyOntoFloat)
+		{
+			floatString.size = floatHeadCounter;
+			switch (floatCounter)
+			{
+				case 0: res.vector.x = Win32_Util_ConvertStringToFloat(floatString); break;
+				case 1: res.vector.y = Win32_Util_ConvertStringToFloat(floatString); break;
+			}
+			floatString = {};
+			floatCounter++;
+		}
+
+		floatHeadCounter++;
+		fileReader++;
+	}
+
+	// >NOTE: The last char of the line will have us exit the while loop so we finish setting the last float here instead
+	floatString.size = floatHeadCounter - 1;
+	res.vector.z = Win32_Util_ConvertStringToFloat(floatString);
+	res.reader = fileReader.reader;
+
+	return res;
+}
+
+
+
 void Win32_WGPU_GetInstance(WGPUInstance& OutInstance)
 {
 	// >NOTASCOI: is it of any use to have it here, knowing that our instance is going to be released a few lines below ? Hmmmm...
@@ -49,7 +263,7 @@ void Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDevice& OutDevice)
 	WGPULimits limits = Win32_WGPU_GetDefaultLimits(Adapter);
 	limits.maxVertexAttributes             = 2;
 	limits.maxVertexBuffers                = 1;
-	limits.maxBufferSize                   = 6 * 5 * sizeof(real32);
+	limits.maxBufferSize                   = 6 * 6 * sizeof(real32);
 	limits.maxVertexBufferArrayStride      = 5 * sizeof(real32);
 	limits.maxInterStageShaderVariables    = 3;
 	limits.maxBindGroups                   = 1;
@@ -62,14 +276,14 @@ void Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDevice& OutDevice)
 	WGPUDeviceDescriptor deviceDesc        = {};
 	deviceDesc.nextInChain                 = nullptr;
 	deviceDesc.label.data                  = "Device-san";
-	deviceDesc.label.length                = Win32_Util_StringSize(deviceDesc.label.data);
+	deviceDesc.label.length                = strlen(deviceDesc.label.data);
 	deviceDesc.requiredFeatureCount        = 0;
 	deviceDesc.requiredLimits              = &limits;
 	deviceDesc.deviceLostCallbackInfo      = Win32_WGPU_Callback_DeviceLost();
 	deviceDesc.uncapturedErrorCallbackInfo = Win32_WGPU_Callback_UncapturedError();
 	deviceDesc.defaultQueue.nextInChain    = nullptr;
 	deviceDesc.defaultQueue.label.data     = "Default Queue-san";
-	deviceDesc.defaultQueue.label.length   = Win32_Util_StringSize(deviceDesc.defaultQueue.label.data);
+	deviceDesc.defaultQueue.label.length   = strlen(deviceDesc.defaultQueue.label.data);
 
 	OutDevice = Win32_WGPU_Sync_RequestDevice(Adapter, &deviceDesc);
 }
@@ -233,7 +447,7 @@ void Win32_WGPU_GetSurface(WNDCLASS* WndClass, HWND WndHandle, WGPUInstance Inst
 	//
 	WGPUSurfaceDescriptor surfaceDescNative = {};
 	surfaceDescNative.label.data   = "Surface native";
-	surfaceDescNative.label.length = Win32_Util_StringSize(surfaceDescNative.label.data);
+	surfaceDescNative.label.length = strlen(surfaceDescNative.label.data);
 	surfaceDescNative.nextInChain  = &surfaceWindow.chain;
 
 	OutSurface = wgpuInstanceCreateSurface(Instance, &surfaceDescNative);
@@ -273,7 +487,7 @@ void Win32_WGPU_GetShaderModule(WGPUDevice Device, WGPUShaderModule& OutShaderMo
 
 	WGPUShaderModuleDescriptor shaderModuleDesc = {};
 	shaderModuleDesc.label.data   = "Shader Descriptor";
-	shaderModuleDesc.label.length = Win32_Util_StringSize(shaderModuleDesc.label.data);
+	shaderModuleDesc.label.length = strlen(shaderModuleDesc.label.data);
 
 	WGPUShaderSourceWGSL shaderCodeDesc = {};
 	shaderCodeDesc.chain.next  = nullptr;
@@ -319,20 +533,21 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 
 	WGPUVertexAttribute pointAttrib;
 	pointAttrib.shaderLocation = 0;
-	pointAttrib.format         = WGPUVertexFormat_Float32x2;
+	pointAttrib.format         = WGPUVertexFormat_Float32x3;
 	pointAttrib.offset         = 0;
 
 	WGPUVertexAttribute colorAttrib;
 	colorAttrib.shaderLocation = 1;
 	colorAttrib.format         = WGPUVertexFormat_Float32x3;
-	colorAttrib.offset         = 2 * sizeof(real32);
+	colorAttrib.offset         = 3 * sizeof(real32);
 
 	WGPUVertexAttribute vertexAttributes[2] = { pointAttrib, colorAttrib };
 
 	WGPUVertexBufferLayout vertexBufferLayout = {};
-	vertexBufferLayout.attributeCount         = 2; //(uint32)VertexAttributes.size();
-	vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
-	vertexBufferLayout.arrayStride            = 5 * sizeof(real32);
+	vertexBufferLayout.attributeCount         = 1; //(uint32)VertexAttributes.size();
+	//vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
+	vertexBufferLayout.attributes             = &pointAttrib; //VertexAttributes.data();
+	vertexBufferLayout.arrayStride            = 3 * sizeof(real32);
 	vertexBufferLayout.stepMode               = WGPUVertexStepMode_Vertex;
 
 
@@ -355,7 +570,7 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	WGPUFragmentState fragmentState = {};
 	fragmentState.module            = ShaderModule;
 	fragmentState.entryPoint.data   = "fs_main";
-	fragmentState.entryPoint.length = Win32_Util_StringSize(fragmentState.entryPoint.data);
+	fragmentState.entryPoint.length = strlen(fragmentState.entryPoint.data);
 	fragmentState.constantCount     = 0;
 	fragmentState.constants         = nullptr;
 	fragmentState.targetCount       = 1; // We have only one target because our render pass has only one output color attachment
@@ -371,7 +586,7 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	pipelineDesc.vertex.buffers                     = &vertexBufferLayout;
 	pipelineDesc.vertex.module                      = ShaderModule;
 	pipelineDesc.vertex.entryPoint.data             = "vs_main";
-	pipelineDesc.vertex.entryPoint.length           = Win32_Util_StringSize(pipelineDesc.vertex.entryPoint.data);
+	pipelineDesc.vertex.entryPoint.length           = strlen(pipelineDesc.vertex.entryPoint.data);
 	pipelineDesc.vertex.constantCount               = 0;
 	pipelineDesc.vertex.constants                   = nullptr;
 	pipelineDesc.vertex.nextInChain                 = nullptr;
@@ -406,7 +621,7 @@ WGPUTextureView Win32_WGPU_GetNextSurfaceTextureView(WGPUSurface Surface)
 	WGPUTextureViewDescriptor viewDesc = {};
 	viewDesc.nextInChain      = nullptr;
 	viewDesc.label.data       = "Surface texture view";
-	viewDesc.label.length     = Win32_Util_StringSize(viewDesc.label.data);
+	viewDesc.label.length     = strlen(viewDesc.label.data);
 	viewDesc.format           = wgpuTextureGetFormat(sTexture.texture);
 	viewDesc.dimension        = WGPUTextureViewDimension_2D;
 	viewDesc.baseMipLevel     = 0;
@@ -458,6 +673,7 @@ WGPUUncapturedErrorCallbackInfo Win32_WGPU_Callback_UncapturedError()
 
 		wsprintf(buffer, "ERROR | UncapturedErrorCallback | ERROR - Type: %s\n\tERROR - Message: %s", Win32_Util_Stringify_WGPUErrorType(Type), Message.data);
 		OutputDebugString(buffer);
+		int toto = 1;
 	};
 
 	return callbackInfo;
@@ -513,25 +729,42 @@ uint8 Win32_Util_ConvertCharToDigit(char Char)
 	return uint8(Char - '0');
 }
 
-float Win32_Util_ConvertStringToFloat(const char* String)
+int Win32_Util_ConvertStringToInt(const char* String, uint8 Size)
 {
-	bool negative   = *String == '-';
-	bool reachedDot = false;
-	int  integer    = 0;
-	int  divider    = 1;
-	int  counter    = negative ? 1 : 0;
+	bool negative = *String == '-';
+	int integer = 0;
+	uint8 counter = negative ? 1 : 0;
 
-	while (String[counter] != '\0')
+	for (counter; counter < Size; counter++)
+	{
+		integer = integer * 10 + Win32_Util_ConvertCharToDigit(String[counter]);
+	}
+
+	if (negative)
+	{
+		integer *= -1;
+	}
+
+	return integer;
+}
+
+real32 Win32_Util_ConvertStringToFloat(const char* String, uint8 Size)
+{
+	bool  negative   = *String == '-';
+	bool  reachedDot = false;
+	int   integer    = 0;
+	int   divider    = 1;
+	uint8 counter    = negative ? 1 : 0;
+
+	for (counter; counter < Size; counter++)
 	{
 		if (String[counter] == '.')
 		{
 			reachedDot = true;
-			counter++;
 			continue;
 		}
 
 		integer = integer * 10 + Win32_Util_ConvertCharToDigit(String[counter]);
-		counter++;
 
 		if (reachedDot)
 		{
@@ -548,28 +781,67 @@ float Win32_Util_ConvertStringToFloat(const char* String)
 	return res;
 }
 
-void Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory)
+int Win32_Util_ConvertStringToInt(const String& String)
 {
+	return Win32_Util_ConvertStringToInt(String.head, (uint8)String.size);
+}
+
+real32 Win32_Util_ConvertStringToFloat(const String& String)
+{
+	return Win32_Util_ConvertStringToFloat(String.head, (uint8)String.size);
+}
+
+
+MeshAsset Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory)
+{
+	MeshAsset asset = {};
 	ReadFileResult res = Win32_Util_ReadFile(Filename, Memory);
 
 	OutputDebugString("--------------------------\n");
 	OutputDebugString(static_cast<const char*>(res.content));
 	OutputDebugString("--------------------------\n");
 
-	Vector3 vec = {};
+	OBJParser::OBJFileResult fileRes = {};
 
-	for (size_t i = 0; i < res.contentSize; i++)
+	Vec3 vec = {};
+	Vec3I indexes = {};
+	const char* reader = (const char*)res.content;
+	FileReader fileReader = {};
+	fileReader.reader = (const char*)res.content;
+	char* floatPointer = nullptr;
+	size_t tPointer = 0;
+	
+	OBJParser::Vec3LineResult lineRes = {};
+	OBJParser::Vec3ILineResult lineResFaces = {};
+	size_t counter = 0;
+
+	while (fileReader.counter < res.contentSize)
 	{
-		//char c = res.content[i];
-		//if (c == 'v')
-		//{
-			//real32* pReal32 = static_cast<float*>(res.content[i]);
-			//real32 = *pReal32;
-		//}
-		//OutputDebugString(&c);
+		if (*fileReader.reader == 'v')
+		{
+			char nextChar = *(fileReader.reader + 1);
+			if (CharUtil::IsSpace(nextChar))
+			{
+				lineRes = OBJParser::parseVec3Line(fileReader);
+				asset.vertices.push(lineRes.vector.x);
+				asset.vertices.push(lineRes.vector.y);
+				asset.vertices.push(lineRes.vector.z);
+			}
+		}
+		else if (*fileReader.reader == 'f')
+		{
+			lineResFaces = OBJParser::parseFaceLine(fileReader);
+			asset.indexes.push(lineResFaces.vector.a);
+			asset.indexes.push(lineResFaces.vector.b);
+			asset.indexes.push(lineResFaces.vector.c);
+		}
+
+		fileReader++;
 	}
 
-	float* t = nullptr;
+	int a = 2;
+
+	return asset;
 }
 
 ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
@@ -602,13 +874,13 @@ ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
 	if (!ReadFile(fileHandle, res.content, fileSize32, &bytesRead, 0))
 	{
 		res.message = "ERROR | Win32_Util_ReadFile() | Could not read the file !\n";
-		Memory->ReadFileMemory.offset -= fileSize32; // Deallocate
+		Memory->readFileChunk.offset -= fileSize32; // Deallocate
 		return res;
 	}
 	if (bytesRead != fileSize32)
 	{
 		res.message = "ERROR | Win32_Util_ReadFile() | We did not read all of the bytes we expected !\n";
-		Memory->ReadFileMemory.offset -= fileSize32; // Deallocate
+		Memory->readFileChunk.offset -= fileSize32; // Deallocate
 		return res;
 	}
 
@@ -633,14 +905,14 @@ uint32 Win32_Util_SafeTruncate_uin64(uint64 Value)
 
 char* Win32_Util_AllocateReadFileMemory(GameMemory* Memory, size_t Size)
 {
-	if (Memory->ReadFileMemory.offset + Size >= Memory->ReadFileMemory.size)
+	if (Memory->readFileChunk.offset + Size >= Memory->readFileChunk.size)
 	{
 		OutputDebugString("ERROR | Win32_Util_AllocateReadFileMemory | You asked for too much !\n");
 		return nullptr;
 	}
 
-	char* ptr = Memory->ReadFileMemory.memory + Memory->ReadFileMemory.offset;
-	Memory->ReadFileMemory.offset += Size;
+	char* ptr = Memory->readFileChunk.memory + Memory->readFileChunk.offset;
+	Memory->readFileChunk.offset += Size;
 
 	return ptr;
 }
@@ -731,16 +1003,24 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		0
 	);
 
-	GameMemory gameMemory            = {};
-	gameMemory.size                  = MEMSIZE_GAME;
-	gameMemory.memory                = static_cast<char*>(VirtualAlloc(0, gameMemory.size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
-	gameMemory.ReadFileMemory.size   = MEMSIZE_READ_FILE;
-	gameMemory.ReadFileMemory.memory = gameMemory.memory;
+	GameMemory gameMemory           = {};
+	gameMemory.fattyChunk.size      = MEMSIZE_GAME;
+	gameMemory.fattyChunk.memory    = static_cast<char*>(VirtualAlloc(0, gameMemory.fattyChunk.size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
+	gameMemory.readFileChunk.size   = MEMSIZE_READ_FILE;
+	gameMemory.readFileChunk.memory = gameMemory.fattyChunk.memory;
+	gameMemory.assetsChunk.size     = MEMSIZE_ASSETS;
+	gameMemory.assetsChunk.memory   = gameMemory.readFileChunk.memory + gameMemory.readFileChunk.size;
 
 
-	Win32_Util_ConvertStringToFloat("-1.000000");
+	const char* testReal32 = "-1.04560";
+	Win32_Util_ConvertStringToFloat(testReal32, Win32_Util_StringSize(testReal32));
 
-	//Win32_Util_ReadFile_OBJ("../resource/Triangle.obj", &gameMemory);
+
+
+	AssetManager assetManager = {};
+
+	MeshAsset asset = Win32_Util_ReadFile_OBJ("../resource/TestOBJ.obj", &gameMemory);
+	
 
 
 	// WGPU initialization
@@ -763,71 +1043,96 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	wgpu.queue = wgpuDeviceGetQueue(wgpu.device);
 
 
-
-
 	// Buffer stuff
 	//
 	std::vector<real32> pointData =
 	{
 		// First triangle
-		-0.2f, -0.2f, 1.0f, 0.0f, 0.0f,
-		+0.2f, -0.2f, 0.0f, 1.0f, 0.0f,
-		+0.2f, +0.2f, 0.0f, 0.0f, 1.0f,
-		-0.2f, +0.2f, 1.0f, 1.0f, 0.0f,
+		//-0.2f, -0.2f, 1.0f, 0.0f, 0.0f,
+		//+0.2f, -0.2f, 0.0f, 1.0f, 0.0f,
+		//+0.2f, +0.2f, 0.0f, 0.0f, 1.0f,
+		//p1.x, p1.y, p1.z, 0.7f, 1.0f, 0.3f, 
+		//p2.x, p2.y, p2.z, 1.0f, 0.5f, 1.0f,  
+		//p3.x, p3.y, p3.z, 1.0f, 0.2f, 1.0f,  
+		//p4.x, p4.y, p4.z, 1.0f, 1.0f, 1.0f,  
+
+		//asset.vertices.at(0), asset.vertices.at(1) , asset.vertices.at(2) , 0.7f, 1.0f, 1.0f,
+		//asset.vertices.at(3), asset.vertices.at(4) , asset.vertices.at(5) , 1.0f, 0.5f, 1.0f,
+		//asset.vertices.at(6), asset.vertices.at(7) , asset.vertices.at(8) , 1.0f, 0.2f, 1.0f,
+		//asset.vertices.at(9), asset.vertices.at(10), asset.vertices.at(11), 1.0f, 1.0f, 1.0f,
+
+		asset.vertices.at(0), asset.vertices.at(1) , asset.vertices.at(2) , //0.7f, 1.0f, 1.0f,
+		asset.vertices.at(3), asset.vertices.at(4) , asset.vertices.at(5) , //1.0f, 0.5f, 1.0f,
+		asset.vertices.at(6), asset.vertices.at(7) , asset.vertices.at(8) , //1.0f, 0.2f, 1.0f,
+		asset.vertices.at(9), asset.vertices.at(10), asset.vertices.at(11), //1.0f, 1.0f, 1.0f,
+
+		//-0.2f, +0.2f, 1.0f, 1.0f, 0.0f,
 	};
 
-	std::vector<uint16> indexData =
-	{
-		0, 1, 2,
-		0, 2, 3,
-	};
-	indexData.resize((indexData.size() + 1) & ~1); // round up to the next multiple of 2
+	//std::vector<uint16> indexData =
+	//{
+	//	//0, 1, 2,
+	//	//1, 2, 3,
+	//	//i1.a, i1.b, i1.c, 
+	//	//i2.a, i2.b, i2.c,
+	//
+	//	asset.indexes.at(0), asset.indexes.at(1), asset.indexes.at(2),
+	//	asset.indexes.at(3), asset.indexes.at(4), asset.indexes.at(5),
+	//};
+	//indexData.resize((indexData.size() + 1) & ~1); // round up to the next multiple of 2
 
-	uint32 indexCount = (uint32)(indexData.size());
+	//uint32 indexCount = (uint32)(indexData.size());
 
 
 	ShaderUniform shaderUniform = {};
 	shaderUniform.time = 2.0f;
 	shaderUniform.color[0] = 0.0f;
 	shaderUniform.color[1] = 1.0f;
-	shaderUniform.color[2] = 0.4f;
+	shaderUniform.color[2] = 0.0f;
 	shaderUniform.color[3] = 1.0f;
+
 
 
 	WGPUBufferDescriptor bufferDesc = {};
 	bufferDesc.nextInChain = nullptr;
 	bufferDesc.label.data = "Point buffer";
-	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
+	bufferDesc.label.length = strlen(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-	bufferDesc.size = pointData.size() * sizeof(real32); // round up to the next multiple of 4
+	//bufferDesc.size = pointData.size() * sizeof(real32); // round up to the next multiple of 4
+	bufferDesc.size = asset.vertices.getElementsSize();
+	bufferDesc.size = (bufferDesc.size + 3) & ~3;
 	bufferDesc.mappedAtCreation = false;
 	WGPUBuffer pointBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
-	wgpuQueueWriteBuffer(wgpu.queue, pointBuffer, 0, pointData.data(), bufferDesc.size);
+	//wgpuQueueWriteBuffer(wgpu.queue, pointBuffer, 0, pointData.data(), bufferDesc.size);
+	wgpuQueueWriteBuffer(wgpu.queue, pointBuffer, 0, asset.vertices.dataPtr(), bufferDesc.size);
 
-	bufferDesc.size = indexData.size() * sizeof(uint16);
-	bufferDesc.size = (bufferDesc.size + 3) & ~3;
+	//bufferDesc.size = indexData.size() * sizeof(uint16);
+	bufferDesc.size = asset.indexes.getElementsSize();
+	bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
 	bufferDesc.label.data = "Index buffer";
-	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
+	bufferDesc.label.length = strlen(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
 	bufferDesc.mappedAtCreation = false;
 	WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
-	wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
+	//wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
+	wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, asset.indexes.dataPtr(), bufferDesc.size);
 
 	WGPULimits supportedLimits = Win32_WGPU_GetDefaultLimits(wgpu.adapter);
 	uint32 uniformBufferStride = Win32_WGPU_Util_CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	bufferDesc.size = uniformBufferStride + sizeof(ShaderUniform);
 	bufferDesc.label.data = "Uniform buffer";
-	bufferDesc.label.length = Win32_Util_StringSize(bufferDesc.label.data);
+	bufferDesc.label.length = strlen(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
 	bufferDesc.mappedAtCreation = false;
 	WGPUBuffer uniformBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
 	wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &shaderUniform, sizeof(ShaderUniform));
 	
-	shaderUniform.color[0] = 1.0f;
-	shaderUniform.color[1] = 0.2f;
-	shaderUniform.color[2] = 0.8f;
-	shaderUniform.time = -1.2f;
-	wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, uniformBufferStride, &shaderUniform, sizeof(ShaderUniform));
+	//shaderUniform.color[0] = 0.5f;
+	//shaderUniform.color[1] = 1.0f;
+	//shaderUniform.color[2] = 0.3f;
+	//shaderUniform.color[3] = 1.0f;
+	//shaderUniform.time = -1.2f;
+	//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, uniformBufferStride, &shaderUniform, sizeof(ShaderUniform));
 
 
 
@@ -859,7 +1164,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), &shaderUniform.time, sizeof(real32));
 
 		//shaderUniform.color[1] = (real32)sin(fakeTime);
-		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), &shaderUniform.color, sizeof(ShaderUniform::color));
+		wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), &shaderUniform.color, sizeof(ShaderUniform::color));
 		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, sizeof(real32) * 2, &shaderUniform.color[1], sizeof(real32));
 
 
@@ -870,7 +1175,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		WGPUCommandEncoderDescriptor encoderDesc = {};
 		encoderDesc.nextInChain = nullptr;
 		encoderDesc.label.data = "Sexy Command Encoder (SCE)";
-		encoderDesc.label.length = Win32_Util_StringSize(encoderDesc.label.data);
+		encoderDesc.label.length = strlen(encoderDesc.label.data);
 		WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(wgpu.device, &encoderDesc);
 
 
@@ -901,17 +1206,18 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, pointBuffer, 0, wgpuBufferGetSize(pointBuffer));
 		wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuBufferGetSize(indexBuffer));
 		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
-		wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
-		dynamicOffset = 1 * uniformBufferStride;
-		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
-		wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
+		//wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
+		wgpuRenderPassEncoderDrawIndexed(renderPass, (uint32)(asset.indexes.getElementsLength()), 1, 0, 0, 0);
+		//dynamicOffset = 1 * uniformBufferStride;
+		//wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
+		//wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
 		wgpuRenderPassEncoderEnd(renderPass);
 		wgpuRenderPassEncoderRelease(renderPass);
 
 		WGPUCommandBufferDescriptor commandBufferDesc = {};
 		commandBufferDesc.nextInChain = nullptr;
 		commandBufferDesc.label.data = "Command buffer";
-		commandBufferDesc.label.length = Win32_Util_StringSize(commandBufferDesc.label.data);
+		commandBufferDesc.label.length = strlen(commandBufferDesc.label.data);
 		WGPUCommandBuffer commandBuffer = wgpuCommandEncoderFinish(encoder, &commandBufferDesc);
 		wgpuCommandEncoderRelease(encoder);
 
