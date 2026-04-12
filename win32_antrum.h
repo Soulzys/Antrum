@@ -10,13 +10,10 @@
 	# TODO
 	~~~~~~
 
-	Start from the most basic data brick before climbing up.
-
-	1. For parsing, using arrays of real32 and uint16 directly, not Vec3 / Vec3I.
-	   It is always easier to go from real32 to Vec3 than the opposite.
-	   We need to feed an array of real32 to the GPU anyway.
-
-	2. Refactors the parsing function properly (esp the 'v') function
+	1. Create game layer
+	2. Move to 3D
+	3. Add inputs
+	4. Profit
 
 */
 
