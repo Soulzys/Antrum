@@ -14,257 +14,348 @@ bool gRunning = false;
 // ***** DEVICE METHODS
 //
 WGPUBindGroup 
-WGPU::Device::createBindGroup
-(WGPUBindGroupDescriptor const* descriptor) { return wgpuDeviceCreateBindGroup(device, descriptor); }
+wgpu::Device::createBindGroup
+(WGPUBindGroupDescriptor const* descriptor) { return wgpuDeviceCreateBindGroup(object, descriptor); }
+
+WGPU_XIN_EXTRA
+wgpu::BindGroup 
+wgpu::Device::createBindGroupHelper
+(WGPUBindGroupDescriptor const* descriptor) 
+{
+	wgpu::BindGroup bindGroup = {};
+	bindGroup.object = createBindGroup(descriptor);
+	return bindGroup;
+}
 
 WGPUBindGroupLayout
-WGPU::Device::createBindGroupLayout
-(WGPUBindGroupLayoutDescriptor const* descriptor) {	return wgpuDeviceCreateBindGroupLayout(device, descriptor); }
+wgpu::Device::createBindGroupLayout
+(WGPUBindGroupLayoutDescriptor const* descriptor) {	return wgpuDeviceCreateBindGroupLayout(object, descriptor); }
 
 WGPUBuffer 
-WGPU::Device::createBuffer
-(WGPUBufferDescriptor const* descriptor) { return wgpuDeviceCreateBuffer(device, descriptor); }
+wgpu::Device::createBuffer
+(WGPUBufferDescriptor const* descriptor) { return wgpuDeviceCreateBuffer(object, descriptor); }
+
+WGPU_XIN_EXTRA
+wgpu::Buffer
+wgpu::Device::createBufferHelper
+(WGPUBufferDescriptor const* descriptor) 
+{
+	wgpu::Buffer buffer = {};
+	buffer.object = createBuffer(descriptor);
+	return buffer;
+}
 
 WGPUCommandEncoder 
-WGPU::Device::createCommandEncoder
-(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor) { return wgpuDeviceCreateCommandEncoder(device, descriptor); }
+wgpu::Device::createCommandEncoder
+(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor) { return wgpuDeviceCreateCommandEncoder(object, descriptor); }
+
+WGPU_XIN_EXTRA
+wgpu::CommandEncoder 
+wgpu::Device::createCommandEncoderHelper
+(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor) 
+{
+	wgpu::CommandEncoder encoder = {};
+	encoder.object = createCommandEncoder(descriptor);
+	return encoder;
+}
 
 WGPUComputePipeline
-WGPU::Device::createComputePipeline
-(WGPUComputePipelineDescriptor const* descriptor) { return wgpuDeviceCreateComputePipeline(device, descriptor); }
+wgpu::Device::createComputePipeline
+(WGPUComputePipelineDescriptor const* descriptor) { return wgpuDeviceCreateComputePipeline(object, descriptor); }
 
 WGPUFuture
-WGPU::Device::createComputePipelineAsync
-(WGPUComputePipelineDescriptor const* descriptor, WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo) { return wgpuDeviceCreateComputePipelineAsync(device, descriptor, callbackInfo); }
+wgpu::Device::createComputePipelineAsync
+(WGPUComputePipelineDescriptor const* descriptor, WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo) { return wgpuDeviceCreateComputePipelineAsync(object, descriptor, callbackInfo); }
 
 WGPUBuffer
-WGPU::Device::createErrorBuffer
-(WGPUBufferDescriptor const* descriptor) { return wgpuDeviceCreateErrorBuffer(device, descriptor); }
+wgpu::Device::createErrorBuffer
+(WGPUBufferDescriptor const* descriptor) { return wgpuDeviceCreateErrorBuffer(object, descriptor); }
 
 WGPUExternalTexture
-WGPU::Device::createErrorExternalTexture
-() { return createErrorExternalTexture(); }
+wgpu::Device::createErrorExternalTexture
+() { return wgpuDeviceCreateErrorExternalTexture(object); }
 
 WGPUShaderModule
-WGPU::Device::createErrorShaderModule
-(WGPUShaderModuleDescriptor const* descriptor, WGPUStringView errorMessage) { return wgpuDeviceCreateErrorShaderModule(device, descriptor, errorMessage); }
+wgpu::Device::createErrorShaderModule
+(WGPUShaderModuleDescriptor const* descriptor, WGPUStringView errorMessage) { return wgpuDeviceCreateErrorShaderModule(object, descriptor, errorMessage); }
 
 WGPUTexture
-WGPU::Device::createErrorTexture
-(WGPUTextureDescriptor const* descriptor) { return wgpuDeviceCreateErrorTexture(device, descriptor); }
+wgpu::Device::createErrorTexture
+(WGPUTextureDescriptor const* descriptor) { return wgpuDeviceCreateErrorTexture(object, descriptor); }
 
 WGPUExternalTexture
-WGPU::Device::createExternalTexture
-(WGPUExternalTextureDescriptor const* externalTextureDescriptor) { return wgpuDeviceCreateExternalTexture(device, externalTextureDescriptor); }
+wgpu::Device::createExternalTexture
+(WGPUExternalTextureDescriptor const* externalTextureDescriptor) { return wgpuDeviceCreateExternalTexture(object, externalTextureDescriptor); }
 
 WGPUPipelineLayout
-WGPU::Device::createPipelineLayout
-(WGPUPipelineLayoutDescriptor const* descriptor) { return wgpuDeviceCreatePipelineLayout(device, descriptor); }
+wgpu::Device::createPipelineLayout
+(WGPUPipelineLayoutDescriptor const* descriptor) { return wgpuDeviceCreatePipelineLayout(object, descriptor); }
 
 WGPUQuerySet
-WGPU::Device::createQuerySet
-(WGPUQuerySetDescriptor const* descriptor) { return wgpuDeviceCreateQuerySet(device, descriptor); }
+wgpu::Device::createQuerySet
+(WGPUQuerySetDescriptor const* descriptor) { return wgpuDeviceCreateQuerySet(object, descriptor); }
 
 WGPURenderBundleEncoder
-WGPU::Device::createRenderBundleEncoder
-(WGPURenderBundleEncoderDescriptor const* descriptor) { return wgpuDeviceCreateRenderBundleEncoder(device, descriptor); }
+wgpu::Device::createRenderBundleEncoder
+(WGPURenderBundleEncoderDescriptor const* descriptor) { return wgpuDeviceCreateRenderBundleEncoder(object, descriptor); }
 
 WGPURenderPipeline
-WGPU::Device::createRenderPipeline
-(WGPURenderPipelineDescriptor const* descriptor) { return wgpuDeviceCreateRenderPipeline(device, descriptor); }
+wgpu::Device::createRenderPipeline
+(WGPURenderPipelineDescriptor const* descriptor) { return wgpuDeviceCreateRenderPipeline(object, descriptor); }
 
 WGPUFuture
-WGPU::Device::createRenderPipelineAsync
-(WGPURenderPipelineDescriptor const* descriptor, WGPUCreateRenderPipelineAsyncCallbackInfo callbackInfo) { return wgpuDeviceCreateRenderPipelineAsync(device, descriptor, callbackInfo); }
+wgpu::Device::createRenderPipelineAsync
+(WGPURenderPipelineDescriptor const* descriptor, WGPUCreateRenderPipelineAsyncCallbackInfo callbackInfo) { return wgpuDeviceCreateRenderPipelineAsync(object, descriptor, callbackInfo); }
 
 WGPUResourceTable
-WGPU::Device::createResourceTable
-(WGPUResourceTableDescriptor const* descriptor) { return wgpuDeviceCreateResourceTable(device, descriptor); }
+wgpu::Device::createResourceTable
+(WGPUResourceTableDescriptor const* descriptor) { return wgpuDeviceCreateResourceTable(object, descriptor); }
 
 WGPUSampler
-WGPU::Device::createSampler
-(WGPU_NULLABLE WGPUSamplerDescriptor const* descriptor) { return wgpuDeviceCreateSampler(device, descriptor); }
+wgpu::Device::createSampler
+(WGPU_NULLABLE WGPUSamplerDescriptor const* descriptor) { return wgpuDeviceCreateSampler(object, descriptor); }
 
 WGPUShaderModule
-WGPU::Device::createShaderModule
-(WGPUShaderModuleDescriptor const* descriptor) { return wgpuDeviceCreateShaderModule(device, descriptor); }
+wgpu::Device::createShaderModule
+(WGPUShaderModuleDescriptor const* descriptor) { return wgpuDeviceCreateShaderModule(object, descriptor); }
 
 WGPUTexture
-WGPU::Device::createTexture
-(WGPUTextureDescriptor const* descriptor) { return wgpuDeviceCreateTexture(device, descriptor); }
+wgpu::Device::createTexture
+(WGPUTextureDescriptor const* descriptor) { return wgpuDeviceCreateTexture(object, descriptor); }
 
 void 
-WGPU::Device::destroy
-() { wgpuDeviceDestroy(device); }
+wgpu::Device::destroy
+() { wgpuDeviceDestroy(object); }
 
 void
-WGPU::Device::forceLoss
-(WGPUDeviceLostReason type, WGPUStringView message) { wgpuDeviceForceLoss(device, type, message); }
+wgpu::Device::forceLoss
+(WGPUDeviceLostReason type, WGPUStringView message) { wgpuDeviceForceLoss(object, type, message); }
 
 WGPUAdapter
-WGPU::Device::getAdapter
-() { return wgpuDeviceGetAdapter(device); }
+wgpu::Device::getAdapter
+() { return wgpuDeviceGetAdapter(object); }
 
 WGPUStatus
-WGPU::Device::getAdapterInfo
-(WGPUAdapterInfo* adapterInfo) { return wgpuDeviceGetAdapterInfo(device, adapterInfo); }
+wgpu::Device::getAdapterInfo
+(WGPUAdapterInfo* adapterInfo) { return wgpuDeviceGetAdapterInfo(object, adapterInfo); }
 
 WGPUStatus
-WGPU::Device::getAHardwareBufferProperties
-(void* handle, WGPUAHardwareBufferProperties* properties) { return wgpuDeviceGetAHardwareBufferProperties(device, handle, properties); }
+wgpu::Device::getAHardwareBufferProperties
+(void* handle, WGPUAHardwareBufferProperties* properties) { return wgpuDeviceGetAHardwareBufferProperties(object, handle, properties); }
 
 void 
-WGPU::Device::getFeatures
-(WGPUSupportedFeatures* features) { return wgpuDeviceGetFeatures(device, features); }
+wgpu::Device::getFeatures
+(WGPUSupportedFeatures* features) { return wgpuDeviceGetFeatures(object, features); }
 
 WGPUStatus
-WGPU::Device::getLimits
-(WGPULimits* limits) { return wgpuDeviceGetLimits(device, limits); }
+wgpu::Device::getLimits
+(WGPULimits* limits) { return wgpuDeviceGetLimits(object, limits); }
 
 WGPUFuture
-WGPU::Device::getLostFuture
-() { return wgpuDeviceGetLostFuture(device); }
+wgpu::Device::getLostFuture
+() { return wgpuDeviceGetLostFuture(object); }
 
 WGPUQueue 
-WGPU::Device::getQueue
-() { return wgpuDeviceGetQueue(device); }
+wgpu::Device::getQueue
+() { return wgpuDeviceGetQueue(object); }
+
+WGPU_XIN_EXTRA
+wgpu::Queue
+wgpu::Device::getQueueHelper() 
+{
+	wgpu::Queue queue = {};
+	queue.object = getQueue();
+	return queue;
+}
 
 WGPUBool
-WGPU::Device::hasFeature
-(WGPUFeatureName feature) { return wgpuDeviceHasFeature(device, feature); }
+wgpu::Device::hasFeature
+(WGPUFeatureName feature) { return wgpuDeviceHasFeature(object, feature); }
 
 WGPUSharedBufferMemory
-WGPU::Device::importShaderBufferMemory
-(WGPUSharedBufferMemoryDescriptor const* descriptor) { return wgpuDeviceImportSharedBufferMemory(device, descriptor); }
+wgpu::Device::importShaderBufferMemory
+(WGPUSharedBufferMemoryDescriptor const* descriptor) { return wgpuDeviceImportSharedBufferMemory(object, descriptor); }
 
 WGPUSharedFence
-WGPU::Device::importSharedFence
-(WGPUSharedFenceDescriptor const* descriptor) { return wgpuDeviceImportSharedFence(device, descriptor); }
+wgpu::Device::importSharedFence
+(WGPUSharedFenceDescriptor const* descriptor) { return wgpuDeviceImportSharedFence(object, descriptor); }
 
 WGPUSharedTextureMemory
-WGPU::Device::importSharedTextureMemory
-(WGPUSharedTextureMemoryDescriptor const* descriptor) { return wgpuDeviceImportSharedTextureMemory(device, descriptor); }
+wgpu::Device::importSharedTextureMemory
+(WGPUSharedTextureMemoryDescriptor const* descriptor) { return wgpuDeviceImportSharedTextureMemory(object, descriptor); }
 
 void
-WGPU::Device::injectError
-(WGPUErrorType type, WGPUStringView message) { wgpuDeviceInjectError(device, type, message); }
+wgpu::Device::injectError
+(WGPUErrorType type, WGPUStringView message) { wgpuDeviceInjectError(object, type, message); }
 
 WGPUFuture
-WGPU::Device::popErrorScope
-(WGPUPopErrorScopeCallbackInfo callbackInfo) { return wgpuDevicePopErrorScope(device, callbackInfo); }
+wgpu::Device::popErrorScope
+(WGPUPopErrorScopeCallbackInfo callbackInfo) { return wgpuDevicePopErrorScope(object, callbackInfo); }
 
 void 
-WGPU::Device::pushErrorScope
-(WGPUErrorFilter filter) { wgpuDevicePushErrorScope(device, filter); }
+wgpu::Device::pushErrorScope
+(WGPUErrorFilter filter) { wgpuDevicePushErrorScope(object, filter); }
 
 void
-WGPU::Device::setLabel
-(WGPUStringView label) { wgpuDeviceSetLabel(device, label); }
+wgpu::Device::setLabel
+(WGPUStringView label) { wgpuDeviceSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::Device::setLabel
+(const char* label) { wgpuDeviceSetLabel(object, { label, strlen(label) }); }
 
 void
-WGPU::Device::setLabel
-(const char* label) { wgpuDeviceSetLabel(device, { label, strlen(label) }); }
+wgpu::Device::setLoggingCallback
+(WGPULoggingCallbackInfo callbackInfo) { wgpuDeviceSetLoggingCallback(object, callbackInfo); }
 
 void
-WGPU::Device::setLoggingCallback
-(WGPULoggingCallbackInfo callbackInfo) { wgpuDeviceSetLoggingCallback(device, callbackInfo); }
+wgpu::Device::tick
+() { wgpuDeviceTick(object); }
 
 void
-WGPU::Device::tick
-() { wgpuDeviceTick(device); }
-
-void
-WGPU::Device::validateTextureDescriptor
-(WGPUTextureDescriptor const* descriptor) { wgpuDeviceValidateTextureDescriptor(device, descriptor); }
+wgpu::Device::validateTextureDescriptor
+(WGPUTextureDescriptor const* descriptor) { wgpuDeviceValidateTextureDescriptor(object, descriptor); }
 
 void 
-WGPU::Device::addRef
-() { wgpuDeviceAddRef(device); }
+wgpu::Device::addRef
+() { wgpuDeviceAddRef(object); }
 
 void
-WGPU::Device::release
-() { wgpuDeviceRelease(device); }
+wgpu::Device::release
+() { wgpuDeviceRelease(object); }
 
 
 // ***** ADAPTER METHODS
 //
 WGPUDevice
-WGPU::Adapter::createDevice
-(WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor) { return wgpuAdapterCreateDevice(adapter, descriptor); }
+wgpu::Adapter::createDevice
+(WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor) { return wgpuAdapterCreateDevice(object, descriptor); }
 
 void
-WGPU::Adapter::getFeatures
-(WGPUSupportedFeatures* features) { return wgpuAdapterGetFeatures(adapter, features); }
+wgpu::Adapter::getFeatures
+(WGPUSupportedFeatures* features) { return wgpuAdapterGetFeatures(object, features); }
 
 WGPUStatus
-WGPU::Adapter::getFormatCapabilities
-(WGPUTextureFormat format, WGPUDawnFormatCapabilities* capabilities) { return wgpuAdapterGetFormatCapabilities(adapter, format, capabilities); }
+wgpu::Adapter::getFormatCapabilities
+(WGPUTextureFormat format, WGPUDawnFormatCapabilities* capabilities) { return wgpuAdapterGetFormatCapabilities(object, format, capabilities); }
 
 WGPUStatus
-WGPU::Adapter::getInfo
-(WGPUAdapterInfo* info) { return wgpuAdapterGetInfo(adapter, info); }
+wgpu::Adapter::getInfo
+(WGPUAdapterInfo* info) { return wgpuAdapterGetInfo(object, info); }
 
 WGPUInstance
-WGPU::Adapter::getInstance
-() { return wgpuAdapterGetInstance(adapter); }
+wgpu::Adapter::getInstance
+() { return wgpuAdapterGetInstance(object); }
 
 WGPUStatus
-WGPU::Adapter::getLimits
-(WGPULimits* limits) { return wgpuAdapterGetLimits(adapter, limits); }
+wgpu::Adapter::getLimits
+(WGPULimits* limits) { return wgpuAdapterGetLimits(object, limits); }
+
+WGPU_XIN_EXTRA
+WGPULimits
+wgpu::Adapter::getDefaultLimits()
+{
+	WGPULimits adapterLimits = {};
+	getLimits(&adapterLimits);
+
+	WGPULimits limits = {};
+	limits.nextInChain = nullptr;
+
+	// Set everything to default
+	limits.maxTextureDimension1D                     = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureDimension2D                     = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureDimension3D                     = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureArrayLayers                     = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxBindGroups                             = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxBindGroupsPlusVertexBuffers            = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxBindingsPerBindGroup                   = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxDynamicUniformBuffersPerPipelineLayout = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxDynamicStorageBuffersPerPipelineLayout = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxSampledTexturesPerShaderStage          = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxSamplersPerShaderStage                 = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxStorageBuffersPerShaderStage           = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxStorageTexturesPerShaderStage          = WGPU_LIMIT_U32_UNDEFINED;
+	limits.minUniformBufferOffsetAlignment           = WGPU_LIMIT_U32_UNDEFINED;
+	limits.minStorageBufferOffsetAlignment           = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxVertexBuffers                          = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxBufferSize                             = WGPU_LIMIT_U64_UNDEFINED;
+	limits.maxVertexAttributes                       = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxVertexBufferArrayStride                = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxUniformBuffersPerShaderStage           = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxStorageBufferBindingSize               = WGPU_LIMIT_U64_UNDEFINED;
+	limits.maxColorAttachments                       = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxColorAttachmentBytesPerSample          = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxComputeWorkgroupStorageSize            = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxComputeInvocationsPerWorkgroup         = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxComputeWorkgroupSizeX                  = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxComputeWorkgroupSizeY                  = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxComputeWorkgroupSizeZ                  = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxComputeWorkgroupsPerDimension          = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxImmediateSize                          = WGPU_LIMIT_U32_UNDEFINED;
+
+	// These two limits are special
+	limits.minUniformBufferOffsetAlignment           = adapterLimits.minUniformBufferOffsetAlignment;
+	limits.minStorageBufferOffsetAlignment           = adapterLimits.minStorageBufferOffsetAlignment;
+
+	return limits;
+}
 
 WGPUBool
-WGPU::Adapter::hasFeature
-(WGPUFeatureName feature) { return wgpuAdapterHasFeature(adapter, feature); }
+wgpu::Adapter::hasFeature
+(WGPUFeatureName feature) { return wgpuAdapterHasFeature(object, feature); }
 
 WGPUFuture
-WGPU::Adapter::requestDevice
-(WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor, WGPURequestDeviceCallbackInfo callbackInfo) { return wgpuAdapterRequestDevice(adapter, descriptor, callbackInfo); }
+wgpu::Adapter::requestDevice
+(WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor, WGPURequestDeviceCallbackInfo callbackInfo) { return wgpuAdapterRequestDevice(object, descriptor, callbackInfo); }
 
 void 
-WGPU::Adapter::addRef
-() { return wgpuAdapterAddRef(adapter); }
+wgpu::Adapter::addRef
+() { return wgpuAdapterAddRef(object); }
 
 void
-WGPU::Adapter::release
-(){	wgpuAdapterRelease(adapter); }
+wgpu::Adapter::release
+(){	wgpuAdapterRelease(object); }
 
 
 // ***** INSTANCE METHODS
 //
 WGPUSurface
-WGPU::Instance::createSurface
-(WGPUSurfaceDescriptor const* descriptor) { return wgpuInstanceCreateSurface(instance, descriptor); }
+wgpu::Instance::createSurface
+(WGPUSurfaceDescriptor const* descriptor) { return wgpuInstanceCreateSurface(object, descriptor); }
 
 void 
-WGPU::Instance::getWGSLLanguageFeatures
-(WGPUSupportedWGSLLanguageFeatures* features) { return wgpuInstanceGetWGSLLanguageFeatures(instance, features); }
+wgpu::Instance::getWGSLLanguageFeatures
+(WGPUSupportedWGSLLanguageFeatures* features) { return wgpuInstanceGetWGSLLanguageFeatures(object, features); }
 
 WGPUBool 
-WGPU::Instance::hasWGSLLanguageFeature
-(WGPUWGSLLanguageFeatureName feature) { return wgpuInstanceHasWGSLLanguageFeature(instance, feature); }
+wgpu::Instance::hasWGSLLanguageFeature
+(WGPUWGSLLanguageFeatureName feature) { return wgpuInstanceHasWGSLLanguageFeature(object, feature); }
 
 void 
-WGPU::Instance::processEvents
-() { return wgpuInstanceProcessEvents(instance); }
+wgpu::Instance::processEvents
+() { return wgpuInstanceProcessEvents(object); }
 
 WGPUFuture
-WGPU::Instance::requestAdapter
-(WGPU_NULLABLE WGPURequestAdapterOptions const* options, WGPURequestAdapterCallbackInfo callbackInfo) { return wgpuInstanceRequestAdapter(instance, options, callbackInfo); }
+wgpu::Instance::requestAdapter
+(WGPU_NULLABLE WGPURequestAdapterOptions const* options, WGPURequestAdapterCallbackInfo callbackInfo) { return wgpuInstanceRequestAdapter(object, options, callbackInfo); }
 
 WGPUWaitStatus
-WGPU::Instance::waitAny
-(size_t futureCount, WGPU_NULLABLE WGPUFutureWaitInfo* futures, uint64_t timeoutNS) { return wgpuInstanceWaitAny(instance, futureCount, futures, timeoutNS); }
+wgpu::Instance::waitAny
+(size_t futureCount, WGPU_NULLABLE WGPUFutureWaitInfo* futures, uint64_t timeoutNS) { return wgpuInstanceWaitAny(object, futureCount, futures, timeoutNS); }
 
 void 
-WGPU::Instance::addRef
-() { return wgpuInstanceAddRef(instance); }
+wgpu::Instance::addRef
+() { return wgpuInstanceAddRef(object); }
 
 void 
-WGPU::Instance::release
-() { return wgpuInstanceRelease(instance); }
+wgpu::Instance::release
+() { return wgpuInstanceRelease(object); }
+
+
 
 WGPUInstance
-WGPU::createInstance
+wgpu::createInstance
 (WGPU_NULLABLE WGPUInstanceDescriptor const* descriptor) { return wgpuCreateInstance(descriptor); }
 
 
@@ -273,478 +364,687 @@ WGPU::createInstance
 // ***** SURFACE METHODS
 //
 void 
-WGPU::Surface::configure
-(WGPUSurfaceConfiguration const* config) { wgpuSurfaceConfigure(surface, config); }
+wgpu::Surface::configure
+(WGPUSurfaceConfiguration const* config) { wgpuSurfaceConfigure(object, config); }
 
 WGPUStatus 
-WGPU::Surface::getCapabilities
-(WGPUAdapter adapter, WGPUSurfaceCapabilities* capabilities) { return wgpuSurfaceGetCapabilities(surface, adapter, capabilities); }
+wgpu::Surface::getCapabilities
+(WGPUAdapter adapter, WGPUSurfaceCapabilities* capabilities) { return wgpuSurfaceGetCapabilities(object, adapter, capabilities); }
+
+WGPU_XIN_EXTRA
+WGPUStatus 
+wgpu::Surface::getCapabilities
+(wgpu::Adapter adapter, WGPUSurfaceCapabilities* capabilities) { return wgpuSurfaceGetCapabilities(object, adapter.object, capabilities); }
 
 void 
-WGPU::Surface::getCurrentTexture
-(WGPUSurfaceTexture* surfaceTexture) { wgpuSurfaceGetCurrentTexture(surface, surfaceTexture); }
+wgpu::Surface::getCurrentTexture
+(WGPUSurfaceTexture* surfaceTexture) { wgpuSurfaceGetCurrentTexture(object, surfaceTexture); }
+
+wgpu::TextureView
+wgpu::Surface::getCurrentTextureView()
+{
+	WGPUSurfaceTexture surfaceTexture = {};
+	getCurrentTexture(&surfaceTexture);
+
+	if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal && surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal)
+	{
+		OutputDebugString("ERROR | wgpu::Surface::getCurrentTextureView() | Failed to retrieve a valid current texture :(\n");
+	}
+
+	WGPUTextureViewDescriptor viewDesc = {};
+	viewDesc.nextInChain      = nullptr;
+	viewDesc.label.data       = "Surface texture view";
+	viewDesc.label.length     = strlen(viewDesc.label.data);
+	viewDesc.format           = wgpuTextureGetFormat(surfaceTexture.texture);
+	viewDesc.dimension        = WGPUTextureViewDimension_2D;
+	viewDesc.baseMipLevel     = 0;
+	viewDesc.mipLevelCount    = 1;
+	viewDesc.baseArrayLayer   = 0;
+	viewDesc.arrayLayerCount  = 1;
+	viewDesc.aspect           = WGPUTextureAspect_All;
+
+
+	wgpu::TextureView textureView = {};
+	textureView.object = wgpuTextureCreateView(surfaceTexture.texture, &viewDesc);
+	wgpuTextureRelease(surfaceTexture.texture);
+
+	return textureView;
+}
+
+WGPU_XIN_EXTRA
+WGPUTextureFormat
+wgpu::Surface::getFormat (WGPUAdapter adapter, uint32 index)
+{
+	WGPUSurfaceCapabilities capabilities = {};
+	getCapabilities(adapter, &capabilities);
+	return capabilities.formats[index];
+}
+
+WGPU_XIN_EXTRA
+WGPUTextureFormat
+wgpu::Surface::getFormat (wgpu::Adapter adapter, uint32 index)
+{
+	WGPUSurfaceCapabilities capabilities = {};
+	getCapabilities(adapter.object, &capabilities);
+	return capabilities.formats[index];
+}
 
 WGPUStatus 
-WGPU::Surface::present
-() { return wgpuSurfacePresent(surface); }
+wgpu::Surface::present
+() { return wgpuSurfacePresent(object); }
 
 void 
-WGPU::Surface::setLabel
-(WGPUStringView label) { wgpuSurfaceSetLabel(surface, label); }
+wgpu::Surface::setLabel
+(WGPUStringView label) { wgpuSurfaceSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::Surface::setLabel
+(const char* label) { wgpuSurfaceSetLabel(object, { label, strlen(label) }); }
 
 void
-WGPU::Surface::setLabel
-(const char* label) { wgpuSurfaceSetLabel(surface, { label, strlen(label) }); }
+wgpu::Surface::unconfigure
+() { wgpuSurfaceUnconfigure(object); }
 
 void
-WGPU::Surface::unconfigure
-() { wgpuSurfaceUnconfigure(surface); }
-
-void
-WGPU::Surface::addRef
-() { wgpuSurfaceAddRef(surface); }
+wgpu::Surface::addRef
+() { wgpuSurfaceAddRef(object); }
 
 void 
-WGPU::Surface::release
-() { wgpuSurfaceRelease(surface); }
+wgpu::Surface::release
+() { wgpuSurfaceRelease(object); }
 
 
 // ***** TEXTURE METHODS
 //
 WGPUTextureView
-WGPU::Texture::createErrorView
-(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor) { return wgpuTextureCreateErrorView(texture, descriptor); }
+wgpu::Texture::createErrorView
+(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor) { return wgpuTextureCreateErrorView(object, descriptor); }
 
 WGPUTextureView 
-WGPU::Texture::createView
-(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor) { return wgpuTextureCreateView(texture, descriptor); }
+wgpu::Texture::createView
+(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor) { return wgpuTextureCreateView(object, descriptor); }
 
 void
-WGPU::Texture::destroy
-() { wgpuTextureDestroy(texture); }
+wgpu::Texture::destroy
+() { wgpuTextureDestroy(object); }
 
 uint32
-WGPU::Texture::getDepthOrArrayLayers
-() { return wgpuTextureGetDepthOrArrayLayers(texture); }
+wgpu::Texture::getDepthOrArrayLayers
+() { return wgpuTextureGetDepthOrArrayLayers(object); }
 
 WGPUTextureDimension
-WGPU::Texture::getDimension
-() { return wgpuTextureGetDimension(texture); }
+wgpu::Texture::getDimension
+() { return wgpuTextureGetDimension(object); }
 
 WGPUTextureFormat 
-WGPU::Texture::getFormat
-() { return wgpuTextureGetFormat(texture); }
+wgpu::Texture::getFormat
+() { return wgpuTextureGetFormat(object); }
 
 uint32
-WGPU::Texture::getHeight
-() { return wgpuTextureGetHeight(texture); }
+wgpu::Texture::getHeight
+() { return wgpuTextureGetHeight(object); }
 
 uint32
-WGPU::Texture::getMipLevelCount
-() { return wgpuTextureGetMipLevelCount(texture); }
+wgpu::Texture::getMipLevelCount
+() { return wgpuTextureGetMipLevelCount(object); }
 
 uint32
-WGPU::Texture::getSampleCount
-() { return wgpuTextureGetSampleCount(texture); }
+wgpu::Texture::getSampleCount
+() { return wgpuTextureGetSampleCount(object); }
 
 WGPUTextureViewDimension
-WGPU::Texture::getTextureBindingViewDimension
-() { return wgpuTextureGetTextureBindingViewDimension(texture); }
+wgpu::Texture::getTextureBindingViewDimension
+() { return wgpuTextureGetTextureBindingViewDimension(object); }
 
 WGPUTextureUsage
-WGPU::Texture::getUsage
-() { return wgpuTextureGetUsage(texture); }
+wgpu::Texture::getUsage
+() { return wgpuTextureGetUsage(object); }
 
 uint32
-WGPU::Texture::getWidth
-() { return wgpuTextureGetWidth(texture); }
+wgpu::Texture::getWidth
+() { return wgpuTextureGetWidth(object); }
 
 void
-WGPU::Texture::pin
-(WGPUTextureUsage usage) { wgpuTexturePin(texture, usage); }
+wgpu::Texture::pin
+(WGPUTextureUsage usage) { wgpuTexturePin(object, usage); }
 
 void
-WGPU::Texture::setLabel
-(WGPUStringView label) { wgpuTextureSetLabel(texture, label); }
+wgpu::Texture::setLabel
+(WGPUStringView label) { wgpuTextureSetLabel(object, label); }
 
+WGPU_XIN_EXTRA
 void
-WGPU::Texture::setLabel
-(const char* label) { wgpuTextureSetLabel(texture, { label, strlen(label) }); }
+wgpu::Texture::setLabel
+(const char* label) { wgpuTextureSetLabel(object, { label, strlen(label) }); }
 
 void 
-WGPU::Texture::setOwnershipForMemoryDump
-(uint64 ownerGuid) { wgpuTextureSetOwnershipForMemoryDump(texture, ownerGuid); }
+wgpu::Texture::setOwnershipForMemoryDump
+(uint64 ownerGuid) { wgpuTextureSetOwnershipForMemoryDump(object, ownerGuid); }
 
 void
-WGPU::Texture::unpin
-() { wgpuTextureUnpin(texture); }
+wgpu::Texture::unpin
+() { wgpuTextureUnpin(object); }
 
 void
-WGPU::Texture::addRef
-() { wgpuTextureAddRef(texture); }
+wgpu::Texture::addRef
+() { wgpuTextureAddRef(object); }
 
 void 
-WGPU::Texture::release
-() { wgpuTextureRelease(texture); }
+wgpu::Texture::release
+() { wgpuTextureRelease(object); }
 
 
 // ***** SHADER MODULE METHODS
 //
 WGPUFuture
-WGPU::ShaderModule::getCompilationInfo
-(WGPUCompilationInfoCallbackInfo callbackInfo) { return wgpuShaderModuleGetCompilationInfo(shaderModule, callbackInfo); }
+wgpu::ShaderModule::getCompilationInfo
+(WGPUCompilationInfoCallbackInfo callbackInfo) { return wgpuShaderModuleGetCompilationInfo(object, callbackInfo); }
 
 void 
-WGPU::ShaderModule::setLabel
-(WGPUStringView label) { wgpuShaderModuleSetLabel(shaderModule, label); }
+wgpu::ShaderModule::setLabel
+(WGPUStringView label) { wgpuShaderModuleSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void 
+wgpu::ShaderModule::setLabel
+(const char* label) { wgpuShaderModuleSetLabel(object, { label, strlen(label) }); }
 
 void 
-WGPU::ShaderModule::setLabel
-(const char* label) { wgpuShaderModuleSetLabel(shaderModule, { label, strlen(label) }); }
+wgpu::ShaderModule::addRef
+() { wgpuShaderModuleAddRef(object); }
 
 void 
-WGPU::ShaderModule::addRef
-() { wgpuShaderModuleAddRef(shaderModule); }
-
-void 
-WGPU::ShaderModule::release
-() { wgpuShaderModuleRelease(shaderModule); }
+wgpu::ShaderModule::release
+() { wgpuShaderModuleRelease(object); }
 
 
 // ***** QUEUE METHODS
 //
 void
-WGPU::Queue::copyExternalTextureForBrowser
+wgpu::Queue::copyExternalTextureForBrowser
 (WGPUImageCopyExternalTexture const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize, WGPUCopyTextureForBrowserOptions const* options)
-{ wgpuQueueCopyExternalTextureForBrowser(queue, source, destination, copySize, options); }
+{ wgpuQueueCopyExternalTextureForBrowser(object, source, destination, copySize, options); }
 
 void 
-WGPU::Queue::copyTextureForBrowser
+wgpu::Queue::copyTextureForBrowser
 (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize, WGPUCopyTextureForBrowserOptions const* options)
-{ wgpuQueueCopyTextureForBrowser(queue, source, destination, copySize, options); }
+{ wgpuQueueCopyTextureForBrowser(object, source, destination, copySize, options); }
 
 WGPUFuture
-WGPU::Queue::onSubmittedWorkDone
-(WGPUQueueWorkDoneCallbackInfo callbackInfo) { return wgpuQueueOnSubmittedWorkDone(queue, callbackInfo); }
+wgpu::Queue::onSubmittedWorkDone
+(WGPUQueueWorkDoneCallbackInfo callbackInfo) { return wgpuQueueOnSubmittedWorkDone(object, callbackInfo); }
 
 void
-WGPU::Queue::setLabel
-(WGPUStringView label) { wgpuQueueSetLabel(queue, label); }
+wgpu::Queue::setLabel
+(WGPUStringView label) { wgpuQueueSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void 
+wgpu::Queue::setLabel
+(const char* label) { wgpuQueueSetLabel(object, { label, strlen(label) }); }
 
 void 
-WGPU::Queue::setLabel
-(const char* label) { wgpuQueueSetLabel(queue, { label, strlen(label) }); }
+wgpu::Queue::submit
+(size_t commandCount, WGPUCommandBuffer const* commands) { wgpuQueueSubmit(object, commandCount, commands); }
 
 void 
-WGPU::Queue::submit
-(size_t commandCount, WGPUCommandBuffer const* commands) { wgpuQueueSubmit(queue, commandCount, commands); }
+wgpu::Queue::writeBuffer
+(WGPUBuffer buffer, uint64_t bufferOffset, void const* data, size_t size) { wgpuQueueWriteBuffer(object, buffer, bufferOffset, data, size); }
+
+WGPU_XIN_EXTRA
+void 
+wgpu::Queue::writeBuffer
+(wgpu::Buffer buffer, uint64_t bufferOffset, void const* data, size_t size) { wgpuQueueWriteBuffer(object, buffer.object, bufferOffset, data, size); }
 
 void 
-WGPU::Queue::writeBuffer
-(WGPUBuffer buffer, uint64_t bufferOffset, void const* data, size_t size) { wgpuQueueWriteBuffer(queue, buffer, bufferOffset, data, size); }
-
-void 
-WGPU::Queue::writeTexture
+wgpu::Queue::writeTexture
 (WGPUTexelCopyTextureInfo const* destination, void const* data, size_t dataSize, WGPUTexelCopyBufferLayout const* dataLayout, WGPUExtent3D const* writeSize)
-{ wgpuQueueWriteTexture(queue, destination, data, dataSize, dataLayout, writeSize); }
+{ wgpuQueueWriteTexture(object, destination, data, dataSize, dataLayout, writeSize); }
 
 void 
-WGPU::Queue::addRef
-() { wgpuQueueAddRef(queue); }
+wgpu::Queue::addRef
+() { wgpuQueueAddRef(object); }
 
 void 
-WGPU::Queue::release
-() { wgpuQueueRelease(queue); }
+wgpu::Queue::release
+() { wgpuQueueRelease(object); }
 
 
 // ***** COMMAND ENCODER METHODS
 //
 WGPUComputePassEncoder
-WGPU::CommandEncoder::beginComputePass
-(WGPU_NULLABLE WGPUComputePassDescriptor const* descriptor) { return wgpuCommandEncoderBeginComputePass(commandEncoder, descriptor); }
+wgpu::CommandEncoder::beginComputePass
+(WGPU_NULLABLE WGPUComputePassDescriptor const* descriptor) { return wgpuCommandEncoderBeginComputePass(object, descriptor); }
 
 WGPURenderPassEncoder 
-WGPU::CommandEncoder::beginRenderPass
-(WGPURenderPassDescriptor const* descriptor) { return wgpuCommandEncoderBeginRenderPass(commandEncoder, descriptor); }
+wgpu::CommandEncoder::beginRenderPass
+(WGPURenderPassDescriptor const* descriptor) { return wgpuCommandEncoderBeginRenderPass(object, descriptor); }
+
+WGPU_XIN_EXTRA
+wgpu::RenderPassEncoder 
+wgpu::CommandEncoder::beginRenderPassHelper
+(WGPURenderPassDescriptor const* descriptor) 
+{
+	wgpu::RenderPassEncoder encoder = {};
+	encoder.object = beginRenderPass(descriptor);
+	return encoder;
+}
 
 void 
-WGPU::CommandEncoder::clearBuffer
-(WGPUBuffer buffer, uint64_t offset, uint64_t size) { return wgpuCommandEncoderClearBuffer(commandEncoder, buffer, offset, size); }
+wgpu::CommandEncoder::clearBuffer
+(WGPUBuffer buffer, uint64_t offset, uint64_t size) { return wgpuCommandEncoderClearBuffer(object, buffer, offset, size); }
 
 void 
-WGPU::CommandEncoder::copyBufferToBuffer
+wgpu::CommandEncoder::copyBufferToBuffer
 (WGPUBuffer source, uint64_t sourceOffset, WGPUBuffer destination, uint64_t destinationOffset, uint64_t size)
-{ wgpuCommandEncoderCopyBufferToBuffer(commandEncoder, source, sourceOffset, destination, destinationOffset, size); }
+{ wgpuCommandEncoderCopyBufferToBuffer(object, source, sourceOffset, destination, destinationOffset, size); }
 
 void 
-WGPU::CommandEncoder::copyBufferToTexture
+wgpu::CommandEncoder::copyBufferToTexture
 (WGPUTexelCopyBufferInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize)
-{ wgpuCommandEncoderCopyBufferToTexture(commandEncoder, source, destination, copySize); }
+{ wgpuCommandEncoderCopyBufferToTexture(object, source, destination, copySize); }
 
 void 
-WGPU::CommandEncoder::copyTextureToBuffer
+wgpu::CommandEncoder::copyTextureToBuffer
 (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyBufferInfo const* destination, WGPUExtent3D const* copySize)
-{ wgpuCommandEncoderCopyTextureToBuffer(commandEncoder, source, destination, copySize); }
+{ wgpuCommandEncoderCopyTextureToBuffer(object, source, destination, copySize); }
 
 void 
-WGPU::CommandEncoder::copyTextureToTexture
+wgpu::CommandEncoder::copyTextureToTexture
 (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize)
-{ wgpuCommandEncoderCopyTextureToTexture(commandEncoder, source, destination, copySize); }
+{ wgpuCommandEncoderCopyTextureToTexture(object, source, destination, copySize); }
 
 WGPUCommandBuffer 
-WGPU::CommandEncoder::finish
-(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor) { return wgpuCommandEncoderFinish(commandEncoder, descriptor); }
+wgpu::CommandEncoder::finish
+(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor) { return wgpuCommandEncoderFinish(object, descriptor); }
+
+WGPU_XIN_EXTRA
+wgpu::CommandBuffer 
+wgpu::CommandEncoder::finishHelper
+(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor) 
+{
+	wgpu::CommandBuffer commandBuffer = {};
+	commandBuffer.object = finish(descriptor);
+	return commandBuffer;
+}
 
 void
-WGPU::CommandEncoder::injectValidationError
-(WGPUStringView message) { wgpuCommandEncoderInjectValidationError(commandEncoder, message); }
+wgpu::CommandEncoder::injectValidationError
+(WGPUStringView message) { wgpuCommandEncoderInjectValidationError(object, message); }
 
 void
-WGPU::CommandEncoder::injectDebugMarker
-(WGPUStringView message) { wgpuCommandEncoderInsertDebugMarker(commandEncoder, message); }
+wgpu::CommandEncoder::injectDebugMarker
+(WGPUStringView message) { wgpuCommandEncoderInsertDebugMarker(object, message); }
 
 void 
-WGPU::CommandEncoder::popDebugGroup
-() { wgpuCommandEncoderPopDebugGroup(commandEncoder); }
+wgpu::CommandEncoder::popDebugGroup
+() { wgpuCommandEncoderPopDebugGroup(object); }
 
 void 
-WGPU::CommandEncoder::pushDebugGroup
-(WGPUStringView groupLabel) { wgpuCommandEncoderPushDebugGroup(commandEncoder, groupLabel); }
+wgpu::CommandEncoder::pushDebugGroup
+(WGPUStringView groupLabel) { wgpuCommandEncoderPushDebugGroup(object, groupLabel); }
 
 void 
-WGPU::CommandEncoder::resolveQuerySet
+wgpu::CommandEncoder::resolveQuerySet
 (WGPUQuerySet querySet, uint32_t firstQuery, uint32_t queryCount, WGPUBuffer destination, uint64_t destinationOffset)
-{ wgpuCommandEncoderResolveQuerySet(commandEncoder, querySet, firstQuery, queryCount, destination, destinationOffset); }
+{ wgpuCommandEncoderResolveQuerySet(object, querySet, firstQuery, queryCount, destination, destinationOffset); }
 
 void
-WGPU::CommandEncoder::setLabel
-(WGPUStringView label) { wgpuCommandEncoderSetLabel(commandEncoder, label); }
+wgpu::CommandEncoder::setLabel
+(WGPUStringView label) { wgpuCommandEncoderSetLabel(object, label); }
 
+WGPU_XIN_EXTRA
 void
-WGPU::CommandEncoder::setLabel
-(const char* label) { wgpuCommandEncoderSetLabel(commandEncoder, { label, strlen(label) }); }
+wgpu::CommandEncoder::setLabel
+(const char* label) { wgpuCommandEncoderSetLabel(object, { label, strlen(label) }); }
 
 void 
-WGPU::CommandEncoder::setResourceTable
-(WGPU_NULLABLE WGPUResourceTable table) { wgpuCommandEncoderSetResourceTable(commandEncoder, table); }
+wgpu::CommandEncoder::setResourceTable
+(WGPU_NULLABLE WGPUResourceTable table) { wgpuCommandEncoderSetResourceTable(object, table); }
 
 void 
-WGPU::CommandEncoder::writeBuffer
-(WGPUBuffer buffer, uint64_t bufferOffset, uint8_t const* data, uint64_t size) { wgpuCommandEncoderWriteBuffer(commandEncoder, buffer, bufferOffset, data, size); }
+wgpu::CommandEncoder::writeBuffer
+(WGPUBuffer buffer, uint64_t bufferOffset, uint8_t const* data, uint64_t size) { wgpuCommandEncoderWriteBuffer(object, buffer, bufferOffset, data, size); }
 
 void 
-WGPU::CommandEncoder::writeTimestamp
-(WGPUQuerySet querySet, uint32_t queryIndex) { wgpuCommandEncoderWriteTimestamp(commandEncoder, querySet, queryIndex); }
+wgpu::CommandEncoder::writeTimestamp
+(WGPUQuerySet querySet, uint32_t queryIndex) { wgpuCommandEncoderWriteTimestamp(object, querySet, queryIndex); }
 
 void 
-WGPU::CommandEncoder::addRef
-() { wgpuCommandEncoderAddRef(commandEncoder); }
+wgpu::CommandEncoder::addRef
+() { wgpuCommandEncoderAddRef(object); }
 
 void 
-WGPU::CommandEncoder::release
-() { wgpuCommandEncoderRelease(commandEncoder); }
+wgpu::CommandEncoder::release
+() { wgpuCommandEncoderRelease(object); }
 
 
 // ***** RENDER PASS ENCODER METHODS
 //
 void 
-WGPU::RenderPassEncoder::beginOcclusionQuery
-(uint32_t queryIndex) { wgpuRenderPassEncoderBeginOcclusionQuery(renderPassEncoder, queryIndex); }
+wgpu::RenderPassEncoder::beginOcclusionQuery
+(uint32_t queryIndex) { wgpuRenderPassEncoderBeginOcclusionQuery(object, queryIndex); }
 
 void 
-WGPU::RenderPassEncoder::draw
+wgpu::RenderPassEncoder::draw
 (uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) 
-{ wgpuRenderPassEncoderDraw(renderPassEncoder, vertexCount, instanceCount, firstVertex, firstInstance); }
+{ wgpuRenderPassEncoderDraw(object, vertexCount, instanceCount, firstVertex, firstInstance); }
 
 void 
-WGPU::RenderPassEncoder::drawIndexed
+wgpu::RenderPassEncoder::drawIndexed
 (uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance)
-{ wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, instanceCount, firstIndex, baseVertex, firstInstance); }
+{ wgpuRenderPassEncoderDrawIndexed(object, indexCount, instanceCount, firstIndex, baseVertex, firstInstance); }
 
 void 
-WGPU::RenderPassEncoder::drawIndexedIndirect
-(WGPUBuffer indirectBuffer, uint64_t indirectOffset) { wgpuRenderPassEncoderDrawIndexedIndirect(renderPassEncoder, indirectBuffer, indirectOffset); }
+wgpu::RenderPassEncoder::drawIndexedIndirect
+(WGPUBuffer indirectBuffer, uint64_t indirectOffset) { wgpuRenderPassEncoderDrawIndexedIndirect(object, indirectBuffer, indirectOffset); }
 
 void 
-WGPU::RenderPassEncoder::end
-() { wgpuRenderPassEncoderEnd(renderPassEncoder); }
+wgpu::RenderPassEncoder::end
+() { wgpuRenderPassEncoderEnd(object); }
 
 void 
-WGPU::RenderPassEncoder::endOcclusionQuery
-() { wgpuRenderPassEncoderEndOcclusionQuery(renderPassEncoder); }
+wgpu::RenderPassEncoder::endOcclusionQuery
+() { wgpuRenderPassEncoderEndOcclusionQuery(object); }
 
 void 
-WGPU::RenderPassEncoder::executeBundles
-(size_t bundleCount, WGPURenderBundle const* bundles) { wgpuRenderPassEncoderExecuteBundles(renderPassEncoder, bundleCount, bundles); }
+wgpu::RenderPassEncoder::executeBundles
+(size_t bundleCount, WGPURenderBundle const* bundles) { wgpuRenderPassEncoderExecuteBundles(object, bundleCount, bundles); }
 
 void
-WGPU::RenderPassEncoder::insertDebugMarker
-(WGPUStringView markerLabel) { wgpuRenderPassEncoderInsertDebugMarker(renderPassEncoder, markerLabel); }
+wgpu::RenderPassEncoder::insertDebugMarker
+(WGPUStringView markerLabel) { wgpuRenderPassEncoderInsertDebugMarker(object, markerLabel); }
 
 void
-WGPU::RenderPassEncoder::multiDrawIndexedIndirect
+wgpu::RenderPassEncoder::multiDrawIndexedIndirect
 (WGPUBuffer indirectBuffer, uint64_t indirectOffset, uint32_t maxDrawCount, WGPU_NULLABLE WGPUBuffer drawCountBuffer, uint64_t drawCountBufferOffset)
-{ wgpuRenderPassEncoderMultiDrawIndexedIndirect(renderPassEncoder, indirectBuffer, indirectOffset, maxDrawCount, drawCountBuffer, drawCountBufferOffset); }
+{ wgpuRenderPassEncoderMultiDrawIndexedIndirect(object, indirectBuffer, indirectOffset, maxDrawCount, drawCountBuffer, drawCountBufferOffset); }
 
 void
-WGPU::RenderPassEncoder::multiDrawIndirect
+wgpu::RenderPassEncoder::multiDrawIndirect
 (WGPUBuffer indirectBuffer, uint64_t indirectOffset, uint32_t maxDrawCount, WGPU_NULLABLE WGPUBuffer drawCountBuffer, uint64_t drawCountBufferOffset)
-{ wgpuRenderPassEncoderMultiDrawIndirect(renderPassEncoder, indirectBuffer, indirectOffset, maxDrawCount, drawCountBuffer, drawCountBufferOffset); }
+{ wgpuRenderPassEncoderMultiDrawIndirect(object, indirectBuffer, indirectOffset, maxDrawCount, drawCountBuffer, drawCountBufferOffset); }
 
 void
-WGPU::RenderPassEncoder::pixelLocalStorageBarrier
-() { wgpuRenderPassEncoderPixelLocalStorageBarrier(renderPassEncoder); }
+wgpu::RenderPassEncoder::pixelLocalStorageBarrier
+() { wgpuRenderPassEncoderPixelLocalStorageBarrier(object); }
 
 void
-WGPU::RenderPassEncoder::popDebugGroup
-() { wgpuRenderPassEncoderPopDebugGroup(renderPassEncoder); }
+wgpu::RenderPassEncoder::popDebugGroup
+() { wgpuRenderPassEncoderPopDebugGroup(object); }
 
 void
-WGPU::RenderPassEncoder::pushDebugGroup
-(WGPUStringView groupLabel) { wgpuRenderPassEncoderPushDebugGroup(renderPassEncoder, groupLabel); }
+wgpu::RenderPassEncoder::pushDebugGroup
+(WGPUStringView groupLabel) { wgpuRenderPassEncoderPushDebugGroup(object, groupLabel); }
 
 void 
-WGPU::RenderPassEncoder::setBindGroup
+wgpu::RenderPassEncoder::setBindGroup
 (uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const* dynamicOffsets)
-{ wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets); }
+{ wgpuRenderPassEncoderSetBindGroup(object, groupIndex, group, dynamicOffsetCount, dynamicOffsets); }
 
 void 
-WGPU::RenderPassEncoder::setBlendConstant
-(WGPUColor const* color) { wgpuRenderPassEncoderSetBlendConstant(renderPassEncoder, color); }
+wgpu::RenderPassEncoder::setBindGroup
+(uint32_t groupIndex, wgpu::BindGroup group, size_t dynamicOffsetCount, uint32_t const* dynamicOffsets)
+{ wgpuRenderPassEncoderSetBindGroup(object, groupIndex, group.object, dynamicOffsetCount, dynamicOffsets); }
 
 void 
-WGPU::RenderPassEncoder::setImmediates
-(uint32_t offset, void const* data, size_t size) { wgpuRenderPassEncoderSetImmediates(renderPassEncoder, offset, data, size); }
+wgpu::RenderPassEncoder::setBlendConstant
+(WGPUColor const* color) { wgpuRenderPassEncoderSetBlendConstant(object, color); }
 
 void 
-WGPU::RenderPassEncoder::setIndexBuffer
-(WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size) { wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, buffer, format, offset, size); }
+wgpu::RenderPassEncoder::setImmediates
+(uint32_t offset, void const* data, size_t size) { wgpuRenderPassEncoderSetImmediates(object, offset, data, size); }
+
+void 
+wgpu::RenderPassEncoder::setIndexBuffer
+(WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size) { wgpuRenderPassEncoderSetIndexBuffer(object, buffer, format, offset, size); }
+
+WGPU_XIN_EXTRA
+void 
+wgpu::RenderPassEncoder::setIndexBuffer
+(wgpu::Buffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size) { wgpuRenderPassEncoderSetIndexBuffer(object, buffer.object, format, offset, size); }
 
 void
-WGPU::RenderPassEncoder::setLabel
-(WGPUStringView label) { wgpuRenderPassEncoderSetLabel(renderPassEncoder, label); }
+wgpu::RenderPassEncoder::setLabel
+(WGPUStringView label) { wgpuRenderPassEncoderSetLabel(object, label); }
 
+WGPU_XIN_EXTRA
 void 
-WGPU::RenderPassEncoder::setLabel
-(const char* label) { wgpuRenderPassEncoderSetLabel(renderPassEncoder, { label, strlen(label) }); }
+wgpu::RenderPassEncoder::setLabel
+(const char* label) { wgpuRenderPassEncoderSetLabel(object, { label, strlen(label) }); }
 
 void
-WGPU::RenderPassEncoder::setPipeline
-(WGPURenderPipeline pipeline) {	wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipeline); }
+wgpu::RenderPassEncoder::setPipeline
+(WGPURenderPipeline pipeline) {	wgpuRenderPassEncoderSetPipeline(object, pipeline); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::RenderPassEncoder::setPipeline
+(wgpu::RenderPipeline pipeline) {	wgpuRenderPassEncoderSetPipeline(object, pipeline.object); }
 
 void
-WGPU::RenderPassEncoder::setScissorRect
-(uint32_t x, uint32_t y, uint32_t width, uint32_t height) { wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, x, y, width, height); }
+wgpu::RenderPassEncoder::setScissorRect
+(uint32_t x, uint32_t y, uint32_t width, uint32_t height) { wgpuRenderPassEncoderSetScissorRect(object, x, y, width, height); }
 
 void
-WGPU::RenderPassEncoder::setStencilReference
-(uint32_t reference) { wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, reference); }
+wgpu::RenderPassEncoder::setStencilReference
+(uint32_t reference) { wgpuRenderPassEncoderSetStencilReference(object, reference); }
 
 void 
-WGPU::RenderPassEncoder::setVertexBuffer
-(uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size) { wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, slot, buffer, offset, size); }
+wgpu::RenderPassEncoder::setVertexBuffer
+(uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size) { wgpuRenderPassEncoderSetVertexBuffer(object, slot, buffer, offset, size); }
 
 void 
-WGPU::RenderPassEncoder::setViewport
-(float x, float y, float width, float height, float minDepth, float maxDepth) { wgpuRenderPassEncoderSetViewport(renderPassEncoder, x, y, width, height, minDepth, maxDepth); }
+wgpu::RenderPassEncoder::setVertexBuffer
+(uint32_t slot, wgpu::Buffer buffer, uint64_t offset, uint64_t size) { wgpuRenderPassEncoderSetVertexBuffer(object, slot, buffer.object, offset, size); }
 
 void 
-WGPU::RenderPassEncoder::writeTimestamp
-(WGPUQuerySet querySet, uint32_t queryIndex) { wgpuRenderPassEncoderWriteTimestamp(renderPassEncoder, querySet, queryIndex); }
+wgpu::RenderPassEncoder::setViewport
+(float x, float y, float width, float height, float minDepth, float maxDepth) { wgpuRenderPassEncoderSetViewport(object, x, y, width, height, minDepth, maxDepth); }
 
 void 
-WGPU::RenderPassEncoder::addRef
-() { wgpuRenderPassEncoderAddRef(renderPassEncoder); }
+wgpu::RenderPassEncoder::writeTimestamp
+(WGPUQuerySet querySet, uint32_t queryIndex) { wgpuRenderPassEncoderWriteTimestamp(object, querySet, queryIndex); }
 
 void 
-WGPU::RenderPassEncoder::release
-() { wgpuRenderPassEncoderRelease(renderPassEncoder); }
+wgpu::RenderPassEncoder::addRef
+() { wgpuRenderPassEncoderAddRef(object); }
+
+void 
+wgpu::RenderPassEncoder::release
+() { wgpuRenderPassEncoderRelease(object); }
 
 
 // ***** RENDER PIPELINE METHODS
 //
 WGPUBindGroupLayout
-WGPU::RenderPipeline::getBindGroupLayout
-(uint32_t groupIndex) { return wgpuRenderPipelineGetBindGroupLayout(renderPipeline, groupIndex); }
+wgpu::RenderPipeline::getBindGroupLayout
+(uint32_t groupIndex) { return wgpuRenderPipelineGetBindGroupLayout(object, groupIndex); }
 
 void 
-WGPU::RenderPipeline::setLabel
-(WGPUStringView label) { wgpuRenderPipelineSetLabel(renderPipeline, label); }
+wgpu::RenderPipeline::setLabel
+(WGPUStringView label) { wgpuRenderPipelineSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::RenderPipeline::setLabel
+(const char* label) { wgpuRenderPipelineSetLabel(object, { label, strlen(label) }); }
 
 void
-WGPU::RenderPipeline::setLabel
-(const char* label) { wgpuRenderPipelineSetLabel(renderPipeline, { label, strlen(label) }); }
-
-void
-WGPU::RenderPipeline::addRef
-() { wgpuRenderPipelineAddRef(renderPipeline); }
+wgpu::RenderPipeline::addRef
+() { wgpuRenderPipelineAddRef(object); }
 
 void 
-WGPU::RenderPipeline::release
-() { wgpuRenderPipelineRelease(renderPipeline); }
+wgpu::RenderPipeline::release
+() { wgpuRenderPipelineRelease(object); }
 
 
 // ***** BUFFER METHODS
 //
 WGPUTexelBufferView 
-WGPU::Buffer::createTexelView
-(WGPUTexelBufferViewDescriptor const* descriptor) { wgpuBufferCreateTexelView(buffer, descriptor); }
+wgpu::Buffer::createTexelView
+(WGPUTexelBufferViewDescriptor const* descriptor) { return wgpuBufferCreateTexelView(object, descriptor); }
 
 void
-WGPU::Buffer::destroy
-() { wgpuBufferDestroy(buffer); }
+wgpu::Buffer::destroy
+() { wgpuBufferDestroy(object); }
 
 void const*
-WGPU::Buffer::getConstMappedRange
-(size_t offset, size_t size) { wgpuBufferGetConstMappedRange(buffer, offset, size); }
+wgpu::Buffer::getConstMappedRange
+(size_t offset, size_t size) { return wgpuBufferGetConstMappedRange(object, offset, size); }
 
 void* 
-WGPU::Buffer::getMappedRange
-(size_t offset, size_t size) { wgpuBufferGetMappedRange(buffer, offset, size); }
+wgpu::Buffer::getMappedRange
+(size_t offset, size_t size) { return wgpuBufferGetMappedRange(object, offset, size); }
 
 WGPUBufferMapState
-WGPU::Buffer::getMapState
-() { wgpuBufferGetMapState(buffer); }
+wgpu::Buffer::getMapState
+() { return wgpuBufferGetMapState(object); }
 
 uint64
-WGPU::Buffer::getSize
-() { wgpuBufferGetSize(buffer); }
+wgpu::Buffer::getSize
+() { return wgpuBufferGetSize(object); }
 
 WGPUBufferUsage
-WGPU::Buffer::getUsage
-() { wgpuBufferGetUsage(buffer); }
+wgpu::Buffer::getUsage
+() { return wgpuBufferGetUsage(object); }
 
 WGPUFuture
-WGPU::Buffer::mapAsync
-(WGPUMapMode mode, size_t offset, size_t size, WGPUBufferMapCallbackInfo callbackInfo) { wgpuBufferMapAsync(buffer, mode, offset, size, callbackInfo); }
+wgpu::Buffer::mapAsync
+(WGPUMapMode mode, size_t offset, size_t size, WGPUBufferMapCallbackInfo callbackInfo) { return wgpuBufferMapAsync(object, mode, offset, size, callbackInfo); }
 
 WGPUStatus
-WGPU::Buffer::readMappedRange
-(size_t offset, void* data, size_t size) { wgpuBufferReadMappedRange(buffer, offset, data, size); }
+wgpu::Buffer::readMappedRange
+(size_t offset, void* data, size_t size) { return wgpuBufferReadMappedRange(object, offset, data, size); }
 
 void 
-WGPU::Buffer::setLabel
-(WGPUStringView label) { wgpuBufferSetLabel(buffer, label); }
+wgpu::Buffer::setLabel
+(WGPUStringView label) { wgpuBufferSetLabel(object, label); }
 
+WGPU_XIN_EXTRA
 void 
-WGPU::Buffer::setLabel
-(const char* label) { wgpuBufferSetLabel(buffer, { label, strlen(label) }); }
+wgpu::Buffer::setLabel
+(const char* label) { wgpuBufferSetLabel(object, { label, strlen(label) }); }
 
 void
-WGPU::Buffer::unmap
-() { wgpuBufferUnmap(buffer); }
+wgpu::Buffer::unmap
+() { wgpuBufferUnmap(object); }
 
 WGPUStatus
-WGPU::Buffer::writeMappedRange
-(size_t offset, void const* data, size_t size) { wgpuBufferWriteMappedRange(buffer, offset, data, size); }
+wgpu::Buffer::writeMappedRange
+(size_t offset, void const* data, size_t size) { return wgpuBufferWriteMappedRange(object, offset, data, size); }
 
 void
-WGPU::Buffer::addRef
-() { wgpuBufferAddRef(buffer); }
+wgpu::Buffer::addRef
+() { wgpuBufferAddRef(object); }
 
 void 
-WGPU::Buffer::release
-() { wgpuBufferRelease(buffer); }
+wgpu::Buffer::release
+() { wgpuBufferRelease(object); }
+
+
+// ***** BIND GROUP LAYOUT METHODS
+//
+void
+wgpu::BindGroupLayout::setLabel
+(WGPUStringView label) { wgpuBindGroupLayoutSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void 
+wgpu::BindGroupLayout::setLabel
+(const char* label) { wgpuBindGroupLayoutSetLabel(object, {label, strlen(label)}); }
+
+void 
+wgpu::BindGroupLayout::addRef
+() { wgpuBindGroupLayoutAddRef(object); }
+
+void 
+wgpu::BindGroupLayout::release
+() { wgpuBindGroupLayoutRelease(object); }
+
+
+// ***** PIPELINE LAYOUT METHODS
+//
+void
+wgpu::PipelineLayout::setLabel
+(WGPUStringView label) { wgpuPipelineLayoutSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void 
+wgpu::PipelineLayout::setLabel
+(const char* label) { wgpuPipelineLayoutSetLabel(object, { label, strlen(label) }); }
+
+void 
+wgpu::PipelineLayout::addRef
+() { wgpuPipelineLayoutAddRef(object); }
+
+void 
+wgpu::PipelineLayout::release
+() { wgpuPipelineLayoutRelease(object); }
+
+
+
+// ***** BIND GROUP METHODS
+//
+void
+wgpu::BindGroup::setLabel
+(WGPUStringView label) { wgpuBindGroupSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::BindGroup::setLabel
+(const char* label) { wgpuBindGroupSetLabel(object, { label, strlen(label) }); }
+
+void
+wgpu::BindGroup::addRef
+() { wgpuBindGroupAddRef(object); }
+
+void
+wgpu::BindGroup::release
+() { wgpuBindGroupRelease(object); }
+
+
+// ***** TEXTURE VIEW METHODS
+//
+void
+wgpu::TextureView::setLabel
+(WGPUStringView label) { wgpuTextureViewSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::TextureView::setLabel
+(const char* label) { wgpuTextureViewSetLabel(object, { label, strlen(label) }); }
+
+void
+wgpu::TextureView::addRef
+() { wgpuTextureViewAddRef(object); }
+
+void
+wgpu::TextureView::release
+() { wgpuTextureViewRelease(object); }
+
+
+// ***** COMMAND BUFFER METHODS
+//
+void
+wgpu::CommandBuffer::setLabel
+(WGPUStringView label) { wgpuCommandBufferSetLabel(object, label); }
+
+WGPU_XIN_EXTRA
+void
+wgpu::CommandBuffer::setLabel
+(const char* label) { wgpuCommandBufferSetLabel(object, { label, strlen(label) }); }
+
+void
+wgpu::CommandBuffer::addRef
+() { wgpuCommandBufferAddRef(object); }
+
+void
+wgpu::CommandBuffer::release
+() { wgpuCommandBufferRelease(object); }
+
+
 
 
 bool CharUtil::IsDigit(char c)
@@ -960,8 +1260,7 @@ OBJParser::Vec3LineResult OBJParser::parseVec3Line(FileReader& fileReader)
 }
 
 
-
-void Win32_WGPU_GetInstance(WGPUInstance& OutInstance)
+wgpu::Instance wgpu::helper::createInstance()
 {
 	// >NOTASCOI: is it of any use to have it here, knowing that our instance is going to be released a few lines below ? Hmmmm...
 	const char* toggleName = "enable_immediate_error_handling";
@@ -976,27 +1275,100 @@ void Win32_WGPU_GetInstance(WGPUInstance& OutInstance)
 	WGPUInstanceDescriptor desc = {};
 	desc.nextInChain = &toggleDesc.chain;
 
-	OutInstance = wgpuCreateInstance(&desc);
-
-	if (!OutInstance)
+	wgpu::Instance instance = {};
+	instance.object = wgpu::createInstance(&desc);
+	if (!instance.object)
 	{
-		OutputDebugString("ERROR | Win32_WGPU_GetInstance() | Coud not initialize WebGPU !\n");
+		OutputDebugString("ERROR | wgpu::helper::createInstance() | Coud not initialize WebGPU !\n");
 	}
+
+	return instance;
 }
 
-void Win32_WGPU_GetAdapter(WGPUInstance Instance, WGPUAdapter& OutAdapter)
+//void Win32_WGPU_GetInstance(wgpu::Instance& OutInstance)
+//{
+//	// >NOTASCOI: is it of any use to have it here, knowing that our instance is going to be released a few lines below ? Hmmmm...
+//	const char* toggleName = "enable_immediate_error_handling";
+//
+//	WGPUDawnTogglesDescriptor toggleDesc = {};
+//	toggleDesc.chain.next                = nullptr;
+//	toggleDesc.chain.sType               = WGPUSType::WGPUSType_DawnTogglesDescriptor;
+//	toggleDesc.disabledToggleCount       = 0;
+//	toggleDesc.enabledToggleCount        = 1;
+//	toggleDesc.enabledToggles            = &toggleName;
+//
+//	WGPUInstanceDescriptor desc = {};
+//	desc.nextInChain = &toggleDesc.chain;
+//
+//	OutInstance.instance = wgpuCreateInstance(&desc);
+//
+//	if (!OutInstance.instance)
+//	{
+//		OutputDebugString("ERROR | Win32_WGPU_GetInstance() | Coud not initialize WebGPU !\n");
+//	}
+//}
+
+wgpu::Adapter wgpu::helper::createAdapter(wgpu::Instance instance)
 {
 	WGPURequestAdapterOptions adapterOptions = {};
 	adapterOptions.nextInChain = nullptr;
 
-	OutAdapter = Win32_WGPU_Sync_RequestAdapter(Instance, &adapterOptions);
+	wgpu::Adapter adapter = {};
+	adapter.object = wgpu::helper::requestAdapterAsync(instance, &adapterOptions);
+
+	return adapter;
 }
 
-void Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDevice& OutDevice)
+WGPUAdapter wgpu::helper::requestAdapterAsync(wgpu::Instance instance, WGPURequestAdapterOptions const* options)
+{
+	struct AdapterRequestData
+	{
+		WGPUAdapter adapter;
+		bool requestEnded;
+	};
+
+	AdapterRequestData requestData = {};
+
+	WGPURequestAdapterCallbackInfo callbackInfo = {};
+	callbackInfo.nextInChain = nullptr;
+	callbackInfo.mode        = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous;
+	callbackInfo.userdata1   = (void*)&requestData;
+	callbackInfo.callback    = [](WGPURequestAdapterStatus Status, WGPUAdapter Adapter, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
+		{
+			AdapterRequestData& data = *reinterpret_cast<AdapterRequestData*>(UD_1);
+			if (Status == WGPURequestAdapterStatus::WGPURequestAdapterStatus_Success)
+			{
+				data.adapter = Adapter;
+			}
+			else
+			{
+				OutputDebugString("ERROR | wgpu::helper::requestAdapterAsync | Coud not get WebGPU adapter :((\n");
+			}
+
+			data.requestEnded = true;
+		};
+
+
+	instance.requestAdapter(options, callbackInfo);
+	AdapterRequestData& requestDataResult = *reinterpret_cast<AdapterRequestData*>(callbackInfo.userdata1);
+	ASSERT(requestDataResult.requestEnded);
+
+	return requestDataResult.adapter;
+}
+
+//void Win32_WGPU_GetAdapter(wgpu::Instance Instance, wgpu::Adapter& OutAdapter)
+//{
+//	WGPURequestAdapterOptions adapterOptions = {};
+//	adapterOptions.nextInChain = nullptr;
+//
+//	OutAdapter.adapter = Win32_WGPU_Sync_RequestAdapter(Instance.instance, &adapterOptions);
+//}
+
+wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter)
 {
 	// GPU Features
 	//
-	WGPULimits limits = Win32_WGPU_GetDefaultLimits(Adapter);
+	WGPULimits limits = adapter.getDefaultLimits();
 	limits.maxVertexAttributes             = 2;
 	limits.maxVertexBuffers                = 1;
 	limits.maxBufferSize                   = 6 * 6 * sizeof(real32);
@@ -1021,46 +1393,13 @@ void Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDevice& OutDevice)
 	deviceDesc.defaultQueue.label.data     = "Default Queue-san";
 	deviceDesc.defaultQueue.label.length   = strlen(deviceDesc.defaultQueue.label.data);
 
-	OutDevice = Win32_WGPU_Sync_RequestDevice(Adapter, &deviceDesc);
+	wgpu::Device device = {};
+	device.object = wgpu::helper::requestDeviceAsync(adapter, &deviceDesc);
+
+	return device;
 }
 
-WGPUAdapter Win32_WGPU_Sync_RequestAdapter(WGPUInstance Instance, WGPURequestAdapterOptions const* Options)
-{
-	struct AdapterRequestData
-	{
-		WGPUAdapter adapter;
-		bool requestEnded;
-	};
-
-	AdapterRequestData requestData = {};
-
-	WGPURequestAdapterCallbackInfo callbackInfo = {};
-	callbackInfo.nextInChain = nullptr;
-	callbackInfo.mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous;
-	callbackInfo.userdata1 = (void*)&requestData;
-	callbackInfo.callback = [](WGPURequestAdapterStatus Status, WGPUAdapter Adapter, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
-	{
-		AdapterRequestData& data = *reinterpret_cast<AdapterRequestData*>(UD_1);
-		if (Status == WGPURequestAdapterStatus::WGPURequestAdapterStatus_Success)
-		{
-			data.adapter = Adapter;
-		}
-		else
-		{
-			OutputDebugString("ERROR | Coud not get WebGPU adapter :((\n");
-		}
-
-		data.requestEnded = true;
-	};
-
-	wgpuInstanceRequestAdapter(Instance, Options, callbackInfo);
-	AdapterRequestData& requestDataResult = *reinterpret_cast<AdapterRequestData*>(callbackInfo.userdata1);
-	ASSERT(requestDataResult.requestEnded);
-
-	return requestDataResult.adapter;
-}
-
-WGPUDevice Win32_WGPU_Sync_RequestDevice(WGPUAdapter Adapter, const WGPUDeviceDescriptor* Descriptor)
+WGPUDevice wgpu::helper::requestDeviceAsync(wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor)
 {
 	struct DeviceRequestData
 	{
@@ -1090,59 +1429,13 @@ WGPUDevice Win32_WGPU_Sync_RequestDevice(WGPUAdapter Adapter, const WGPUDeviceDe
 		data.requestEnded = true;
 	};
 
-	wgpuAdapterRequestDevice(Adapter, Descriptor, callbackInfo);
+	adapter.requestDevice(descriptor, callbackInfo);
 	DeviceRequestData& requestDataResult = *reinterpret_cast<DeviceRequestData*>(callbackInfo.userdata1);
 	ASSERT(requestDataResult.requestEnded);
 
 	return requestDataResult.device;
 }
 
-WGPULimits Win32_WGPU_GetDefaultLimits(WGPUAdapter Adapter)
-{
-	WGPULimits adapterLimits = {};
-	wgpuAdapterGetLimits(Adapter, &adapterLimits);
-
-	WGPULimits limits = {};
-	limits.nextInChain = nullptr;
-
-	// Set everything to default
-	limits.maxTextureDimension1D                     = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxTextureDimension2D                     = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxTextureDimension3D                     = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxTextureArrayLayers                     = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxBindGroups                             = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxBindGroupsPlusVertexBuffers            = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxBindingsPerBindGroup                   = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxDynamicUniformBuffersPerPipelineLayout = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxDynamicStorageBuffersPerPipelineLayout = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxSampledTexturesPerShaderStage          = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxSamplersPerShaderStage                 = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxStorageBuffersPerShaderStage           = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxStorageTexturesPerShaderStage          = WGPU_LIMIT_U32_UNDEFINED;
-	limits.minUniformBufferOffsetAlignment           = WGPU_LIMIT_U32_UNDEFINED;
-	limits.minStorageBufferOffsetAlignment           = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxVertexBuffers                          = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxBufferSize                             = WGPU_LIMIT_U64_UNDEFINED;
-	limits.maxVertexAttributes                       = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxVertexBufferArrayStride                = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxUniformBuffersPerShaderStage           = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxStorageBufferBindingSize               = WGPU_LIMIT_U64_UNDEFINED;
-	limits.maxColorAttachments                       = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxColorAttachmentBytesPerSample          = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxComputeWorkgroupStorageSize            = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxComputeInvocationsPerWorkgroup         = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxComputeWorkgroupSizeX                  = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxComputeWorkgroupSizeY                  = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxComputeWorkgroupSizeZ                  = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxComputeWorkgroupsPerDimension          = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxImmediateSize                          = WGPU_LIMIT_U32_UNDEFINED;
-
-	// These two limits are special
-	limits.minUniformBufferOffsetAlignment           = adapterLimits.minUniformBufferOffsetAlignment;
-	limits.minStorageBufferOffsetAlignment           = adapterLimits.minStorageBufferOffsetAlignment;
-
-	return limits;
-}
 
 void Win32_WGPU_GetDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout)
 {
@@ -1171,11 +1464,11 @@ uint32 Win32_WGPU_Util_CeilToNextMultiple(uint32 Value, uint32 Multiple)
 }
 
 
-void Win32_WGPU_GetSurface(WNDCLASS* WndClass, HWND WndHandle, WGPUInstance Instance, WGPUSurface& OutSurface)
+wgpu::Surface wgpu::helper::createSurface(WNDCLASS* wndClass, HWND wndHandle, wgpu::Instance instance)
 {
 	WGPUSurfaceSourceWindowsHWND surfaceWindow = {};
-	surfaceWindow.hinstance   = WndClass->hInstance;
-	surfaceWindow.hwnd        = WndHandle;
+	surfaceWindow.hinstance   = wndClass->hInstance;
+	surfaceWindow.hwnd        = wndHandle;
 	surfaceWindow.chain.next  = nullptr;
 	surfaceWindow.chain.sType = WGPUSType_SurfaceSourceWindowsHWND;
 
@@ -1186,56 +1479,39 @@ void Win32_WGPU_GetSurface(WNDCLASS* WndClass, HWND WndHandle, WGPUInstance Inst
 	surfaceDescNative.label.length = strlen(surfaceDescNative.label.data);
 	surfaceDescNative.nextInChain  = &surfaceWindow.chain;
 
-	OutSurface = wgpuInstanceCreateSurface(Instance, &surfaceDescNative);
+	wgpu::Surface surface = {};
+	surface.object = instance.createSurface(&surfaceDescNative);
+
+	return surface;
 }
 
-void Win32_WGPU_GetSurfaceFormat(WGPUSurface Surface, WGPUAdapter Adapter, WGPUTextureFormat& OutSurfaceFormat)
+wgpu::ShaderModule wgpu::helper::createShaderModule(wgpu::Device device, GameMemory* memory, const char* path, const char* label)
 {
-	WGPUSurfaceCapabilities surfaceCapabilities = {};
-	wgpuSurfaceGetCapabilities(Surface, Adapter, &surfaceCapabilities);
-	OutSurfaceFormat = surfaceCapabilities.formats[0];
-}
-
-void Win32_WGPU_ConfigureSurface(WGPUSurface Surface, WGPUTextureFormat SurfaceFormat, WGPUDevice Device, WGPUAdapter Adapter)
-{
-	WGPUSurfaceConfiguration config = {};
-	config.nextInChain     = nullptr;
-	config.width           = WINDOW_WIDTH;
-	config.height          = WINDOW_HEIGHT;
-	config.format          = SurfaceFormat;
-	config.viewFormatCount = 0;
-	config.viewFormats     = nullptr;
-	config.usage           = WGPUTextureUsage_RenderAttachment;
-	config.device          = Device;
-	config.presentMode     = WGPUPresentMode::WGPUPresentMode_Fifo;
-	config.alphaMode       = WGPUCompositeAlphaMode::WGPUCompositeAlphaMode_Auto;
-	wgpuSurfaceConfigure(Surface, &config);	
-}
-
-void Win32_WGPU_GetShaderModule(WGPUDevice Device, WGPUShaderModule& OutShaderModule, GameMemory* Memory)
-{
-	ReadFileResult file = Win32_Util_ReadFile("../resource/shader.sha", Memory);
+	ReadFileResult file = Win32_Util_ReadFile(path, memory);
 	if (!file.content)
 	{
 		OutputDebugString(file.message);
-		return;
 	}
 
 	WGPUShaderModuleDescriptor shaderModuleDesc = {};
-	shaderModuleDesc.label.data   = "Shader Descriptor";
-	shaderModuleDesc.label.length = strlen(shaderModuleDesc.label.data);
+	shaderModuleDesc.label.data   = label;
+	shaderModuleDesc.label.length = strlen(label);
 
 	WGPUShaderSourceWGSL shaderCodeDesc = {};
 	shaderCodeDesc.chain.next  = nullptr;
 	shaderCodeDesc.chain.sType = WGPUSType_ShaderSourceWGSL;
 	shaderCodeDesc.code.data   = static_cast<const char*>(file.content);
-	shaderCodeDesc.code.length = file.contentSize;// Win32_Util_StringSize(shaderSource);
+	shaderCodeDesc.code.length = file.contentSize;
 
 	shaderModuleDesc.nextInChain = &shaderCodeDesc.chain;
-	OutShaderModule = wgpuDeviceCreateShaderModule(Device, &shaderModuleDesc);
+
+	wgpu::ShaderModule shaderModule = {};
+	shaderModule.object = device.createShaderModule(&shaderModuleDesc);
+
+	return shaderModule;
 }
 
-void Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindGroupLayout)
+wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device)
 {
 	// Create a bind group
 	//
@@ -1251,19 +1527,29 @@ void Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindG
 	bindGroupLayoutDesc.nextInChain = nullptr;
 	bindGroupLayoutDesc.entryCount = 1;
 	bindGroupLayoutDesc.entries = &bindingLayoutEntry;
-	BindGroupLayout = wgpuDeviceCreateBindGroupLayout(Device, &bindGroupLayoutDesc);
+
+	wgpu::BindGroupLayout bindGroupLayout = {};
+	bindGroupLayout.object = device.createBindGroupLayout(&bindGroupLayoutDesc);
+
+	return bindGroupLayout;
 }
 
-void Win32_WGPU_GetPipelineLayout(WGPUDevice Device, WGPUBindGroupLayout BindGroupLayout, WGPUPipelineLayout& PipelineLayout)
+wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout)
 {
 	WGPUPipelineLayoutDescriptor layoutDesc = {};
-	layoutDesc.nextInChain = nullptr;
+	layoutDesc.nextInChain          = nullptr;
 	layoutDesc.bindGroupLayoutCount = 1;
-	layoutDesc.bindGroupLayouts = &BindGroupLayout;
-	PipelineLayout = wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
+	layoutDesc.bindGroupLayouts     = &bindGroupLayout.object;
+
+	wgpu::PipelineLayout pipelineLayout = {};
+	pipelineLayout.object = device.createPipelineLayout(&layoutDesc);
+
+	return pipelineLayout;
 }
 
-void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPUBindGroupLayout BindGroupLayout, WGPUPipelineLayout PipelineLayout, WGPURenderPipeline& OutRenderPipeline)
+wgpu::RenderPipeline 
+wgpu::helper::createRenderPipeline
+(wgpu::Device device, wgpu::ShaderModule shaderModule, WGPUTextureFormat textureFormat, wgpu::PipelineLayout pipelineLayout)
 {
 	//std::vector<WGPUVertexAttribute> VertexAttributes(2);
 
@@ -1299,12 +1585,12 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	blendState.alpha.operation = WGPUBlendOperation_Add;
 
 	WGPUColorTargetState colorTarget = {};
-	colorTarget.format    = SurfaceFormat;
+	colorTarget.format    = textureFormat;
 	colorTarget.blend     = &blendState;
 	colorTarget.writeMask = WGPUColorWriteMask_All; // We could write to only some of the color channels
 
 	WGPUFragmentState fragmentState = {};
-	fragmentState.module            = ShaderModule;
+	fragmentState.module            = shaderModule.object;
 	fragmentState.entryPoint.data   = "fs_main";
 	fragmentState.entryPoint.length = strlen(fragmentState.entryPoint.data);
 	fragmentState.constantCount     = 0;
@@ -1320,7 +1606,7 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	pipelineDesc.nextInChain                        = nullptr;
 	pipelineDesc.vertex.bufferCount                 = 1;
 	pipelineDesc.vertex.buffers                     = &vertexBufferLayout;
-	pipelineDesc.vertex.module                      = ShaderModule;
+	pipelineDesc.vertex.module                      = shaderModule.object;
 	pipelineDesc.vertex.entryPoint.data             = "vs_main";
 	pipelineDesc.vertex.entryPoint.length           = strlen(pipelineDesc.vertex.entryPoint.data);
 	pipelineDesc.vertex.constantCount               = 0;
@@ -1336,42 +1622,13 @@ void Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModu
 	pipelineDesc.multisample.count                  = 1;
 	pipelineDesc.multisample.mask                   = ~0u; // Default value for the mask. It means "all bits on"
 	pipelineDesc.multisample.alphaToCoverageEnabled = false; // Default value as well. It is irrelevant for count = 1 anyways
-	pipelineDesc.layout                             = PipelineLayout;
+	pipelineDesc.layout                             = pipelineLayout.object;
 
-	OutRenderPipeline = wgpuDeviceCreateRenderPipeline(Device, &pipelineDesc);
+	wgpu::RenderPipeline renderPipeline = {};
+	renderPipeline.object = device.createRenderPipeline(&pipelineDesc);
+
+	return renderPipeline;
 }
-
-
-WGPUTextureView Win32_WGPU_GetNextSurfaceTextureView(WGPUSurface Surface)
-{
-	if (!Surface) return nullptr;
-
-	WGPUSurfaceTexture sTexture = {};
-	wgpuSurfaceGetCurrentTexture(Surface, &sTexture);
-
-	if (sTexture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal && sTexture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal)
-	{
-		return nullptr;
-	}
-
-	WGPUTextureViewDescriptor viewDesc = {};
-	viewDesc.nextInChain      = nullptr;
-	viewDesc.label.data       = "Surface texture view";
-	viewDesc.label.length     = strlen(viewDesc.label.data);
-	viewDesc.format           = wgpuTextureGetFormat(sTexture.texture);
-	viewDesc.dimension        = WGPUTextureViewDimension_2D;
-	viewDesc.baseMipLevel     = 0;
-	viewDesc.mipLevelCount    = 1;
-	viewDesc.baseArrayLayer   = 0;
-	viewDesc.arrayLayerCount  = 1;
-	viewDesc.aspect           = WGPUTextureAspect_All;
-
-	WGPUTextureView targetViewTexture = wgpuTextureCreateView(sTexture.texture, &viewDesc);
-	wgpuTextureRelease(sTexture.texture);
-
-	return targetViewTexture;
-}
-
 
 WGPUDeviceLostCallbackInfo Win32_WGPU_Callback_DeviceLost()
 {
@@ -1707,6 +1964,11 @@ LRESULT CALLBACK Win32_MainWindowCallback(HWND Window, UINT Message, WPARAM WPar
 	return result;
 }
 
+void Win32_WGPU_Util_Initialize()
+{
+
+}
+
 int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)
 {
 	WNDCLASS wndClass      = {};
@@ -1748,76 +2010,40 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	gameMemory.assetsChunk.memory   = gameMemory.readFileChunk.memory + gameMemory.readFileChunk.size;
 
 
-	const char* testReal32 = "-1.04560";
-	Win32_Util_ConvertStringToFloat(testReal32, Win32_Util_StringSize(testReal32));
-
 
 
 	AssetManager assetManager = {};
-
 	MeshAsset asset = Win32_Util_ReadFile_OBJ("../resource/TestOBJ.obj", &gameMemory);
 	
-
-
 	// WGPU initialization
 	//
-	WGPUMaster wgpu = {};
-	Win32_WGPU_GetInstance        (wgpu.instance);
-	Win32_WGPU_GetAdapter         (wgpu.instance, wgpu.adapter);
-	Win32_WGPU_GetDevice          (wgpu.adapter, wgpu.device);
-	Win32_WGPU_GetSurface         (&wndClass, wndHandle, wgpu.instance, wgpu.surface);
-	Win32_WGPU_GetSurfaceFormat   (wgpu.surface, wgpu.adapter, wgpu.surfaceFormat);
-	Win32_WGPU_GetShaderModule    (wgpu.device, wgpu.shaderModule, &gameMemory);
-	Win32_WGPU_GetBindGroupLayout (wgpu.device, wgpu.bindGroupLayout);
-	Win32_WGPU_GetPipelineLayout  (wgpu.device, wgpu.bindGroupLayout, wgpu.pipelineLayout);
-	Win32_WGPU_GetRenderPipeline  (wgpu.device, wgpu.shaderModule, wgpu.surfaceFormat, wgpu.bindGroupLayout, wgpu.pipelineLayout, wgpu.renderPipeline);
+	wgpu::Instance        instance        = wgpu::helper::createInstance        ();
+	wgpu::Adapter         adapter         = wgpu::helper::createAdapter         (instance);
+	wgpu::Device          device          = wgpu::helper::createDevice          (adapter);
+	wgpu::Surface         surface         = wgpu::helper::createSurface         (&wndClass, wndHandle, instance);
+	wgpu::ShaderModule    shaderModule    = wgpu::helper::createShaderModule    (device, &gameMemory, "../resource/shader.sha", "Xin Shader Module");
+	wgpu::BindGroupLayout bindGroupLayout = wgpu::helper::createBindGroupLayout (device);
+	wgpu::PipelineLayout  pipelineLayout  = wgpu::helper::createPipelineLayout  (device, bindGroupLayout);
+	wgpu::RenderPipeline  renderPipeline  = wgpu::helper::createRenderPipeline  (device, shaderModule, surface.getFormat(adapter), pipelineLayout);
 
-	Win32_WGPU_ConfigureSurface(wgpu.surface, wgpu.surfaceFormat, wgpu.device, wgpu.adapter);
-	wgpuAdapterRelease(wgpu.adapter);
-	wgpuShaderModuleRelease(wgpu.shaderModule);
+	WGPUSurfaceConfiguration config = {};
+	config.nextInChain     = nullptr;
+	config.width           = WINDOW_WIDTH;
+	config.height          = WINDOW_HEIGHT;
+	config.format          = surface.getFormat(adapter);
+	config.viewFormatCount = 0;
+	config.viewFormats     = nullptr;
+	config.usage           = WGPUTextureUsage_RenderAttachment;
+	config.device          = device.object;
+	config.presentMode     = WGPUPresentMode::WGPUPresentMode_Fifo;
+	config.alphaMode       = WGPUCompositeAlphaMode::WGPUCompositeAlphaMode_Auto;
+	surface.configure(&config);	
 
-	wgpu.queue = wgpuDeviceGetQueue(wgpu.device);
+	adapter.release();
+	shaderModule.release();
 
 
-	// Buffer stuff
-	//
-	std::vector<real32> pointData =
-	{
-		// First triangle
-		//-0.2f, -0.2f, 1.0f, 0.0f, 0.0f,
-		//+0.2f, -0.2f, 0.0f, 1.0f, 0.0f,
-		//+0.2f, +0.2f, 0.0f, 0.0f, 1.0f,
-		//p1.x, p1.y, p1.z, 0.7f, 1.0f, 0.3f, 
-		//p2.x, p2.y, p2.z, 1.0f, 0.5f, 1.0f,  
-		//p3.x, p3.y, p3.z, 1.0f, 0.2f, 1.0f,  
-		//p4.x, p4.y, p4.z, 1.0f, 1.0f, 1.0f,  
-
-		//asset.vertices.at(0), asset.vertices.at(1) , asset.vertices.at(2) , 0.7f, 1.0f, 1.0f,
-		//asset.vertices.at(3), asset.vertices.at(4) , asset.vertices.at(5) , 1.0f, 0.5f, 1.0f,
-		//asset.vertices.at(6), asset.vertices.at(7) , asset.vertices.at(8) , 1.0f, 0.2f, 1.0f,
-		//asset.vertices.at(9), asset.vertices.at(10), asset.vertices.at(11), 1.0f, 1.0f, 1.0f,
-
-		asset.vertices.at(0), asset.vertices.at(1) , asset.vertices.at(2) , //0.7f, 1.0f, 1.0f,
-		asset.vertices.at(3), asset.vertices.at(4) , asset.vertices.at(5) , //1.0f, 0.5f, 1.0f,
-		asset.vertices.at(6), asset.vertices.at(7) , asset.vertices.at(8) , //1.0f, 0.2f, 1.0f,
-		asset.vertices.at(9), asset.vertices.at(10), asset.vertices.at(11), //1.0f, 1.0f, 1.0f,
-
-		//-0.2f, +0.2f, 1.0f, 1.0f, 0.0f,
-	};
-
-	//std::vector<uint16> indexData =
-	//{
-	//	//0, 1, 2,
-	//	//1, 2, 3,
-	//	//i1.a, i1.b, i1.c, 
-	//	//i2.a, i2.b, i2.c,
-	//
-	//	asset.indexes.at(0), asset.indexes.at(1), asset.indexes.at(2),
-	//	asset.indexes.at(3), asset.indexes.at(4), asset.indexes.at(5),
-	//};
-	//indexData.resize((indexData.size() + 1) & ~1); // round up to the next multiple of 2
-
-	//uint32 indexCount = (uint32)(indexData.size());
+	wgpu::Queue queue = device.getQueueHelper();
 
 
 	ShaderUniform shaderUniform = {};
@@ -1831,37 +2057,32 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 
 	WGPUBufferDescriptor bufferDesc = {};
 	bufferDesc.nextInChain = nullptr;
-	bufferDesc.label.data = "Point buffer";
-	bufferDesc.label.length = strlen(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-	//bufferDesc.size = pointData.size() * sizeof(real32); // round up to the next multiple of 4
 	bufferDesc.size = asset.vertices.getElementsSize();
 	bufferDesc.size = (bufferDesc.size + 3) & ~3;
 	bufferDesc.mappedAtCreation = false;
-	WGPUBuffer pointBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
-	//wgpuQueueWriteBuffer(wgpu.queue, pointBuffer, 0, pointData.data(), bufferDesc.size);
-	wgpuQueueWriteBuffer(wgpu.queue, pointBuffer, 0, asset.vertices.dataPtr(), bufferDesc.size);
+	wgpu::Buffer pointBuffer = device.createBufferHelper(&bufferDesc);
+	pointBuffer.setLabel("Point buffer");
+	queue.writeBuffer(pointBuffer, 0, asset.vertices.dataPtr(), bufferDesc.size);
 
 	//bufferDesc.size = indexData.size() * sizeof(uint16);
 	bufferDesc.size = asset.indexes.getElementsSize();
 	bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
-	bufferDesc.label.data = "Index buffer";
-	bufferDesc.label.length = strlen(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
 	bufferDesc.mappedAtCreation = false;
-	WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
-	//wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
-	wgpuQueueWriteBuffer(wgpu.queue, indexBuffer, 0, asset.indexes.dataPtr(), bufferDesc.size);
+	wgpu::Buffer indexBuffer = device.createBufferHelper(&bufferDesc);
+	indexBuffer.setLabel("Index buffer");
+	queue.writeBuffer(indexBuffer, 0, asset.indexes.dataPtr(), bufferDesc.size);
 
-	WGPULimits supportedLimits = Win32_WGPU_GetDefaultLimits(wgpu.adapter);
+    //WGPULimits supportedLimits = Win32_WGPU_GetDefaultLimits(wgpu.adapter);
+	WGPULimits supportedLimits = adapter.getDefaultLimits();
 	uint32 uniformBufferStride = Win32_WGPU_Util_CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	bufferDesc.size = uniformBufferStride + sizeof(ShaderUniform);
-	bufferDesc.label.data = "Uniform buffer";
-	bufferDesc.label.length = strlen(bufferDesc.label.data);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
 	bufferDesc.mappedAtCreation = false;
-	WGPUBuffer uniformBuffer = wgpuDeviceCreateBuffer(wgpu.device, &bufferDesc);
-	wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, 0, &shaderUniform, sizeof(ShaderUniform));
+	wgpu::Buffer uniformBuffer = device.createBufferHelper(&bufferDesc);
+	uniformBuffer.setLabel("Uniform buffer");
+	queue.writeBuffer(uniformBuffer, 0, &shaderUniform, sizeof(ShaderUniform));
 	
 	//shaderUniform.color[0] = 0.5f;
 	//shaderUniform.color[1] = 1.0f;
@@ -1877,15 +2098,16 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	WGPUBindGroupEntry binding = {};
 	binding.nextInChain = nullptr;
 	binding.binding = 0; // The index of the binding
-	binding.buffer = uniformBuffer; // The buffer it is bound to
+	binding.buffer = uniformBuffer.object; // The buffer it is bound to
 	binding.offset = 0; // A buffer can contain multiple uniforms
 	binding.size = sizeof(ShaderUniform); // i.e. the size of the buffer
 	WGPUBindGroupDescriptor bindGroupDesc = {};
 	bindGroupDesc.nextInChain = nullptr;
-	bindGroupDesc.layout = wgpu.bindGroupLayout;
+	bindGroupDesc.layout = bindGroupLayout.object;
 	bindGroupDesc.entryCount = 1;
 	bindGroupDesc.entries = &binding;
-	wgpu.bindGroup = wgpuDeviceCreateBindGroup(wgpu.device, &bindGroupDesc);
+	wgpu::BindGroup bindGroup = device.createBindGroupHelper(&bindGroupDesc);
+	bindGroup.setLabel("Bind group san");
 
 
 	real32 fakeTime = 1.0f;
@@ -1900,25 +2122,26 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), &shaderUniform.time, sizeof(real32));
 
 		//shaderUniform.color[1] = (real32)sin(fakeTime);
-		wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), &shaderUniform.color, sizeof(ShaderUniform::color));
+		queue.writeBuffer(uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), &shaderUniform.color, sizeof(ShaderUniform::color));
+		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), &shaderUniform.color, sizeof(ShaderUniform::color));
 		//wgpuQueueWriteBuffer(wgpu.queue, uniformBuffer, sizeof(real32) * 2, &shaderUniform.color[1], sizeof(real32));
 
 
-		WGPUTextureView targetView = Win32_WGPU_GetNextSurfaceTextureView(wgpu.surface);
-		if (!targetView) return 0;
+		wgpu::TextureView targetView = surface.getCurrentTextureView();
+		ASSERT(targetView.object);
 
 
 		WGPUCommandEncoderDescriptor encoderDesc = {};
 		encoderDesc.nextInChain = nullptr;
 		encoderDesc.label.data = "Sexy Command Encoder (SCE)";
 		encoderDesc.label.length = strlen(encoderDesc.label.data);
-		WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(wgpu.device, &encoderDesc);
+		wgpu::CommandEncoder encoder = device.createCommandEncoderHelper(&encoderDesc);
 
 
 		// Describe Render Pass
 		//
 		WGPURenderPassColorAttachment renderPassColorAttachment = {};
-		renderPassColorAttachment.view = targetView;
+		renderPassColorAttachment.view = targetView.object;
 		renderPassColorAttachment.resolveTarget = nullptr;
 		renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
 		renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
@@ -1932,52 +2155,45 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		renderPassDesc.depthStencilAttachment = nullptr;
 		renderPassDesc.timestampWrites = nullptr;
 
-		WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
+		wgpu::RenderPassEncoder renderPass = encoder.beginRenderPassHelper(&renderPassDesc);
 
 		// Use Render Pass
 		//
 		uint32 dynamicOffset = 0;
 		dynamicOffset = 0 * uniformBufferStride;
-		wgpuRenderPassEncoderSetPipeline(renderPass, wgpu.renderPipeline);
-		wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, pointBuffer, 0, wgpuBufferGetSize(pointBuffer));
-		wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuBufferGetSize(indexBuffer));
-		wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
-		//wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
-		wgpuRenderPassEncoderDrawIndexed(renderPass, (uint32)(asset.indexes.getElementsLength()), 1, 0, 0, 0);
-		//dynamicOffset = 1 * uniformBufferStride;
-		//wgpuRenderPassEncoderSetBindGroup(renderPass, 0, wgpu.bindGroup, 1, &dynamicOffset);
-		//wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
-		wgpuRenderPassEncoderEnd(renderPass);
-		wgpuRenderPassEncoderRelease(renderPass);
+		renderPass.setPipeline(renderPipeline);
+		renderPass.setVertexBuffer(0, pointBuffer, 0, pointBuffer.getSize());
+		renderPass.setIndexBuffer(indexBuffer, WGPUIndexFormat_Uint16, 0, indexBuffer.getSize());
+		renderPass.setBindGroup(0, bindGroup, 1, &dynamicOffset);
+		renderPass.drawIndexed((uint32)(asset.indexes.getElementsLength()), 1, 0, 0, 0);
+		renderPass.end();
+		renderPass.release();
 
 		WGPUCommandBufferDescriptor commandBufferDesc = {};
 		commandBufferDesc.nextInChain = nullptr;
 		commandBufferDesc.label.data = "Command buffer";
 		commandBufferDesc.label.length = strlen(commandBufferDesc.label.data);
-		WGPUCommandBuffer commandBuffer = wgpuCommandEncoderFinish(encoder, &commandBufferDesc);
-		wgpuCommandEncoderRelease(encoder);
+		wgpu::CommandBuffer commandBuffer = encoder.finishHelper(&commandBufferDesc);
+		encoder.release();
 
-		wgpuQueueSubmit(wgpu.queue, 1, &commandBuffer);
-		wgpuCommandBufferRelease(commandBuffer);
-
-
-		wgpuTextureViewRelease(targetView);
-		wgpuSurfacePresent(wgpu.surface);
-		wgpuDeviceTick(wgpu.device);
+		queue.submit(1, &commandBuffer.object);
+		commandBuffer.release();
+		targetView.release();
+		surface.present();
+		device.tick();
 	}
 
 	// Once we have retrieved our adapter, we do not need the WGPUInstance anymore
-	wgpuRenderPipelineRelease(wgpu.renderPipeline);
-	wgpuSurfaceUnconfigure(wgpu.surface);
-	wgpuQueueRelease(wgpu.queue);
-	wgpuSurfaceRelease(wgpu.surface);
-	wgpuDeviceRelease(wgpu.device);
-	wgpuPipelineLayoutRelease(wgpu.pipelineLayout);
-	wgpuBindGroupRelease(wgpu.bindGroup);
-	wgpuBindGroupLayoutRelease(wgpu.bindGroupLayout);
-	wgpuBufferRelease(pointBuffer);
-	wgpuBufferRelease(indexBuffer);
-	wgpuBufferRelease(uniformBuffer);
+	renderPipeline.release();
+	surface.unconfigure();
+	queue.release();
+	surface.release();
+	pipelineLayout.release();
+	bindGroup.release();
+	bindGroupLayout.release();
+	pointBuffer.release();
+	indexBuffer.release();
+	uniformBuffer.release();
 
 	return 0;
 }

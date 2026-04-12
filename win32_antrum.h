@@ -91,20 +91,7 @@ struct String
 	size_t size;
 };
 
-struct WGPUMaster
-{
-	WGPUInstance        instance;
-	WGPUAdapter         adapter;
-	WGPUDevice          device;
-	WGPUSurface         surface;
-	WGPUTextureFormat   surfaceFormat;
-	WGPUShaderModule    shaderModule;
-	WGPUPipelineLayout  pipelineLayout;
-	WGPUBindGroupLayout bindGroupLayout;
-	WGPUBindGroup       bindGroup;
-	WGPURenderPipeline  renderPipeline;
-	WGPUQueue           queue;
-};
+
 
 struct ShaderUniform
 {
@@ -250,17 +237,75 @@ struct FileReader
 };
 
 
-namespace WGPU
+// >NOTE: custom utilitary functions that were added to WGPU objects structs
+#if !defined(WGPU_XIN_EXTRA)
+#define WGPU_XIN_EXTRA
+#endif
+
+namespace wgpu
 {
 	WGPUInstance createInstance(WGPU_NULLABLE WGPUInstanceDescriptor const* descriptor);
 
+	struct Device            ;
+	struct Adapter           ;
+	struct Instance          ;
+	struct Surface           ;
+	struct Texture           ;
+	struct ShaderModule      ;
+	struct Queue             ;
+	struct CommandEncoder    ;
+	struct RenderPassEncoder ;
+	struct RenderPipeline    ;
+	struct Buffer            ;
+	struct BindGroupLayout   ;
+	struct PipelineLayout    ;
+	struct BindGroup         ;
+	struct TextureView       ;
+	struct CommandBuffer     ;
 
+	namespace helper
+	{
+		wgpu::Instance        createInstance        ();
+		wgpu::Adapter         createAdapter         (wgpu::Instance instance);
+		wgpu::Device          createDevice          (wgpu::Adapter adapter);
+		wgpu::Surface         createSurface         (WNDCLASS* wndClass, HWND wndHandle, wgpu::Instance instance);
+		wgpu::ShaderModule    createShaderModule    (wgpu::Device device, GameMemory* memory, const char* path, const char* label);
+		wgpu::BindGroupLayout createBindGroupLayout (wgpu::Device device);
+		wgpu::PipelineLayout  createPipelineLayout  (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout);
+		wgpu::RenderPipeline  createRenderPipeline  (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout);
+
+		WGPUAdapter requestAdapterAsync (wgpu::Instance instance, WGPURequestAdapterOptions const* options);
+		WGPUDevice  requestDeviceAsync  (wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor);
+	}
+
+	// 
+	//struct ObjectContainer
+	//{
+	//	Instance*           instance;
+	//	WGPUAdapter         adapter;
+	//	WGPUDevice          device;
+	//	WGPUSurface         surface;
+	//	WGPUTextureFormat   surfaceFormat;
+	//	WGPUShaderModule    shaderModule;
+	//	WGPUPipelineLayout  pipelineLayout;
+	//	WGPUBindGroupLayout bindGroupLayout;
+	//	WGPUBindGroup       bindGroup;
+	//	WGPURenderPipeline  renderPipeline;
+	//	WGPUQueue           queue;
+	//};
+
+
+	// >NOTE: All of these structs are referred to as "helpers"
+	//        Example: Device::getQueueHelper will return wgpu::Queue while Device::getQueue will return WGPUQueue
 	struct Device
 	{
 		WGPUBindGroup           createBindGroup              (WGPUBindGroupDescriptor const* descriptor);
+		wgpu::BindGroup         createBindGroupHelper        (WGPUBindGroupDescriptor const* descriptor) WGPU_XIN_EXTRA;
 		WGPUBindGroupLayout     createBindGroupLayout        (WGPUBindGroupLayoutDescriptor const* descriptor);
 		WGPUBuffer              createBuffer                 (WGPUBufferDescriptor const* descriptor);
+		wgpu::Buffer            createBufferHelper           (WGPUBufferDescriptor const* descriptor) WGPU_XIN_EXTRA;
 		WGPUCommandEncoder      createCommandEncoder         (WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor);
+		wgpu::CommandEncoder    createCommandEncoderHelper   (WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor) WGPU_XIN_EXTRA;
 		WGPUComputePipeline     createComputePipeline        (WGPUComputePipelineDescriptor const* descriptor);
 		WGPUFuture              createComputePipelineAsync   (WGPUComputePipelineDescriptor const* descriptor, WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo);
 		WGPUBuffer              createErrorBuffer            (WGPUBufferDescriptor const* descriptor);
@@ -286,6 +331,7 @@ namespace WGPU
 		WGPUStatus              getLimits                    (WGPULimits* limits);
 		WGPUFuture              getLostFuture                ();
 		WGPUQueue               getQueue                     ();
+		wgpu::Queue             getQueueHelper               () WGPU_XIN_EXTRA;
 		WGPUBool                hasFeature                   (WGPUFeatureName feature);
 		WGPUSharedBufferMemory  importShaderBufferMemory     (WGPUSharedBufferMemoryDescriptor const* descriptor);
 		WGPUSharedFence         importSharedFence            (WGPUSharedFenceDescriptor const* descriptor);
@@ -294,14 +340,14 @@ namespace WGPU
 		WGPUFuture              popErrorScope                (WGPUPopErrorScopeCallbackInfo callbackInfo);
 		void                    pushErrorScope               (WGPUErrorFilter filter);
 		void                    setLabel                     (WGPUStringView label);
-		void                    setLabel                     (const char* label);
+		void                    setLabel                     (const char* label) WGPU_XIN_EXTRA;
 		void                    setLoggingCallback           (WGPULoggingCallbackInfo callbackInfo);
 		void                    tick                         ();
 		void                    validateTextureDescriptor    (WGPUTextureDescriptor const* descriptor);
 		void                    addRef                       ();
 		void                    release                      ();
 
-		WGPUDevice device;
+		WGPUDevice object;
 	};
 
 	struct Adapter
@@ -312,12 +358,13 @@ namespace WGPU
 		WGPUStatus   getInfo               (WGPUAdapterInfo* info);
 		WGPUInstance getInstance           ();
 		WGPUStatus   getLimits             (WGPULimits* limits);
+		WGPULimits   getDefaultLimits      () WGPU_XIN_EXTRA;
 		WGPUBool     hasFeature            (WGPUFeatureName feature);
 		WGPUFuture   requestDevice         (WGPU_NULLABLE WGPUDeviceDescriptor const* descriptor, WGPURequestDeviceCallbackInfo callbackInfo);
 		void         addRef                ();
 		void         release               ();
 
-		WGPUAdapter adapter;
+		WGPUAdapter object;
 	};
 
 	struct Instance
@@ -331,22 +378,26 @@ namespace WGPU
 		void           addRef                  ();
 		void           release                 ();
 
-		WGPUInstance instance;
+		WGPUInstance object;
 	};
 
 	struct Surface
 	{
-		void       configure         (WGPUSurfaceConfiguration const* config);
-		WGPUStatus getCapabilities   (WGPUAdapter adapter, WGPUSurfaceCapabilities* capabilities);
-		void       getCurrentTexture (WGPUSurfaceTexture* surfaceTexture);
-		WGPUStatus present           ();
-		void       setLabel          (WGPUStringView label);
-		void       setLabel          (const char* label);
-		void       unconfigure       ();
-		void       addRef            ();
-		void       release           ();
+		void              configure             (WGPUSurfaceConfiguration const* config);
+		WGPUStatus        getCapabilities       (WGPUAdapter adapter, WGPUSurfaceCapabilities* capabilities);
+		WGPUStatus        getCapabilities       (wgpu::Adapter adapter, WGPUSurfaceCapabilities* capabilities) WGPU_XIN_EXTRA;
+		void              getCurrentTexture     (WGPUSurfaceTexture* surfaceTexture);
+		wgpu::TextureView getCurrentTextureView () WGPU_XIN_EXTRA;
+		WGPUTextureFormat getFormat             (WGPUAdapter adapter, uint32 index = 0) WGPU_XIN_EXTRA;
+		WGPUTextureFormat getFormat             (wgpu::Adapter adapter, uint32 index = 0) WGPU_XIN_EXTRA;
+		WGPUStatus        present               ();
+		void              setLabel              (WGPUStringView label);
+		void              setLabel              (const char* label) WGPU_XIN_EXTRA;
+		void              unconfigure           ();
+		void              addRef                ();
+		void              release               ();
 
-		WGPUSurface surface;
+		WGPUSurface object;
 	};
 
 	struct Texture
@@ -365,24 +416,24 @@ namespace WGPU
 		uint32                   getWidth                       ();
 		void                     pin                            (WGPUTextureUsage usage);
 		void                     setLabel                       (WGPUStringView label);
-		void                     setLabel                       (const char* label);
+		void                     setLabel                       (const char* label) WGPU_XIN_EXTRA;
 		void                     setOwnershipForMemoryDump      (uint64 ownerGuid);
 		void                     unpin                          ();
 		void                     addRef                         ();
 		void                     release                        ();
 
-		WGPUTexture texture;
+		WGPUTexture object;
 	};
 
 	struct ShaderModule
 	{
 		WGPUFuture getCompilationInfo (WGPUCompilationInfoCallbackInfo callbackInfo);
 		void       setLabel           (WGPUStringView label);
-		void       setLabel           (const char* label);
+		void       setLabel           (const char* label) WGPU_XIN_EXTRA;
 		void       addRef             ();
 		void       release            ();
 
-		WGPUShaderModule shaderModule;
+		WGPUShaderModule object;
 	};
 
 	struct Queue
@@ -391,40 +442,43 @@ namespace WGPU
 		void       copyTextureForBrowser         (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize, WGPUCopyTextureForBrowserOptions const* options);
 		WGPUFuture onSubmittedWorkDone           (WGPUQueueWorkDoneCallbackInfo callbackInfo);
 		void       setLabel                      (WGPUStringView label);
-		void       setLabel                      (const char* label);
+		void       setLabel                      (const char* label) WGPU_XIN_EXTRA;
 		void       submit                        (size_t commandCount, WGPUCommandBuffer const* commands);
 		void       writeBuffer                   (WGPUBuffer buffer, uint64_t bufferOffset, void const* data, size_t size);
+		void       writeBuffer                   (wgpu::Buffer buffer, uint64_t bufferOffset, void const* data, size_t size) WGPU_XIN_EXTRA;
 		void       writeTexture                  (WGPUTexelCopyTextureInfo const* destination, void const* data, size_t dataSize, WGPUTexelCopyBufferLayout const* dataLayout, WGPUExtent3D const* writeSize);
 		void       addRef                        ();
 		void       release                       ();
 
-		WGPUQueue queue;
+		WGPUQueue object;
 	};
 
 	struct CommandEncoder
 	{
-		WGPUComputePassEncoder beginComputePass      (WGPU_NULLABLE WGPUComputePassDescriptor const* descriptor);
-		WGPURenderPassEncoder  beginRenderPass       (WGPURenderPassDescriptor const* descriptor);
-		void                   clearBuffer           (WGPUBuffer buffer, uint64_t offset, uint64_t size);
-		void                   copyBufferToBuffer    (WGPUBuffer source, uint64_t sourceOffset, WGPUBuffer destination, uint64_t destinationOffset, uint64_t size);
-		void                   copyBufferToTexture   (WGPUTexelCopyBufferInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize);
-		void                   copyTextureToBuffer   (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyBufferInfo const* destination, WGPUExtent3D const* copySize);
-		void                   copyTextureToTexture  (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize);
-		WGPUCommandBuffer      finish                (WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor);
-		void                   injectValidationError (WGPUStringView message);
-		void                   injectDebugMarker     (WGPUStringView markerLabel);
-		void                   popDebugGroup         ();
-		void                   pushDebugGroup        (WGPUStringView groupLabel);
-		void                   resolveQuerySet       (WGPUQuerySet querySet, uint32_t firstQuery, uint32_t queryCount, WGPUBuffer destination, uint64_t destinationOffset);
-		void                   setLabel              (WGPUStringView label);
-		void                   setLabel              (const char* label);
-		void                   setResourceTable      (WGPU_NULLABLE WGPUResourceTable table);
-		void                   writeBuffer           (WGPUBuffer buffer, uint64_t bufferOffset, uint8_t const* data, uint64_t size);
-		void                   writeTimestamp        (WGPUQuerySet querySet, uint32_t queryIndex);
-		void                   addRef                ();
-		void                   release               ();
+		WGPUComputePassEncoder   beginComputePass      (WGPU_NULLABLE WGPUComputePassDescriptor const* descriptor);
+		WGPURenderPassEncoder    beginRenderPass       (WGPURenderPassDescriptor const* descriptor);
+		wgpu::RenderPassEncoder  beginRenderPassHelper (WGPURenderPassDescriptor const* descriptor) WGPU_XIN_EXTRA;
+		void                     clearBuffer           (WGPUBuffer buffer, uint64_t offset, uint64_t size);
+		void                     copyBufferToBuffer    (WGPUBuffer source, uint64_t sourceOffset, WGPUBuffer destination, uint64_t destinationOffset, uint64_t size);
+		void                     copyBufferToTexture   (WGPUTexelCopyBufferInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize);
+		void                     copyTextureToBuffer   (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyBufferInfo const* destination, WGPUExtent3D const* copySize);
+		void                     copyTextureToTexture  (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize);
+		WGPUCommandBuffer        finish                (WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor);
+		wgpu::CommandBuffer      finishHelper          (WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor);
+		void                     injectValidationError (WGPUStringView message);
+		void                     injectDebugMarker     (WGPUStringView markerLabel);
+		void                     popDebugGroup         ();
+		void                     pushDebugGroup        (WGPUStringView groupLabel);
+		void                     resolveQuerySet       (WGPUQuerySet querySet, uint32_t firstQuery, uint32_t queryCount, WGPUBuffer destination, uint64_t destinationOffset);
+		void                     setLabel              (WGPUStringView label);
+		void                     setLabel              (const char* label) WGPU_XIN_EXTRA;
+		void                     setResourceTable      (WGPU_NULLABLE WGPUResourceTable table);
+		void                     writeBuffer           (WGPUBuffer buffer, uint64_t bufferOffset, uint8_t const* data, uint64_t size);
+		void                     writeTimestamp        (WGPUQuerySet querySet, uint32_t queryIndex);
+		void                     addRef                ();
+		void                     release               ();
 
-		WGPUCommandEncoder commandEncoder;
+		WGPUCommandEncoder object;
 	};
 
 	struct RenderPassEncoder
@@ -443,32 +497,36 @@ namespace WGPU
 		void popDebugGroup            ();
 		void pushDebugGroup           (WGPUStringView groupLabel);
 		void setBindGroup             (uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const* dynamicOffsets);
+		void setBindGroup             (uint32_t groupIndex, wgpu::BindGroup group, size_t dynamicOffsetCount, uint32_t const* dynamicOffsets) WGPU_XIN_EXTRA;
 		void setBlendConstant         (WGPUColor const* color);
 		void setImmediates            (uint32_t offset, void const* data, size_t size);
 		void setIndexBuffer           (WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size);
+		void setIndexBuffer           (wgpu::Buffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size) WGPU_XIN_EXTRA;
 		void setLabel                 (WGPUStringView label);
-		void setLabel                 (const char* label);
+		void setLabel                 (const char* label) WGPU_XIN_EXTRA;
 		void setPipeline              (WGPURenderPipeline pipeline);
+		void setPipeline              (wgpu::RenderPipeline pipeline) WGPU_XIN_EXTRA;
 		void setScissorRect           (uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 		void setStencilReference      (uint32_t reference);
 		void setVertexBuffer          (uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size);
+		void setVertexBuffer          (uint32_t slot, wgpu::Buffer buffer, uint64_t offset, uint64_t size) WGPU_XIN_EXTRA;
 		void setViewport              (float x, float y, float width, float height, float minDepth, float maxDepth);
 		void writeTimestamp           (WGPUQuerySet querySet, uint32_t queryIndex);
 		void addRef                   ();
 		void release                  ();
 
-		WGPURenderPassEncoder renderPassEncoder;
+		WGPURenderPassEncoder object;
 	};
 
 	struct RenderPipeline
 	{
 		WGPUBindGroupLayout getBindGroupLayout (uint32_t groupIndex);
 		void                setLabel           (WGPUStringView label);
-		void                setLabel           (const char* label);
+		void                setLabel           (const char* label) WGPU_XIN_EXTRA;
 		void                addRef             ();
 		void                release            ();
 
-		WGPURenderPipeline renderPipeline;
+		WGPURenderPipeline object;
 	};
 
 	struct Buffer
@@ -483,13 +541,63 @@ namespace WGPU
 		WGPUFuture          mapAsync            (WGPUMapMode mode, size_t offset, size_t size, WGPUBufferMapCallbackInfo callbackInfo);
 		WGPUStatus          readMappedRange     (size_t offset, void* data, size_t size);
 		void                setLabel            (WGPUStringView label);
-		void                setLabel            (const char* label);
+		void                setLabel            (const char* label) WGPU_XIN_EXTRA;
 		void                unmap               ();
 		WGPUStatus          writeMappedRange    (size_t offset, void const* data, size_t size);
 		void                addRef              ();
 		void                release             ();
 
-		WGPUBuffer buffer;
+		WGPUBuffer object;
+	};
+
+	struct BindGroupLayout
+	{
+		void setLabel (WGPUStringView label);
+		void setLabel (const char* label) WGPU_XIN_EXTRA;
+		void addRef   ();
+		void release  ();
+
+		WGPUBindGroupLayout object;
+	};
+
+	struct PipelineLayout
+	{
+		void setLabel (WGPUStringView label);
+		void setLabel (const char* label) WGPU_XIN_EXTRA;
+		void addRef   ();
+		void release  ();
+
+		WGPUPipelineLayout object;
+	};
+
+	struct BindGroup
+	{
+		void setLabel (WGPUStringView label);
+		void setLabel (const char* label) WGPU_XIN_EXTRA;
+		void addRef   ();
+		void release  ();
+
+		WGPUBindGroup object;
+	};
+
+	struct TextureView
+	{
+		void setLabel (WGPUStringView label);
+		void setLabel (const char* label) WGPU_XIN_EXTRA;
+		void addRef   ();
+		void release  ();
+
+		WGPUTextureView object;
+	};
+
+	struct CommandBuffer
+	{
+		void setLabel (WGPUStringView label);
+		void setLabel (const char* label) WGPU_XIN_EXTRA;
+		void addRef   ();
+		void release  ();
+
+		WGPUCommandBuffer object;
 	};
 }
 
@@ -530,28 +638,13 @@ namespace OBJParser
 }
 
 
-void                            Win32_WGPU_GetInstance(WGPUInstance& OutInstance);
-void                            Win32_WGPU_GetAdapter(WGPUInstance Instance, WGPUAdapter& OutAdapter);
-void                            Win32_WGPU_GetDevice(WGPUAdapter Adapter, WGPUDevice& OutDevice);
-void                            Win32_WGPU_GetSurface(WNDCLASS* WndClass, HWND WndHandle, WGPUInstance Instance, WGPUSurface& OutSurface);
-void                            Win32_WGPU_GetSurfaceFormat(WGPUSurface Surface, WGPUAdapter Adapter, WGPUTextureFormat& OutSurfaceFormat);
-void                            Win32_WGPU_GetShaderModule(WGPUDevice Device, WGPUShaderModule& OutShaderModule, GameMemory* Memory);
-void                            Win32_WGPU_GetPipelineLayout(WGPUDevice Device, WGPUBindGroupLayout BindGroupLayout, WGPUPipelineLayout& PipelineLayout);
-void                            Win32_WGPU_GetBindGroupLayout(WGPUDevice Device, WGPUBindGroupLayout& BindGroupLayout);
-void                            Win32_WGPU_GetRenderPipeline(WGPUDevice Device, WGPUShaderModule ShaderModule, WGPUTextureFormat SurfaceFormat, WGPUBindGroupLayout BindGroupLayout, WGPUPipelineLayout PipelineLayout, WGPURenderPipeline& OutRenderPipeline);
 void						    Win32_WGPU_GetDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout);
 uint32                          Win32_WGPU_Util_CeilToNextMultiple(uint32 Value, uint32 Multiple);
-
-WGPUAdapter                     Win32_WGPU_Sync_RequestAdapter(WGPUInstance Instance, WGPURequestAdapterOptions const* Options);
-WGPUDevice                      Win32_WGPU_Sync_RequestDevice(WGPUAdapter Adapter, const WGPUDeviceDescriptor* Descriptor);
+void                            Win32_WGPU_Util_Initialize();
 
 WGPUDeviceLostCallbackInfo      Win32_WGPU_Callback_DeviceLost();
 WGPUUncapturedErrorCallbackInfo Win32_WGPU_Callback_UncapturedError();
 
-
-WGPULimits                      Win32_WGPU_GetDefaultLimits(WGPUAdapter Adapter);
-void                            Win32_WGPU_ConfigureSurface(WGPUSurface Surface, WGPUTextureFormat SurfaceFormat, WGPUDevice Device, WGPUAdapter Adapter);
-WGPUTextureView                 Win32_WGPU_GetNextSurfaceTextureView(WGPUSurface Surface);
 
 const char*                     Win32_Util_Stringify_WGPUDeviceLostReason(WGPUDeviceLostReason Reason);
 const char*                     Win32_Util_Stringify_WGPUErrorType(WGPUErrorType Err);
