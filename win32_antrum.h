@@ -234,7 +234,7 @@ struct FileReader
 };
 
 
-// >NOTE: custom utilitary functions that were added to WGPU objects structs
+// >NOTE: tag for custom utilitary functions that were added to WGPU objects structs
 #if !defined(WGPU_XIN_EXTRA)
 #define WGPU_XIN_EXTRA
 #endif
