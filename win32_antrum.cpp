@@ -10,15 +10,6 @@
 
 
 
-bool gRunning = false;
-
-
-
-
-
-
-
-
 bool CharUtil::IsDigit(char c)
 {
 	int cInt = (int)c;
@@ -883,7 +874,7 @@ char* Win32_Util_AllocateReadFileMemory(GameMemory* Memory, size_t Size)
 }
 
 
-void Win32_ProcessPendingMessages()
+void Win32_ProcessPendingMessages(GameState* gameState)
 {
 	MSG msg = {};
 	while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -892,7 +883,7 @@ void Win32_ProcessPendingMessages()
 		{
 			case WM_QUIT:
 			{
-				gRunning = false;
+				gameState->quit = true;
 			} break;
 
 			case WM_SYSKEYDOWN:
@@ -903,7 +894,7 @@ void Win32_ProcessPendingMessages()
 				uint32 vkCode = (uint32)msg.wParam;
 				if (vkCode == 'A') OutputDebugString("A KEY PRESSED !\n");
 				if (vkCode == 'D') OutputDebugString("D KEY PRESSED !\n");
-				if (vkCode == VK_ESCAPE) gRunning = false;
+				if (vkCode == VK_ESCAPE) gameState->quit = true;
 			} break;
 
 			default:
@@ -924,7 +915,7 @@ LRESULT CALLBACK Win32_MainWindowCallback(HWND Window, UINT Message, WPARAM WPar
 		case WM_DESTROY:
 		case WM_CLOSE:
 		{
-			gRunning = false;
+			//gRunning = false;
 		} break;
 
 		default:
@@ -1001,12 +992,14 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	gameMemory.assetsChunk.size     = MEMSIZE_ASSETS;
 	gameMemory.assetsChunk.memory   = gameMemory.readFileChunk.memory + gameMemory.readFileChunk.size;
 
+	GameState gameState = {};
 
 	PlatformStorage platformStorage = {};
 	platformStorage.readFile = Platform_ReadFile;
 
 
-	gameDLL.update(&gameMemory, &platformStorage);
+
+	
 
 
 
@@ -1108,10 +1101,11 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	bindGroup.setLabel("Bind group san");
 
 
-	gRunning = true;
-	while (gRunning)
+	while (!gameState.quit)
 	{
-		Win32_ProcessPendingMessages();
+		Win32_ProcessPendingMessages(&gameState);
+
+		gameDLL.update(&gameMemory, &gameState, &platformStorage);
 
 		//fakeTime += 0.02f;
 		//shaderUniform.time = fakeTime;

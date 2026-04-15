@@ -79,6 +79,13 @@ struct GameMemory
 	MemoryChunk fattyChunk;
 	MemoryChunk readFileChunk;
 	MemoryChunk assetsChunk;
+
+};
+
+struct GameState
+{
+	bool initialized;
+	bool quit;
 };
 
 
@@ -101,5 +108,5 @@ struct PlatformStorage
 };
 
 
-#define GAME_UPDATE(name) void name(GameMemory* memory, PlatformStorage* platformStorage)
+#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage)
 typedef GAME_UPDATE(game_update);
