@@ -1,6 +1,14 @@
 #include "antrum.h"
 
-extern "C" GAME_UPDATE_AND_RENDER(Game_UpdateAndRender)
+/*
+	Parameters
+		@ GameMemory*
+		@ PlatformStorage*
+
+*/
+extern "C" GAME_UPDATE(Game_Update)
 {
+	int a = 0;
+
 
 }

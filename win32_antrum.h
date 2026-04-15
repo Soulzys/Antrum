@@ -8,6 +8,7 @@ enum AssetType
 	MESH = 1
 };
 
+
 struct Vec3
 {
 	real32 x;
@@ -44,14 +45,7 @@ struct ShaderUniform
 };
 static_assert(sizeof(ShaderUniform) % sizeof(ShaderUniform::color) == 0);
 
-struct MemoryChunk
-{
-	void* allocate(size_t amount);
 
-	uint64 size;
-	uint64 offset;
-	char*  memory;
-};
 
 
 template<typename T>
@@ -124,28 +118,14 @@ struct AssetManager
 
 
 
-/*
-	Memory Layout
-	~~~~~~~~~~~~~
 
-	+-------------+--------------------+
-	|  Read File  |       Assets       |
-	+-------------+--------------------+
-	<------------- Fatty -------------->
-*/
-struct GameMemory
-{
-	MemoryChunk fattyChunk;
-	MemoryChunk readFileChunk;
-	MemoryChunk assetsChunk;
-};
 
-struct ReadFileResult
-{
-	uint32      contentSize;
-	void*       content;
-	const char* message;
-};
+//struct ReadFileResult
+//{
+//	uint32      contentSize;
+//	void*       content;
+//	const char* message;
+//};
 
 struct FileReader
 {
@@ -225,7 +205,7 @@ WGPUUncapturedErrorCallbackInfo Win32_WGPU_Callback_UncapturedError();
 
 const char*                     Win32_Util_Stringify_WGPUDeviceLostReason(WGPUDeviceLostReason Reason);
 const char*                     Win32_Util_Stringify_WGPUErrorType(WGPUErrorType Err);
-ReadFileResult                  Win32_Util_ReadFile(const char* Filename, GameMemory* Memory);
+//ReadFileResult                  Win32_Util_ReadFile(const char* Filename, GameMemory* Memory);
 MeshAsset                       Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory);
 uint32                          Win32_Util_SafeTruncate_uin64(uint64 Value);
 char*                           Win32_Util_AllocateReadFileMemory(GameMemory* Memory, size_t Size);

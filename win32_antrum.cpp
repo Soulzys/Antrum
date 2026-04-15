@@ -149,17 +149,17 @@ OBJParser::Vec3ILineResult OBJParser::parseFaceLine(FileReader& fileReader)
 
 			if (inputCounter == 0)
 			{
-				res.vector.a = parsingRes.number.i;
+				res.vector.a = (uint16)parsingRes.number.i;
 				res.vector.a--;
 			}
 			else if (inputCounter == 1)
 			{
-				res.vector.b = parsingRes.number.i;
+				res.vector.b = (uint16)parsingRes.number.i;
 				res.vector.b--;
 			}
 			else
 			{
-				res.vector.c = parsingRes.number.i;
+				res.vector.c = (uint16)parsingRes.number.i;
 				res.vector.c--;
 			}
 
@@ -614,7 +614,6 @@ WGPUUncapturedErrorCallbackInfo Win32_WGPU_Callback_UncapturedError()
 
 		wsprintf(buffer, "ERROR | UncapturedErrorCallback | ERROR - Type: %s\n\tERROR - Message: %s", Win32_Util_Stringify_WGPUErrorType(Type), Message.data);
 		OutputDebugString(buffer);
-		int toto = 1;
 	};
 
 	return callbackInfo;
@@ -645,6 +644,58 @@ const char* Win32_Util_Stringify_WGPUErrorType(WGPUErrorType Err)
 		case WGPUErrorType_Force32     : return "Force32";
 		default                        : return "Could not retrieve a valid ErrorType :((";
 	}
+}
+
+PLATFORM_READ_FILE(Platform_ReadFile)
+//ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
+{
+	ReadFileResult res = {};
+
+	HANDLE fileHandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+	if (fileHandle == INVALID_HANDLE_VALUE)
+	{
+		res.message = "ERROR | Win32_Util_ReadFile() | Could not retrieve a handle to the file !\n";
+		return res;
+	}
+
+	LARGE_INTEGER fileSize;
+	if (!GetFileSizeEx(fileHandle, &fileSize))
+	{
+		res.message = "ERROR | Win32_Util_ReadFile() | Could not retrieve the size of the file !\n";
+		return res;
+	}
+
+	uint32 fileSize32 = Win32_Util_SafeTruncate_uin64(fileSize.QuadPart);
+	res.content = Win32_Util_AllocateReadFileMemory(memory, fileSize32);
+	if (!res.content)
+	{
+		res.message = "ERROR | Win32_Util_ReadFile() | Your file is too big !\n";
+		return res;
+	}
+
+	DWORD bytesRead;
+	if (!ReadFile(fileHandle, res.content, fileSize32, &bytesRead, 0))
+	{
+		res.message = "ERROR | Win32_Util_ReadFile() | Could not read the file !\n";
+		memory->readFileChunk.offset -= fileSize32; // Deallocate
+		return res;
+	}
+	if (bytesRead != fileSize32)
+	{
+		res.message = "ERROR | Win32_Util_ReadFile() | We did not read all of the bytes we expected !\n";
+		memory->readFileChunk.offset -= fileSize32; // Deallocate
+		return res;
+	}
+
+	res.contentSize = fileSize32;
+
+	// Deallocate
+	//Memory->ReadFileMemory.offset = 0;
+	//Memory->ReadFileMemory.memory = nullptr;
+
+	CloseHandle(fileHandle);
+
+	return res;
 }
 
 size_t Win32_Util_StringSize(const char* Str)
@@ -736,7 +787,8 @@ real32 Win32_Util_ConvertStringToFloat(const String& String)
 MeshAsset Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory)
 {
 	MeshAsset asset = {};
-	ReadFileResult res = Win32_Util_ReadFile(Filename, Memory);
+	//ReadFileResult res = Win32_Util_ReadFile(Filename, Memory);
+	ReadFileResult res = Platform_ReadFile(Filename, Memory);
 
 	OutputDebugString("--------------------------\n");
 	OutputDebugString(static_cast<const char*>(res.content));
@@ -746,15 +798,11 @@ MeshAsset Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory)
 
 	Vec3 vec = {};
 	Vec3I indexes = {};
-	const char* reader = (const char*)res.content;
 	FileReader fileReader = {};
 	fileReader.reader = (const char*)res.content;
-	char* floatPointer = nullptr;
-	size_t tPointer = 0;
 	
 	OBJParser::Vec3LineResult lineRes = {};
 	OBJParser::Vec3ILineResult lineResFaces = {};
-	size_t counter = 0;
 
 	while (fileReader.counter < res.contentSize)
 	{
@@ -780,14 +828,13 @@ MeshAsset Win32_Util_ReadFile_OBJ(const char* Filename, GameMemory* Memory)
 		fileReader++;
 	}
 
-	int a = 2;
-
 	return asset;
 }
 
 wgpu::ShaderModule createShaderModule(wgpu::Device device, GameMemory* memory, const char* path, const char* label)
 {
-	ReadFileResult file = Win32_Util_ReadFile(path, memory);
+	//ReadFileResult file = Win32_Util_ReadFile(path, memory);
+	ReadFileResult file = Platform_ReadFile(path, memory);
 	if (!file.content)
 	{
 		OutputDebugString(file.message);
@@ -811,57 +858,7 @@ wgpu::ShaderModule createShaderModule(wgpu::Device device, GameMemory* memory, c
 	return shaderModule;
 }
 
-//PLATFORM_READ_FILE(ReadFile)
-ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
-{
-	ReadFileResult res = {};
 
-	HANDLE fileHandle = CreateFile(Filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-	if (fileHandle == INVALID_HANDLE_VALUE)
-	{
-		res.message = "ERROR | Win32_Util_ReadFile() | Could not retrieve a handle to the file !\n";
-		return res;
-	}
-
-	LARGE_INTEGER fileSize;
-	if (!GetFileSizeEx(fileHandle, &fileSize))
-	{
-		res.message = "ERROR | Win32_Util_ReadFile() | Could not retrieve the size of the file !\n";
-		return res;
-	}
-
-	uint32 fileSize32 = Win32_Util_SafeTruncate_uin64(fileSize.QuadPart);
-	res.content = Win32_Util_AllocateReadFileMemory(Memory, fileSize32);
-	if (!res.content)
-	{
-		res.message = "ERROR | Win32_Util_ReadFile() | Your file is too big !\n";
-		return res;
-	}
-
-	DWORD bytesRead;
-	if (!ReadFile(fileHandle, res.content, fileSize32, &bytesRead, 0))
-	{
-		res.message = "ERROR | Win32_Util_ReadFile() | Could not read the file !\n";
-		Memory->readFileChunk.offset -= fileSize32; // Deallocate
-		return res;
-	}
-	if (bytesRead != fileSize32)
-	{
-		res.message = "ERROR | Win32_Util_ReadFile() | We did not read all of the bytes we expected !\n";
-		Memory->readFileChunk.offset -= fileSize32; // Deallocate
-		return res;
-	}
-
-	res.contentSize = fileSize32;
-
-	// Deallocate
-	//Memory->ReadFileMemory.offset = 0;
-	//Memory->ReadFileMemory.memory = nullptr;
-
-	CloseHandle(fileHandle);
-
-	return res;
-}
 
 uint32 Win32_Util_SafeTruncate_uin64(uint64 Value)
 {
@@ -944,8 +941,28 @@ void Win32_WGPU_Util_Initialize()
 
 }
 
+struct Win32GameDLL
+{
+	HMODULE DLL;
+	game_update* update;
+};
+
+Win32GameDLL Win32_LoadGameDLL()
+{
+	Win32GameDLL game = {};
+	game.DLL = LoadLibrary("antrum.dll");
+	ASSERT(game.DLL)
+
+	game.update = (game_update*)(GetProcAddress(game.DLL, "Game_Update"));
+	ASSERT(game.update);
+
+	return game;
+}
+
 int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)
 {
+	Win32GameDLL gameDLL = Win32_LoadGameDLL();	
+
 	WNDCLASS wndClass      = {};
 	wndClass.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 	wndClass.hInstance     = Instance;
@@ -985,8 +1002,11 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	gameMemory.assetsChunk.memory   = gameMemory.readFileChunk.memory + gameMemory.readFileChunk.size;
 
 
-	//PlatformStorage platformStorage = {};
-	//platformStorage.readFile = Win32_ReadFile;
+	PlatformStorage platformStorage = {};
+	platformStorage.readFile = Platform_ReadFile;
+
+
+	gameDLL.update(&gameMemory, &platformStorage);
 
 
 
@@ -1087,8 +1107,6 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	wgpu::BindGroup bindGroup = device.createBindGroupHelper(&bindGroupDesc);
 	bindGroup.setLabel("Bind group san");
 
-
-	real32 fakeTime = 1.0f;
 
 	gRunning = true;
 	while (gRunning)

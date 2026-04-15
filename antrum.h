@@ -55,24 +55,51 @@ typedef int32    bool32;
 
 
 
+struct MemoryChunk
+{
+	void* allocate(size_t amount);
+
+	uint64 size;
+	uint64 offset;
+	char* memory;
+};
+
+
+/*
+	Memory Layout
+	~~~~~~~~~~~~~
+
+	+-------------+--------------------+
+	|  Read File  |       Assets       |
+	+-------------+--------------------+
+	<------------- Fatty -------------->
+*/
+struct GameMemory
+{
+	MemoryChunk fattyChunk;
+	MemoryChunk readFileChunk;
+	MemoryChunk assetsChunk;
+};
+
+
 // Platform-specific structs & functions
 //
-//struct ReadFileResult
-//{
-//	uint32      contentSize;
-//	void*       content;
-//	const char* message;
-//};
-//
-//#define PLATFORM_READ_FILE(name) ReadFileResult name(const char* fileName, GameMemory* memory)
-//typedef PLATFORM_READ_FILE(platform_read_file);
+struct ReadFileResult
+{
+	uint32      contentSize;
+	void*       content;
+	const char* message;
+};
+
+#define PLATFORM_READ_FILE(name) ReadFileResult name(const char* filename, GameMemory* memory)
+typedef PLATFORM_READ_FILE(platform_read_file);
 
 
-//struct PlatformStorage
-//{
-//	platform_read_file* readFile;
-//};
+struct PlatformStorage
+{
+	platform_read_file* readFile;
+};
 
 
-#define GAME_UPDATE_AND_RENDER(name) void name()
-typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
+#define GAME_UPDATE(name) void name(GameMemory* memory, PlatformStorage* platformStorage)
+typedef GAME_UPDATE(game_update);
