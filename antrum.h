@@ -13,8 +13,6 @@
 
 */
 
-
-
 typedef int8_t   int8;
 typedef int16_t  int16;
 typedef int32_t  int32;
@@ -23,14 +21,9 @@ typedef uint8_t  uint8;
 typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
-
 typedef float    real32;
 typedef double   real64;
-
 typedef int32    bool32;
-
-#include "wgpu_layer.cpp"
-
 
 
 #define KILOBYTES(Value) ((Value)          * 1024LL)
@@ -38,11 +31,15 @@ typedef int32    bool32;
 #define GIGABYTES(Value) (MEGABYTES(Value) * 1024LL)
 
 #define ASSERT(Expression) if (!(Expression)) {*(int*)0 = 0;}
-#define ASSERT_MSG(Expression, Message) if (!(Expression)) \
-{                                                          \
-	OutputDebugString(Message);                            \
-	ASSERT(Expression);                                    \
-}                                                          \
+
+
+
+
+
+#include "wgpu_layer.cpp"
+
+
+
 
 
 #define STRING_MAX_LENGTH 10000
@@ -285,14 +282,67 @@ struct ParseNumberResult
 ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endChar);
 
 
+struct ShaderUniform
+{
+	// When dealing with uniform offset, the formula is that for each struct member, its offset has to be a multiple of: offset * sizeof(memberType);
+	real32 color[4]; // offset = 0 * sizeof(vec4f) --> OK, 0 is a multiple of 16
+	real32 time; // offset = 16 = 4 * sizeof(f32) --> OK, 16 is a multiple of 16
+
+	// Makes it host-shareable by adding padding at the end of the struct so its total size if a multiple of its largest bit-field (here, a multiple of 16,
+	// as its total size would then be 32 bytes).
+	real32 __padding[3];
+};
+static_assert(sizeof(ShaderUniform) % sizeof(ShaderUniform::color) == 0);
+
+struct WebGPUStorage
+{
+	wgpu::Instance instance;
+	wgpu::Adapter adapter;
+	wgpu::Device device;
+	wgpu::Surface surface;
+	wgpu::ShaderModule shaderModule;
+	wgpu::BindGroupLayout bindGroupLayout;
+	wgpu::PipelineLayout pipelineLayout;
+	wgpu::RenderPipeline renderPipeline;
+	wgpu::Queue queue;
+
+	wgpu::Buffer pointBuffer;
+	wgpu::Buffer indexBuffer;
+	wgpu::Buffer uniformBuffer;
+
+	wgpu::BindGroup bindGroup;
+
+
+	ShaderUniform shaderUniform;
+};
+
+
+
+void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformStorage* platformStorage);
+
+
 // Used to display the arguments of the macroed functions
 #if !defined(XARG)
 #define XARGS(arg)
 #endif
 
 
-#define GAME_INITIALIZE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, MeshAsset* asset)
+//#define GAME_INITIALIZE(name) void name  \
+//(                                        \
+//	GameMemory* memory,                  \
+//	GameState* gameState,                \
+//	PlatformStorage* platformStorage,    \
+//	MeshAsset* asset,                    \
+//	WebGPUStorage* wgpuStorage,          \
+//	void* wndHandle,                     \
+//    void* hInstance                      \
+//)                                        \
+
+#define GAME_INITIALIZE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, MeshAsset* asset, WebGPUStorage* wgpuStorage, void* wndHandle, void* hInstance)
 typedef GAME_INITIALIZE(game_initialize);
 
-#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage)
+#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, WebGPUStorage* wgpuStorage, MeshAsset* asset)
 typedef GAME_UPDATE(game_update);
+
+#define GAME_QUIT(name) void name(WebGPUStorage* storage)
+typedef GAME_QUIT(game_quit);

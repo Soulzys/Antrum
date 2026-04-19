@@ -4,6 +4,370 @@
 
 // ***** HELPER METHODS
 //
+wgpu::Instance wgpu::helper::createInstance()
+{
+	// >NOTASCOI: is it of any use to have it here, knowing that our instance is going to be released a few lines below ? Hmmmm...
+	const char* toggleName = "enable_immediate_error_handling";
+
+	WGPUDawnTogglesDescriptor toggleDesc = {};
+	toggleDesc.chain.next                = nullptr;
+	toggleDesc.chain.sType               = WGPUSType::WGPUSType_DawnTogglesDescriptor;
+	toggleDesc.disabledToggleCount       = 0;
+	toggleDesc.enabledToggleCount        = 1;
+	toggleDesc.enabledToggles            = &toggleName;
+
+	WGPUInstanceDescriptor desc = {};
+	desc.nextInChain = &toggleDesc.chain;
+
+	wgpu::Instance instance = {};
+	instance.object = wgpu::createInstance(&desc);
+	if (!instance.object)
+	{
+		//OutputDebugString("ERROR | wgpu::helper::createInstance() | Coud not initialize WebGPU !\n");
+	}
+
+	return instance;
+}
+
+WGPUAdapter wgpu::helper::requestAdapterAsync(wgpu::Instance instance, WGPURequestAdapterOptions const* options)
+{
+	struct AdapterRequestData
+	{
+		WGPUAdapter adapter;
+		bool requestEnded;
+	};
+
+	AdapterRequestData requestData = {};
+
+	WGPURequestAdapterCallbackInfo callbackInfo = {};
+	callbackInfo.nextInChain = nullptr;
+	callbackInfo.mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous;
+	callbackInfo.userdata1 = (void*)&requestData;
+	callbackInfo.callback = [](WGPURequestAdapterStatus Status, WGPUAdapter Adapter, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
+		{
+			AdapterRequestData& data = *reinterpret_cast<AdapterRequestData*>(UD_1);
+			if (Status == WGPURequestAdapterStatus::WGPURequestAdapterStatus_Success)
+			{
+				data.adapter = Adapter;
+			}
+			else
+			{
+				//OutputDebugString("ERROR | wgpu::helper::requestAdapterAsync | Coud not get WebGPU adapter :((\n");
+			}
+
+			data.requestEnded = true;
+		};
+
+
+	instance.requestAdapter(options, callbackInfo);
+	AdapterRequestData& requestDataResult = *reinterpret_cast<AdapterRequestData*>(callbackInfo.userdata1);
+	ASSERT(requestDataResult.requestEnded);
+
+	return requestDataResult.adapter;
+}
+
+wgpu::Adapter wgpu::helper::createAdapter(wgpu::Instance instance)
+{
+	WGPURequestAdapterOptions adapterOptions = {};
+	adapterOptions.nextInChain = nullptr;
+
+	wgpu::Adapter adapter = {};
+	adapter.object = requestAdapterAsync(instance, &adapterOptions);
+
+	return adapter;
+}
+
+WGPUDevice wgpu::helper::requestDeviceAsync(wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor)
+{
+	struct DeviceRequestData
+	{
+		WGPUDevice device;
+		bool requestEnded;
+	}; 
+
+	DeviceRequestData requestData = {};	
+
+	WGPURequestDeviceCallbackInfo callbackInfo = {};
+	callbackInfo.nextInChain = nullptr;
+	callbackInfo.mode        = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous;
+	callbackInfo.userdata1   = (void*)&requestData;
+	callbackInfo.callback    = [](WGPURequestDeviceStatus Status, WGPUDevice Device, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
+	{
+		DeviceRequestData& data = *reinterpret_cast<DeviceRequestData*>(UD_1);
+
+		if (Status == WGPURequestDeviceStatus::WGPURequestDeviceStatus_Success)
+		{
+			data.device = Device;
+		}
+		else
+		{
+			//OutputDebugString("ERROR | Could not get WebGPU device :((\n");
+		}
+
+		data.requestEnded = true;
+	};
+
+	adapter.requestDevice(descriptor, callbackInfo);
+	DeviceRequestData& requestDataResult = *reinterpret_cast<DeviceRequestData*>(callbackInfo.userdata1);
+	ASSERT(requestDataResult.requestEnded);
+
+	return requestDataResult.device;
+}
+
+wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter)
+{
+	// GPU Features
+	//
+	WGPULimits limits = adapter.getDefaultLimits();
+	limits.maxVertexAttributes             = 2;
+	limits.maxVertexBuffers                = 1;
+	limits.maxBufferSize                   = 6 * 6 * sizeof(real32);
+	limits.maxVertexBufferArrayStride      = 5 * sizeof(real32);
+	limits.maxInterStageShaderVariables    = 3;
+	limits.maxBindGroups                   = 1;
+	limits.maxUniformBuffersPerShaderStage = 1;
+	limits.maxUniformBufferBindingSize     = 16 * 4;
+	limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
+
+	// Requesting a device
+	//
+	WGPUDeviceDescriptor deviceDesc        = {};
+	deviceDesc.nextInChain                 = nullptr;
+	deviceDesc.label.data                  = "Device-san";
+	deviceDesc.label.length                = strlen(deviceDesc.label.data);
+	deviceDesc.requiredFeatureCount        = 0;
+	deviceDesc.requiredLimits              = &limits;
+	deviceDesc.deviceLostCallbackInfo      = wgpu::callback::onDeviceLost();
+	deviceDesc.uncapturedErrorCallbackInfo = wgpu::callback::onUncapturedError();
+	deviceDesc.defaultQueue.nextInChain    = nullptr;
+	deviceDesc.defaultQueue.label.data     = "Default Queue-san";
+	deviceDesc.defaultQueue.label.length   = strlen(deviceDesc.defaultQueue.label.data);
+
+	wgpu::Device device = {};
+	device.object = requestDeviceAsync(adapter, &deviceDesc);
+
+	return device;
+}
+
+WGPUDeviceLostCallbackInfo wgpu::callback::onDeviceLost()
+{
+	WGPUDeviceLostCallbackInfo callbackInfo = {};
+	callbackInfo.nextInChain = nullptr;
+	callbackInfo.mode = WGPUCallbackMode_AllowSpontaneous;
+	callbackInfo.callback = [](WGPUDevice const* Device, WGPUDeviceLostReason Reason, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
+		{
+			//char buffer[KILOBYTES(2)];
+			//if (Message.length >= sizeof(buffer))
+			//{
+			//	//OutputDebugString("ERROR | DeviceLostCallback | Could not print out the Message as the buffer is too small !\n");
+			//	return;
+			//}
+
+			//wsprintf(buffer, "ERROR | DeviceListCallback | ERROR - Reason: %s\n\tERROR - Message: %s\n", Win32_Util_Stringify_WGPUDeviceLostReason(Reason), Message.data);
+			//OutputDebugString(buffer);
+		};
+
+	return callbackInfo;
+}
+
+WGPUUncapturedErrorCallbackInfo wgpu::callback::onUncapturedError()
+{
+	WGPUUncapturedErrorCallbackInfo callbackInfo = {};
+	callbackInfo.nextInChain = {};
+	callbackInfo.callback = [](WGPUDevice const* Device, WGPUErrorType Type, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
+		{
+			//char buffer[KILOBYTES(2)];
+			//if (Message.length >= sizeof(buffer))
+			//{
+			//	//OutputDebugString("ERROR | UncapturedErrorCallback | Could not print out the Message as the buffer is too small !\n");
+			//	return;
+			//}
+
+			//wsprintf(buffer, "ERROR | UncapturedErrorCallback | ERROR - Type: %s\n\tERROR - Message: %s", Win32_Util_Stringify_WGPUErrorType(Type), Message.data);
+			//OutputDebugString(buffer);
+		};
+
+	return callbackInfo;
+}
+
+wgpu::Surface wgpu::helper::createSurface(void* wndHandle, void* hInstance, wgpu::Instance instance)
+{
+	WGPUSurfaceSourceWindowsHWND surfaceWindow = {};
+	surfaceWindow.hinstance   = hInstance;
+	surfaceWindow.hwnd        = wndHandle;
+	surfaceWindow.chain.next  = nullptr;
+	surfaceWindow.chain.sType = WGPUSType_SurfaceSourceWindowsHWND;
+
+	// Getting our surface to draw on screen
+	//
+	WGPUSurfaceDescriptor surfaceDescNative = {};
+	surfaceDescNative.label.data   = "Surface native";
+	surfaceDescNative.label.length = strlen(surfaceDescNative.label.data);
+	surfaceDescNative.nextInChain  = &surfaceWindow.chain;
+
+	wgpu::Surface surface = {};
+	surface.object = instance.createSurface(&surfaceDescNative);
+
+	return surface;
+}
+
+wgpu::ShaderModule wgpu::helper::createShaderModule(wgpu::Device device, WGPUStringView shaderData, const char* label)
+{
+	WGPUShaderModuleDescriptor shaderModuleDesc = {};
+	shaderModuleDesc.label.data = label;
+	shaderModuleDesc.label.length = strlen(label);
+
+	WGPUShaderSourceWGSL shaderCodeDesc = {};
+	shaderCodeDesc.chain.next = nullptr;
+	shaderCodeDesc.chain.sType = WGPUSType_ShaderSourceWGSL;
+	shaderCodeDesc.code = shaderData;
+	//shaderCodeDesc.code.data = static_cast<const char*>(file.content);
+	//shaderCodeDesc.code.length = file.contentSize;
+
+	shaderModuleDesc.nextInChain = &shaderCodeDesc.chain;
+
+	wgpu::ShaderModule shaderModule = {};
+	shaderModule.object = device.createShaderModule(&shaderModuleDesc);
+
+	return shaderModule;
+}
+
+void wgpu::helper::getDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout)
+{
+	bindingLayout.buffer.nextInChain = nullptr;
+	bindingLayout.buffer.type = WGPUBufferBindingType_Undefined;
+	bindingLayout.buffer.hasDynamicOffset = false;
+
+	bindingLayout.sampler.nextInChain = nullptr;
+	bindingLayout.sampler.type = WGPUSamplerBindingType_BindingNotUsed;
+
+	bindingLayout.storageTexture.nextInChain = nullptr;
+	bindingLayout.storageTexture.access = WGPUStorageTextureAccess_BindingNotUsed;
+	bindingLayout.storageTexture.format = WGPUTextureFormat_Undefined;
+	bindingLayout.storageTexture.viewDimension = WGPUTextureViewDimension_Undefined;
+
+	bindingLayout.texture.nextInChain = nullptr;
+	bindingLayout.texture.multisampled = false;
+	bindingLayout.texture.sampleType = WGPUTextureSampleType_BindingNotUsed;
+	bindingLayout.texture.viewDimension = WGPUTextureViewDimension_Undefined;
+}
+
+wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, uint64_t minBindingSize)
+{
+	// Create a bind group
+	//
+	WGPUBindGroupLayoutEntry bindingLayoutEntry = {};
+	wgpu::helper::getDefaultBindingLayout(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
+	bindingLayoutEntry.binding     = 0; // This is the binding index we use in our shader
+	bindingLayoutEntry.visibility  = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
+	bindingLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
+	bindingLayoutEntry.buffer.minBindingSize = minBindingSize;
+	bindingLayoutEntry.buffer.hasDynamicOffset = true;
+
+	WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
+	bindGroupLayoutDesc.nextInChain = nullptr;
+	bindGroupLayoutDesc.entryCount = 1;
+	bindGroupLayoutDesc.entries = &bindingLayoutEntry;
+
+	wgpu::BindGroupLayout bindGroupLayout = {};
+	bindGroupLayout.object = device.createBindGroupLayout(&bindGroupLayoutDesc);
+
+	return bindGroupLayout;
+}
+
+wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout)
+{
+	WGPUPipelineLayoutDescriptor layoutDesc = {};
+	layoutDesc.nextInChain          = nullptr;
+	layoutDesc.bindGroupLayoutCount = 1;
+	layoutDesc.bindGroupLayouts     = &bindGroupLayout.object;
+
+	wgpu::PipelineLayout pipelineLayout = {};
+	pipelineLayout.object = device.createPipelineLayout(&layoutDesc);
+
+	return pipelineLayout;
+}
+
+wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgpu::ShaderModule shaderModule, WGPUTextureFormat textureFormat, wgpu::PipelineLayout pipelineLayout)
+{
+	//std::vector<WGPUVertexAttribute> VertexAttributes(2);
+
+	WGPUVertexAttribute pointAttrib;
+	pointAttrib.shaderLocation = 0;
+	pointAttrib.format = WGPUVertexFormat_Float32x3;
+	pointAttrib.offset = 0;
+
+	WGPUVertexAttribute colorAttrib;
+	colorAttrib.shaderLocation = 1;
+	colorAttrib.format = WGPUVertexFormat_Float32x3;
+	colorAttrib.offset = 3 * sizeof(real32);
+
+	WGPUVertexAttribute vertexAttributes[2] = { pointAttrib, colorAttrib };
+
+	WGPUVertexBufferLayout vertexBufferLayout = {};
+	vertexBufferLayout.attributeCount = 1; //(uint32)VertexAttributes.size();
+	//vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
+	vertexBufferLayout.attributes = &pointAttrib; //VertexAttributes.data();
+	vertexBufferLayout.arrayStride = 3 * sizeof(real32);
+	vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
+
+
+
+	// Pipeline stuff
+	//
+	WGPUBlendState blendState = {};
+	blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+	blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+	blendState.color.operation = WGPUBlendOperation_Add;
+	blendState.alpha.srcFactor = WGPUBlendFactor_Zero;
+	blendState.alpha.dstFactor = WGPUBlendFactor_One;
+	blendState.alpha.operation = WGPUBlendOperation_Add;
+
+	WGPUColorTargetState colorTarget = {};
+	colorTarget.format = textureFormat;
+	colorTarget.blend = &blendState;
+	colorTarget.writeMask = WGPUColorWriteMask_All; // We could write to only some of the color channels
+
+	WGPUFragmentState fragmentState = {};
+	fragmentState.module = shaderModule.object;
+	fragmentState.entryPoint.data = "fs_main";
+	fragmentState.entryPoint.length = strlen(fragmentState.entryPoint.data);
+	fragmentState.constantCount = 0;
+	fragmentState.constants = nullptr;
+	fragmentState.targetCount = 1; // We have only one target because our render pass has only one output color attachment
+	fragmentState.targets = &colorTarget;
+	fragmentState.nextInChain = nullptr;
+
+
+
+
+	WGPURenderPipelineDescriptor pipelineDesc = {};
+	pipelineDesc.nextInChain = nullptr;
+	pipelineDesc.vertex.bufferCount = 1;
+	pipelineDesc.vertex.buffers = &vertexBufferLayout;
+	pipelineDesc.vertex.module = shaderModule.object;
+	pipelineDesc.vertex.entryPoint.data = "vs_main";
+	pipelineDesc.vertex.entryPoint.length = strlen(pipelineDesc.vertex.entryPoint.data);
+	pipelineDesc.vertex.constantCount = 0;
+	pipelineDesc.vertex.constants = nullptr;
+	pipelineDesc.vertex.nextInChain = nullptr;
+	pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+	pipelineDesc.primitive.stripIndexFormat = WGPUIndexFormat_Undefined;
+	pipelineDesc.primitive.frontFace = WGPUFrontFace_CCW;
+	// >NOTASCOI: Based on the face orientation. Should eventually set it to 'front'. None is only for debug, so we see everything, nothing is hidden.
+	pipelineDesc.primitive.cullMode = WGPUCullMode_None;
+	pipelineDesc.fragment = &fragmentState;
+	pipelineDesc.depthStencil = nullptr;
+	pipelineDesc.multisample.count = 1;
+	pipelineDesc.multisample.mask = ~0u; // Default value for the mask. It means "all bits on"
+	pipelineDesc.multisample.alphaToCoverageEnabled = false; // Default value as well. It is irrelevant for count = 1 anyways
+	pipelineDesc.layout = pipelineLayout.object;
+
+	wgpu::RenderPipeline renderPipeline = {};
+	renderPipeline.object = device.createRenderPipeline(&pipelineDesc);
+
+	return renderPipeline;
+}
 
 
 

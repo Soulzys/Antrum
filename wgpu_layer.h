@@ -30,17 +30,25 @@ namespace wgpu
 
 	namespace helper
 	{
-		//wgpu::Instance        createInstance        ();
-		//wgpu::Adapter         createAdapter         (wgpu::Instance instance);
-		//wgpu::Device          createDevice          (wgpu::Adapter adapter);
-		//wgpu::Surface         createSurface         (WNDCLASS* wndClass, HWND wndHandle, wgpu::Instance instance);
-		//wgpu::ShaderModule    createShaderModule    (wgpu::Device device, GameMemory* memory, const char* path, const char* label);
-		//wgpu::BindGroupLayout createBindGroupLayout (wgpu::Device device);
-		//wgpu::PipelineLayout  createPipelineLayout  (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout);
-		//wgpu::RenderPipeline  createRenderPipeline  (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout);
+		wgpu::Instance        createInstance        ();
+		wgpu::Adapter         createAdapter         (wgpu::Instance instance);
+		wgpu::Device          createDevice          (wgpu::Adapter adapter);
+		wgpu::Surface         createSurface         (void* wndHandle, void* hInstance, wgpu::Instance instance);
+		wgpu::ShaderModule    createShaderModule    (wgpu::Device device, WGPUStringView shaderData, const char* label);
+		wgpu::BindGroupLayout createBindGroupLayout (wgpu::Device device, uint64_t minBindingSize);
+		wgpu::PipelineLayout  createPipelineLayout  (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout);
+		wgpu::RenderPipeline  createRenderPipeline  (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout);
 
-		//WGPUAdapter requestAdapterAsync (wgpu::Instance instance, WGPURequestAdapterOptions const* options);
-		//WGPUDevice  requestDeviceAsync  (wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor);
+		WGPUAdapter requestAdapterAsync (wgpu::Instance instance, WGPURequestAdapterOptions const* options);
+		WGPUDevice  requestDeviceAsync  (wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor);
+
+		void getDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout);
+	}
+
+	namespace callback
+	{
+		WGPUDeviceLostCallbackInfo onDeviceLost();
+		WGPUUncapturedErrorCallbackInfo onUncapturedError();
 	}
 
 	// 

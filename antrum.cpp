@@ -309,19 +309,123 @@ void ReadFile_OBJ(const char* Filename, GameMemory* Memory, PlatformStorage* pla
 }
 
 
+uint32 CeilToNextMultiple(uint32 value, uint32 multiple)
+{
+	uint32 step = value / multiple + (value % multiple == 0 ? 0 : 1);
+	return step * multiple;
+}
+
+void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformStorage* platformStorage)
+{
+	storage->instance = wgpu::helper::createInstance();
+	storage->adapter  = wgpu::helper::createAdapter(storage->instance);
+	storage->device   = wgpu::helper::createDevice(storage->adapter);
+	storage->surface  = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
+
+	ReadFileResult file = platformStorage->readFile("../resource/shader.sha", memory);
+	ASSERT(file.content);
+	WGPUStringView shaderCode = {};
+	shaderCode.data           = (const char*)file.content;
+	shaderCode.length         = file.contentSize;
+
+	storage->shaderModule    = wgpu::helper::createShaderModule(storage->device, shaderCode, "Xin Shader Module");
+	storage->bindGroupLayout = wgpu::helper::createBindGroupLayout(storage->device, sizeof(ShaderUniform));
+	storage->pipelineLayout  = wgpu::helper::createPipelineLayout(storage->device, storage->bindGroupLayout);
+	storage->renderPipeline  = wgpu::helper::createRenderPipeline(storage->device, storage->shaderModule, storage->surface.getFormat(storage->adapter), storage->pipelineLayout);
+
+	WGPUSurfaceConfiguration config = {};
+	config.nextInChain     = nullptr;
+	config.width           = WINDOW_WIDTH;
+	config.height          = WINDOW_HEIGHT;
+	config.format          = storage->surface.getFormat(storage->adapter);
+	config.viewFormatCount = 0;
+	config.viewFormats     = nullptr;
+	config.usage           = WGPUTextureUsage_RenderAttachment;
+	config.device          = storage->device.object;
+	config.presentMode     = WGPUPresentMode::WGPUPresentMode_Fifo;
+	config.alphaMode       = WGPUCompositeAlphaMode::WGPUCompositeAlphaMode_Auto;
+	storage->surface.configure(&config);	
+
+	storage->adapter.release();
+	storage->shaderModule.release();
 
 
-XARGS(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, MeshAsset* asset)
+	storage->queue = storage->device.getQueueHelper();
+
+
+	ShaderUniform shaderUniform = {};
+	shaderUniform.time = 2.0f;
+	shaderUniform.color[0] = 0.0f;
+	shaderUniform.color[1] = 1.0f;
+	shaderUniform.color[2] = 0.0f;
+	shaderUniform.color[3] = 1.0f;
+
+	storage->shaderUniform = shaderUniform; // >TODO: put this inside memory
+
+
+
+	WGPUBufferDescriptor bufferDesc = {};
+	bufferDesc.nextInChain = nullptr;
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+	bufferDesc.size = asset->vertices.getElementsSize();
+	bufferDesc.size = (bufferDesc.size + 3) & ~3;
+	bufferDesc.mappedAtCreation = false;
+	storage->pointBuffer = storage->device.createBufferHelper(&bufferDesc);
+	storage->pointBuffer.setLabel("Point buffer");
+	storage->queue.writeBuffer(storage->pointBuffer, 0, asset->vertices.dataPtr(), bufferDesc.size);
+
+	bufferDesc.size = asset->indexes.getElementsSize();
+	bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
+	bufferDesc.mappedAtCreation = false;
+	storage->indexBuffer = storage->device.createBufferHelper(&bufferDesc);
+	storage->indexBuffer.setLabel("Index buffer");
+	storage->queue.writeBuffer(storage->indexBuffer, 0, asset->indexes.dataPtr(), bufferDesc.size);
+
+	WGPULimits supportedLimits = storage->adapter.getDefaultLimits();
+	uint32 uniformBufferStride = CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
+	bufferDesc.size = uniformBufferStride + sizeof(ShaderUniform);
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+	bufferDesc.mappedAtCreation = false;
+	storage->uniformBuffer = storage->device.createBufferHelper(&bufferDesc);
+	storage->uniformBuffer.setLabel("Uniform buffer");
+	storage->queue.writeBuffer(storage->uniformBuffer, 0, &storage->shaderUniform, sizeof(ShaderUniform));
+
+
+
+	WGPUBindGroupEntry binding = {};
+	binding.nextInChain = nullptr;
+	binding.binding = 0; // The index of the binding
+	binding.buffer = storage->uniformBuffer.object; // The buffer it is bound to
+	binding.offset = 0; // A buffer can contain multiple uniforms
+	binding.size = sizeof(ShaderUniform); // i.e. the size of the buffer
+	WGPUBindGroupDescriptor bindGroupDesc = {};
+	bindGroupDesc.nextInChain = nullptr;
+	bindGroupDesc.layout = storage->bindGroupLayout.object;
+	bindGroupDesc.entryCount = 1;
+	bindGroupDesc.entries = &binding;
+	storage->bindGroup = storage->device.createBindGroupHelper(&bindGroupDesc);
+	storage->bindGroup.setLabel("Bind group san");
+}
+
+
+
+XARGS(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, MeshAsset* asset, WebGPUStorage* wgpuStorage, void* wndHandle, void* hInstance)
 extern "C" GAME_INITIALIZE(Game_Initialize)
 {
-	// Load mesh asset
+	// Load assets
+	//
 	ReadFile_OBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
+
+	// Load wgpu
+	InitializeWebGPU(wgpuStorage, wndHandle, hInstance, memory, asset, platformStorage);
+
 
 	gameState->initialized = true;
 }
 
 
-XARGS(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage)
+XARGS(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, WebGPUStorage* wgpuStorage, MeshAsset* asset)
 extern "C" GAME_UPDATE(Game_Update)
 {
 	if (!gameState->initialized)
@@ -331,8 +435,77 @@ extern "C" GAME_UPDATE(Game_Update)
 	}
 
 
-	if (gameState->quit)
-	{
-		int a = 2;
-	}
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), 
+		&wgpuStorage->shaderUniform.color, sizeof(ShaderUniform::color));
+
+	wgpu::TextureView targetView = wgpuStorage->surface.getCurrentTextureView();
+	ASSERT(targetView.object);
+
+	WGPUCommandEncoderDescriptor encoderDesc = {};
+	encoderDesc.nextInChain = nullptr;
+	encoderDesc.label.data = "Sexy Command Encoder (SCE)";
+	encoderDesc.label.length = strlen(encoderDesc.label.data);
+	wgpu::CommandEncoder encoder = wgpuStorage->device.createCommandEncoderHelper(&encoderDesc);
+
+
+	// Describe Render Pass
+	//
+	WGPURenderPassColorAttachment renderPassColorAttachment = {};
+	renderPassColorAttachment.view = targetView.object;
+	renderPassColorAttachment.resolveTarget = nullptr;
+	renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
+	renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
+	renderPassColorAttachment.clearValue = WGPUColor{ 0.15, 0.2, 0.33, 1.0f };
+	renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+
+	WGPURenderPassDescriptor renderPassDesc = {};
+	renderPassDesc.colorAttachmentCount = 1;
+	renderPassDesc.colorAttachments = &renderPassColorAttachment;
+	renderPassDesc.nextInChain = nullptr;
+	renderPassDesc.depthStencilAttachment = nullptr;
+	renderPassDesc.timestampWrites = nullptr;
+
+	wgpu::RenderPassEncoder renderPass = encoder.beginRenderPassHelper(&renderPassDesc);
+
+	// Use Render Pass
+	//
+	uint32 dynamicOffset = 0;
+	WGPULimits supportedLimits = wgpuStorage->adapter.getDefaultLimits();
+	uint32 uniformBufferStride = CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
+	dynamicOffset = 0 * uniformBufferStride;
+	renderPass.setPipeline(wgpuStorage->renderPipeline);
+	renderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
+	renderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->indexBuffer.getSize());
+	renderPass.setBindGroup(0, wgpuStorage->bindGroup, 1, &dynamicOffset);
+	renderPass.drawIndexed((uint32)(asset->indexes.getElementsLength()), 1, 0, 0, 0);
+	renderPass.end();
+	renderPass.release();
+
+	WGPUCommandBufferDescriptor commandBufferDesc = {};
+	commandBufferDesc.nextInChain = nullptr;
+	commandBufferDesc.label.data = "Command buffer";
+	commandBufferDesc.label.length = strlen(commandBufferDesc.label.data);
+	wgpu::CommandBuffer commandBuffer = encoder.finishHelper(&commandBufferDesc);
+	encoder.release();
+
+	wgpuStorage->queue.submit(1, &commandBuffer.object);
+	commandBuffer.release();
+	targetView.release();
+	wgpuStorage->surface.present();
+	wgpuStorage->device.tick();
+}
+
+XARGS(WebGPUStorage* storage)
+extern "C" GAME_QUIT(Game_Quit)
+{
+	storage->renderPipeline.release();
+	storage->surface.unconfigure();
+	storage->queue.release();
+	storage->surface.release();
+	storage->pipelineLayout.release();
+	storage->bindGroup.release();
+	storage->bindGroupLayout.release();
+	storage->pointBuffer.release();
+	storage->indexBuffer.release();
+	storage->uniformBuffer.release();
 }
