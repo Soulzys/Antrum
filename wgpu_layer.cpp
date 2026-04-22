@@ -114,7 +114,7 @@ WGPUDevice wgpu::helper::requestDeviceAsync(wgpu::Adapter adapter, const WGPUDev
 	return requestDataResult.device;
 }
 
-wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter)
+wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, platform_log* log)
 {
 	// GPU Features
 	//
@@ -129,6 +129,7 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter)
 	limits.maxUniformBufferBindingSize     = 16 * 4;
 	limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 
+
 	// Requesting a device
 	//
 	WGPUDeviceDescriptor deviceDesc        = {};
@@ -137,8 +138,8 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter)
 	deviceDesc.label.length                = strlen(deviceDesc.label.data);
 	deviceDesc.requiredFeatureCount        = 0;
 	deviceDesc.requiredLimits              = &limits;
-	deviceDesc.deviceLostCallbackInfo      = wgpu::callback::onDeviceLost();
-	deviceDesc.uncapturedErrorCallbackInfo = wgpu::callback::onUncapturedError();
+	deviceDesc.deviceLostCallbackInfo      = wgpu::callback::onDeviceLost(log);
+	deviceDesc.uncapturedErrorCallbackInfo = wgpu::callback::onUncapturedError(log);
 	deviceDesc.defaultQueue.nextInChain    = nullptr;
 	deviceDesc.defaultQueue.label.data     = "Default Queue-san";
 	deviceDesc.defaultQueue.label.length   = strlen(deviceDesc.defaultQueue.label.data);
@@ -149,42 +150,95 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter)
 	return device;
 }
 
-WGPUDeviceLostCallbackInfo wgpu::callback::onDeviceLost()
+WGPUDeviceLostCallbackInfo wgpu::callback::onDeviceLost(platform_log* log)
 {
 	WGPUDeviceLostCallbackInfo callbackInfo = {};
 	callbackInfo.nextInChain = nullptr;
 	callbackInfo.mode = WGPUCallbackMode_AllowSpontaneous;
-	callbackInfo.callback = [](WGPUDevice const* Device, WGPUDeviceLostReason Reason, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
-		{
-			//char buffer[KILOBYTES(2)];
-			//if (Message.length >= sizeof(buffer))
-			//{
-			//	//OutputDebugString("ERROR | DeviceLostCallback | Could not print out the Message as the buffer is too small !\n");
-			//	return;
-			//}
+	callbackInfo.userdata1 = log;
+	callbackInfo.callback = [](WGPUDevice const* device, WGPUDeviceLostReason reason, WGPUStringView message, WGPU_NULLABLE void* ud1, WGPU_NULLABLE void* ud2)
+	{
+		platform_log* log = (platform_log*)ud1;
 
-			//wsprintf(buffer, "ERROR | DeviceListCallback | ERROR - Reason: %s\n\tERROR - Message: %s\n", Win32_Util_Stringify_WGPUDeviceLostReason(Reason), Message.data);
-			//OutputDebugString(buffer);
-		};
+		char buffer[KILOBYTES(2)];
+		if (message.length >= sizeof(buffer))
+		{
+			log("ERROR | DeviceLostCallback | Could not print out the message as the buffer is too small !\n");
+			return;
+		}
+		
+		// From what I remember, the WGPUStringView::data is not null-terminated
+		// It may be useful to double check though
+		strcpy(buffer, message.data);
+		buffer[message.length - 1] = '\0';
+
+
+		log("ERROR | DeviceLost callback ~~~~~\n");
+		log("Reason: ");
+		log(wgpu::stringifier::deviceLostReason(reason));
+		log("\n");
+		log("Message: ");
+		log(buffer);
+	};
 
 	return callbackInfo;
 }
 
-WGPUUncapturedErrorCallbackInfo wgpu::callback::onUncapturedError()
+const char* wgpu::stringifier::deviceLostReason(WGPUDeviceLostReason e)
+{
+	switch (e)
+	{
+		case WGPUDeviceLostReason_Unknown           : return "Unknown";
+		case WGPUDeviceLostReason_Destroyed         : return "Destroyed";
+		case WGPUDeviceLostReason_CallbackCancelled : return "CallbackCancelled";
+		case WGPUDeviceLostReason_FailedCreation    : return "FailedCreation";
+		case WGPUDeviceLostReason_Force32           : return "Force32";
+		default                                     : return "Could not retrieve a valid Reason :((";
+	}
+}
+
+const char* wgpu::stringifier::errorType(WGPUErrorType e)
+{
+	switch (e)
+	{
+		case WGPUErrorType_NoError     : return "NoError";
+		case WGPUErrorType_Validation  : return "Validation";
+		case WGPUErrorType_OutOfMemory : return "OutOfMemory";
+		case WGPUErrorType_Internal    : return "Internal";
+		case WGPUErrorType_Unknown     : return "Unknown";
+		case WGPUErrorType_Force32     : return "Force32";
+		default                        : return "Could not retrieve a valid ErrorType :((";
+	}
+}
+
+WGPUUncapturedErrorCallbackInfo wgpu::callback::onUncapturedError(platform_log* log)
 {
 	WGPUUncapturedErrorCallbackInfo callbackInfo = {};
 	callbackInfo.nextInChain = {};
-	callbackInfo.callback = [](WGPUDevice const* Device, WGPUErrorType Type, WGPUStringView Message, WGPU_NULLABLE void* UD_1, WGPU_NULLABLE void* UD_2)
+	callbackInfo.userdata1 = log;
+	callbackInfo.callback = [](WGPUDevice const* device, WGPUErrorType type, WGPUStringView message, WGPU_NULLABLE void* ud1, WGPU_NULLABLE void* ud2)
 		{
-			//char buffer[KILOBYTES(2)];
-			//if (Message.length >= sizeof(buffer))
-			//{
-			//	//OutputDebugString("ERROR | UncapturedErrorCallback | Could not print out the Message as the buffer is too small !\n");
-			//	return;
-			//}
+			platform_log* log = (platform_log*)ud1;
 
-			//wsprintf(buffer, "ERROR | UncapturedErrorCallback | ERROR - Type: %s\n\tERROR - Message: %s", Win32_Util_Stringify_WGPUErrorType(Type), Message.data);
-			//OutputDebugString(buffer);
+			char buffer[KILOBYTES(2)];
+			if (message.length >= sizeof(buffer))
+			{
+				log("ERROR | UncapturedErrorCallback | Could not print out the Message as the buffer is too small !\n");
+				return;
+			}
+
+			// From what I remember, the WGPUStringView::data is not null-terminated
+			// It may be useful to double check though
+			strcpy(buffer, message.data);
+			buffer[message.length - 1] = '\0';
+
+
+			log("ERROR | UncapturedError callback ~~~~~\n");
+			log("Error type: ");
+			log(wgpu::stringifier::errorType(type));
+			log("\n");
+			log("Message: ");
+			log(buffer);
 		};
 
 	return callbackInfo;

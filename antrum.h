@@ -36,7 +36,7 @@ typedef int32    bool32;
 
 
 
-#include "wgpu_layer.cpp"
+
 
 
 
@@ -161,10 +161,14 @@ struct ReadFileResult
 #define PLATFORM_READ_FILE(name) ReadFileResult name(const char* filename, GameMemory* memory)
 typedef PLATFORM_READ_FILE(platform_read_file);
 
+#define PLATFORM_LOG(name) void name(const char* message)
+typedef PLATFORM_LOG(platform_log);
+
 
 struct PlatformStorage
 {
 	platform_read_file* readFile;
+	platform_log* log;
 };
 
 struct Vec3
@@ -294,6 +298,9 @@ struct ShaderUniform
 };
 static_assert(sizeof(ShaderUniform) % sizeof(ShaderUniform::color) == 0);
 
+
+#include "wgpu_layer.cpp"
+
 struct WebGPUStorage
 {
 	wgpu::Instance instance;
@@ -327,18 +334,17 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 #endif
 
 
-//#define GAME_INITIALIZE(name) void name  \
-//(                                        \
-//	GameMemory* memory,                  \
-//	GameState* gameState,                \
-//	PlatformStorage* platformStorage,    \
-//	MeshAsset* asset,                    \
-//	WebGPUStorage* wgpuStorage,          \
-//	void* wndHandle,                     \
-//    void* hInstance                      \
-//)                                        \
+#define GAME_INITIALIZE(name) void name  \
+(                                        \
+	GameMemory* memory,                  \
+	GameState* gameState,                \
+	PlatformStorage* platformStorage,    \
+	MeshAsset* asset,                    \
+	WebGPUStorage* wgpuStorage,          \
+	void* wndHandle,                     \
+    void* hInstance                      \
+)                                        \
 
-#define GAME_INITIALIZE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, MeshAsset* asset, WebGPUStorage* wgpuStorage, void* wndHandle, void* hInstance)
 typedef GAME_INITIALIZE(game_initialize);
 
 #define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, WebGPUStorage* wgpuStorage, MeshAsset* asset)
@@ -346,3 +352,7 @@ typedef GAME_UPDATE(game_update);
 
 #define GAME_QUIT(name) void name(WebGPUStorage* storage)
 typedef GAME_QUIT(game_quit);
+
+
+
+

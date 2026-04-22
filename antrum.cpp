@@ -319,7 +319,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 {
 	storage->instance = wgpu::helper::createInstance();
 	storage->adapter  = wgpu::helper::createAdapter(storage->instance);
-	storage->device   = wgpu::helper::createDevice(storage->adapter);
+	storage->device   = wgpu::helper::createDevice(storage->adapter, platformStorage->log);
 	storage->surface  = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
 
 	ReadFileResult file = platformStorage->readFile("../resource/shader.sha", memory);
@@ -418,6 +418,7 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 	ReadFile_OBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
 
 	// Load wgpu
+	//
 	InitializeWebGPU(wgpuStorage, wndHandle, hInstance, memory, asset, platformStorage);
 
 

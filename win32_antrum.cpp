@@ -21,36 +21,8 @@ void* MemoryChunk::allocate(size_t Amount)
 	return memPtr;
 }
 
-
-const char* Win32_Util_Stringify_WGPUDeviceLostReason(WGPUDeviceLostReason Reason)
-{
-	switch (Reason)
-	{
-		case WGPUDeviceLostReason_Unknown           : return "Unknown";
-		case WGPUDeviceLostReason_Destroyed         : return "Destroyed";
-		case WGPUDeviceLostReason_CallbackCancelled : return "CallbackCancelled";
-		case WGPUDeviceLostReason_FailedCreation    : return "FailedCreation";
-		case WGPUDeviceLostReason_Force32           : return "Force32";
-		default                                     : return "Could not retrieve a valid Reason :((";
-	}
-}
-
-const char* Win32_Util_Stringify_WGPUErrorType(WGPUErrorType Err)
-{
-	switch (Err)
-	{
-		case WGPUErrorType_NoError     : return "NoError";
-		case WGPUErrorType_Validation  : return "Validation";
-		case WGPUErrorType_OutOfMemory : return "OutOfMemory";
-		case WGPUErrorType_Internal    : return "Internal";
-		case WGPUErrorType_Unknown     : return "Unknown";
-		case WGPUErrorType_Force32     : return "Force32";
-		default                        : return "Could not retrieve a valid ErrorType :((";
-	}
-}
-
+XARGS(const char* filename, GameMemory* memory)
 PLATFORM_READ_FILE(Platform_ReadFile)
-//ReadFileResult Win32_Util_ReadFile(const char* Filename, GameMemory* Memory)
 {
 	ReadFileResult res = {};
 
@@ -101,7 +73,11 @@ PLATFORM_READ_FILE(Platform_ReadFile)
 	return res;
 }
 
-
+XARGS(const char* message)
+PLATFORM_LOG(Platform_Log)
+{
+	OutputDebugString(message);
+}
 
 
 
@@ -165,14 +141,21 @@ LRESULT CALLBACK Win32_MainWindowCallback(HWND Window, UINT Message, WPARAM WPar
 {
 	LRESULT result = 0;
 
+	if (Message == WM_NCCREATE)
+	{
+		CREATESTRUCT* cs = (CREATESTRUCT*)LParam;
+		GameState* gameState = (GameState*)cs->lpCreateParams;
+		SetWindowLongPtr(Window, GWLP_USERDATA, (LONG_PTR)gameState);
+	}
+
 	switch (Message)
 	{
 		case WM_DESTROY:
 		case WM_CLOSE:
 		{
-			//gRunning = false;
+			GameState* gameState = (GameState*)(GetWindowLongPtr(Window, GWLP_USERDATA));
+			gameState->quit = true;
 		} break;
-
 		default:
 		{
 			result = DefWindowProc(Window, Message, WParam, LParam);
@@ -184,10 +167,10 @@ LRESULT CALLBACK Win32_MainWindowCallback(HWND Window, UINT Message, WPARAM WPar
 
 struct Win32GameDLL
 {
-	HMODULE DLL;
-	game_update* update;
+	HMODULE          DLL;
+	game_update*     update;
 	game_initialize* initialize;
-	game_quit* quit;
+	game_quit*       quit;
 };
 
 Win32GameDLL Win32_LoadGameDLL()
@@ -221,13 +204,16 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	bool32 success = RegisterClass(&wndClass);
 	if (!success) return 0;
 
+
+
+	GameState gameState = {};
+
 	RECT wndRect   = {};
 	wndRect.top    = 0;
 	wndRect.bottom = WINDOW_HEIGHT;
 	wndRect.left   = 0;
 	wndRect.right  = WINDOW_WIDTH;
 	AdjustWindowRectEx(&wndRect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, false, 0);
-
 	HWND wndHandle = CreateWindowExA
 	(
 		0,
@@ -239,7 +225,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 		wndRect.bottom - wndRect.top, 
 		0, 0, 
 		wndClass.hInstance, 
-		0
+		&gameState
 	);
 
 	GameMemory gameMemory           = {};
@@ -250,10 +236,10 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	gameMemory.assetsChunk.size     = MEMSIZE_ASSETS;
 	gameMemory.assetsChunk.memory   = gameMemory.readFileChunk.memory + gameMemory.readFileChunk.size;
 
-	GameState gameState = {};
 
 	PlatformStorage platformStorage = {};
 	platformStorage.readFile = Platform_ReadFile;
+	platformStorage.log = Platform_Log;
 
 
 
