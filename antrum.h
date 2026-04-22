@@ -6,10 +6,9 @@
 	# TODO
 	~~~~~~
 
-	1. Create game layer
-	2. Move to 3D
-	3. Add inputs
-	4. Profit
+	1. Move to 3D
+	2. Add inputs
+	3. Profit
 
 */
 
