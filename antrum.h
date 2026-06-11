@@ -47,7 +47,7 @@ typedef int32    bool32;
 #define MEMSIZE_GAME      MEGABYTES(64)
 #define MEMSIZE_READ_FILE MEGABYTES(4)
 #define MEMSIZE_ASSETS    MEGABYTES(12)
-#define ASSET_MAX_POINTS  1000
+#define ASSET_MAX_POINTS  10000
 
 
 
@@ -175,6 +175,11 @@ struct Vec3
 	real32 x;
 	real32 y;
 	real32 z;
+};
+
+struct M4
+{
+
 };
 
 struct Vec3I
@@ -315,6 +320,9 @@ struct WebGPUStorage
 	wgpu::Buffer pointBuffer;
 	wgpu::Buffer indexBuffer;
 	wgpu::Buffer uniformBuffer;
+
+	wgpu::Texture depthTexture;
+	wgpu::TextureView depthTextureView;
 
 	wgpu::BindGroup bindGroup;
 

@@ -122,12 +122,15 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, platform_log* log
 	limits.maxVertexAttributes             = 2;
 	limits.maxVertexBuffers                = 1;
 	limits.maxBufferSize                   = 6 * 6 * sizeof(real32);
-	limits.maxVertexBufferArrayStride      = 5 * sizeof(real32);
+	limits.maxVertexBufferArrayStride      = 6 * sizeof(real32);
 	limits.maxInterStageShaderVariables    = 3;
 	limits.maxBindGroups                   = 1;
 	limits.maxUniformBuffersPerShaderStage = 1;
 	limits.maxUniformBufferBindingSize     = 16 * 4;
 	limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
+	limits.maxTextureDimension1D = WINDOW_HEIGHT;
+	limits.maxTextureDimension2D = WINDOW_WIDTH;
+	limits.maxTextureArrayLayers = 1;
 
 
 	// Requesting a device
@@ -237,8 +240,9 @@ WGPUUncapturedErrorCallbackInfo wgpu::callback::onUncapturedError(platform_log* 
 			log("Error type: ");
 			log(wgpu::stringifier::errorType(type));
 			log("\n");
-			log("Message: ");
+			log("\tMessage: ");
 			log(buffer);
+			log("\n\n");
 		};
 
 	return callbackInfo;
@@ -286,7 +290,7 @@ wgpu::ShaderModule wgpu::helper::createShaderModule(wgpu::Device device, WGPUStr
 	return shaderModule;
 }
 
-void wgpu::helper::getDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout)
+void wgpu::helper::setDefault(WGPUBindGroupLayoutEntry& bindingLayout)
 {
 	bindingLayout.buffer.nextInChain = nullptr;
 	bindingLayout.buffer.type = WGPUBufferBindingType_Undefined;
@@ -306,12 +310,34 @@ void wgpu::helper::getDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayo
 	bindingLayout.texture.viewDimension = WGPUTextureViewDimension_Undefined;
 }
 
+void wgpu::helper::setDefault(WGPUStencilFaceState& stencilFaceState)
+{
+	stencilFaceState.compare     = WGPUCompareFunction_Always;
+	stencilFaceState.failOp      = WGPUStencilOperation_Keep;
+	stencilFaceState.depthFailOp = WGPUStencilOperation_Keep;
+	stencilFaceState.passOp      = WGPUStencilOperation_Keep;
+}
+
+void wgpu::helper::setDefault(WGPUDepthStencilState& depthStencilState)
+{
+	depthStencilState.format              = WGPUTextureFormat_Undefined;
+	depthStencilState.depthWriteEnabled   = WGPUOptionalBool_False;
+	depthStencilState.depthCompare        = WGPUCompareFunction_Always;
+	depthStencilState.stencilReadMask     = 0xFFFFFFFF;
+	depthStencilState.stencilWriteMask    = 0xFFFFFFFF;
+	depthStencilState.depthBias           = 0;
+	depthStencilState.depthBiasSlopeScale = 0;
+	depthStencilState.depthBiasClamp      = 0;
+	wgpu::helper::setDefault(depthStencilState.stencilFront);
+	wgpu::helper::setDefault(depthStencilState.stencilBack);
+}
+
 wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, uint64_t minBindingSize)
 {
 	// Create a bind group
 	//
 	WGPUBindGroupLayoutEntry bindingLayoutEntry = {};
-	wgpu::helper::getDefaultBindingLayout(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
+	wgpu::helper::setDefault(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
 	bindingLayoutEntry.binding     = 0; // This is the binding index we use in our shader
 	bindingLayoutEntry.visibility  = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
 	bindingLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
@@ -394,6 +420,15 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 
 
 
+	WGPUTextureFormat depthTextureFormat = WGPUTextureFormat_Depth24Plus;
+	WGPUDepthStencilState depthStencilState = {};
+	wgpu::helper::setDefault(depthStencilState);
+	depthStencilState.depthCompare = WGPUCompareFunction_Less;
+	depthStencilState.depthWriteEnabled = WGPUOptionalBool_False;
+	depthStencilState.format = depthTextureFormat;
+	depthStencilState.stencilReadMask = 0;
+	depthStencilState.stencilWriteMask = 0;
+
 
 	WGPURenderPipelineDescriptor pipelineDesc = {};
 	pipelineDesc.nextInChain = nullptr;
@@ -411,7 +446,7 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 	// >NOTASCOI: Based on the face orientation. Should eventually set it to 'front'. None is only for debug, so we see everything, nothing is hidden.
 	pipelineDesc.primitive.cullMode = WGPUCullMode_None;
 	pipelineDesc.fragment = &fragmentState;
-	pipelineDesc.depthStencil = nullptr;
+	pipelineDesc.depthStencil = &depthStencilState;
 	pipelineDesc.multisample.count = 1;
 	pipelineDesc.multisample.mask = ~0u; // Default value for the mask. It means "all bits on"
 	pipelineDesc.multisample.alphaToCoverageEnabled = false; // Default value as well. It is irrelevant for count = 1 anyways
@@ -536,6 +571,15 @@ wgpu::Device::createShaderModule
 WGPUTexture
 wgpu::Device::createTexture
 (WGPUTextureDescriptor const* descriptor) { return wgpuDeviceCreateTexture(object, descriptor); }
+
+wgpu::Texture
+wgpu::Device::createTextureHelper
+(WGPUTextureDescriptor const* descriptor)
+{
+	wgpu::Texture texture = {};
+	texture.object = createTexture(descriptor);
+	return texture;
+}
 
 void 
 wgpu::Device::destroy
@@ -878,6 +922,15 @@ wgpu::Texture::createErrorView
 WGPUTextureView 
 wgpu::Texture::createView
 (WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor) { return wgpuTextureCreateView(object, descriptor); }
+
+wgpu::TextureView
+wgpu::Texture::createViewHelper
+(WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor)
+{
+	wgpu::TextureView textureView = {};
+	textureView.object = createView(descriptor);
+	return textureView;
+}
 
 void
 wgpu::Texture::destroy

@@ -42,12 +42,14 @@ namespace wgpu
 		WGPUAdapter requestAdapterAsync (wgpu::Instance instance, WGPURequestAdapterOptions const* options);
 		WGPUDevice  requestDeviceAsync  (wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor);
 
-		void getDefaultBindingLayout(WGPUBindGroupLayoutEntry& bindingLayout);
+		void setDefault(WGPUBindGroupLayoutEntry& bindingLayout);
+		void setDefault(WGPUStencilFaceState& stencilFaceState);
+		void setDefault(WGPUDepthStencilState& depthStencilState);
 	}
 
 	namespace callback
 	{
-		WGPUDeviceLostCallbackInfo onDeviceLost(platform_log* log);
+		WGPUDeviceLostCallbackInfo      onDeviceLost(platform_log* log);
 		WGPUUncapturedErrorCallbackInfo onUncapturedError(platform_log* log);
 	}
 
@@ -101,6 +103,7 @@ namespace wgpu
 		WGPUSampler             createSampler                (WGPU_NULLABLE WGPUSamplerDescriptor const* descriptor);
 		WGPUShaderModule        createShaderModule           (WGPUShaderModuleDescriptor const* descriptor);
 		WGPUTexture             createTexture                (WGPUTextureDescriptor const* descriptor);
+		wgpu::Texture           createTextureHelper          (WGPUTextureDescriptor const* descriptor) WGPU_XIN_EXTRA;
 		void                    destroy                      ();
 		void                    forceLoss                    (WGPUDeviceLostReason type, WGPUStringView message);
 		WGPUAdapter             getAdapter                   ();
@@ -183,6 +186,7 @@ namespace wgpu
 	{
 		WGPUTextureView          createErrorView                (WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor);
 		WGPUTextureView          createView                     (WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor);
+		wgpu::TextureView        createViewHelper               (WGPU_NULLABLE WGPUTextureViewDescriptor const* descriptor) WGPU_XIN_EXTRA;
 		void                     destroy                        ();
 		uint32                   getDepthOrArrayLayers          ();
 		WGPUTextureDimension     getDimension                   ();

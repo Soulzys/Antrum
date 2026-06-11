@@ -349,12 +349,38 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->adapter.release();
 	storage->shaderModule.release();
 
-
 	storage->queue = storage->device.getQueueHelper();
 
 
+
+	WGPUTextureFormat depthTextureFormat = WGPUTextureFormat_Depth24Plus;
+	WGPUTextureDescriptor depthTextureDesc = {};
+	depthTextureDesc.dimension = WGPUTextureDimension_2D;
+	depthTextureDesc.format = depthTextureFormat;
+	depthTextureDesc.mipLevelCount = 1;
+	depthTextureDesc.sampleCount = 1;
+	depthTextureDesc.size = { WINDOW_WIDTH , WINDOW_HEIGHT, 1 };
+	depthTextureDesc.usage = WGPUTextureUsage_RenderAttachment;
+	depthTextureDesc.viewFormatCount = 1;
+	depthTextureDesc.viewFormats = &depthTextureFormat;
+	storage->depthTexture = storage->device.createTextureHelper(&depthTextureDesc);
+
+	WGPUTextureViewDescriptor depthTextureViewDesc = {};
+	depthTextureViewDesc.aspect = WGPUTextureAspect_DepthOnly;
+	depthTextureViewDesc.baseArrayLayer = 0;
+	depthTextureViewDesc.arrayLayerCount = 1;
+	depthTextureViewDesc.baseMipLevel = 0;
+	depthTextureViewDesc.mipLevelCount = 1;
+	depthTextureViewDesc.dimension = WGPUTextureViewDimension_2D;
+	depthTextureViewDesc.format = depthTextureFormat;
+	storage->depthTextureView = storage->depthTexture.createViewHelper(&depthTextureViewDesc);
+
+
+
+
+
 	ShaderUniform shaderUniform = {};
-	shaderUniform.time = 2.0f;
+	shaderUniform.time = 0.0f;
 	shaderUniform.color[0] = 0.0f;
 	shaderUniform.color[1] = 1.0f;
 	shaderUniform.color[2] = 0.0f;
@@ -415,7 +441,10 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 {
 	// Load assets
 	//
-	ReadFile_OBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
+	//ReadFile_OBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
+	//ReadFile_OBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
+	ReadFile_OBJ("../resource/Suzane.obj", memory, platformStorage, *asset);
+	size_t vSize = asset->vertices.getElementsLength();
 
 	// Load wgpu
 	//
@@ -435,9 +464,14 @@ extern "C" GAME_UPDATE(Game_Update)
 		return;
 	}
 
+	// Update the uniform time 
+	wgpuStorage->shaderUniform.time += 0.01;
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), 
+		&wgpuStorage->shaderUniform.time, sizeof(ShaderUniform::time));
 
-	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), 
-		&wgpuStorage->shaderUniform.color, sizeof(ShaderUniform::color));
+	// Update the uniform color
+	//wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), 
+	//	&wgpuStorage->shaderUniform.color, sizeof(ShaderUniform::color));
 
 	wgpu::TextureView targetView = wgpuStorage->surface.getCurrentTextureView();
 	ASSERT(targetView.object);
@@ -459,11 +493,22 @@ extern "C" GAME_UPDATE(Game_Update)
 	renderPassColorAttachment.clearValue = WGPUColor{ 0.15, 0.2, 0.33, 1.0f };
 	renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
 
+	WGPURenderPassDepthStencilAttachment depthStencilAttachment = {};
+	depthStencilAttachment.view = wgpuStorage->depthTextureView.object;
+	depthStencilAttachment.depthClearValue = 1.0f;
+	depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
+	depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
+	depthStencilAttachment.depthReadOnly = WGPUOptionalBool_False;
+	depthStencilAttachment.stencilClearValue = 0;
+	depthStencilAttachment.stencilLoadOp = WGPULoadOp_Undefined; // Dawn specific
+	depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Undefined; // Dawn specific
+	depthStencilAttachment.stencilReadOnly = WGPUOptionalBool_True;
+
 	WGPURenderPassDescriptor renderPassDesc = {};
 	renderPassDesc.colorAttachmentCount = 1;
 	renderPassDesc.colorAttachments = &renderPassColorAttachment;
 	renderPassDesc.nextInChain = nullptr;
-	renderPassDesc.depthStencilAttachment = nullptr;
+	renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
 	renderPassDesc.timestampWrites = nullptr;
 
 	wgpu::RenderPassEncoder renderPass = encoder.beginRenderPassHelper(&renderPassDesc);
