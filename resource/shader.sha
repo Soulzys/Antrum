@@ -27,21 +27,14 @@ fn vs_main(in: VertexInput) -> VertexOutput
 	
 	// Object transform
 	//
-	let objectScale = vec3f(1.0, 1.0, 1.0);
-	let objectTranslate = vec3f(0.0, 0.0, 0.0);
-	var position = vec3f(in.position);
-	//position = position * objectScale + objectTranslate;
-
-	// View transform
-	//
 	let angle = uUniforms.time;
 	let c1 = cos(angle);
 	let s1 = sin(angle);
 
 	let S = mat4x4(
-		0.3, 0.0, 0.0, 0.0, 
-		0.0, 0.3, 0.0, 0.0, 
-		0.0, 0.0, 0.3, 0.0, 
+		0.1, 0.0, 0.0, 0.0, 
+		0.0, 0.1, 0.0, 0.0, 
+		0.0, 0.0, 0.1, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
@@ -50,49 +43,112 @@ fn vs_main(in: VertexInput) -> VertexOutput
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0, 
-		1.5, 0.0, 0.0, 1.0
+		0.0, 0.0, 0.0, 1.0
 	);
 	
 
 	let Rx = mat4x4(
 		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, c1, -s1, 
-		0.0, 0.0, s1, c1, 
+		0.0,  c1, -s1, 0.0, 
+		0.0,  s1,  c1, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
 	let Ry = mat4x4(
-		c1, 0.0, s1, 0.0, 
+		 c1, 0.0,  s1, 0.0, 
 		0.0, 1.0, 0.0, 0.0, 
-		-s1, 0.0, c1, 0.0, 
+		-s1, 0.0,  c1, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
 	let Rz = mat4x4(
-		c1, -s1, 0.0, 0.0,
-		s1, c1, 0.0, 0.0,
+		 c1, -s1, 0.0, 0.0,
+		 s1,  c1, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
+	let pi = 3.1453;
+	let vAngleZ = 2.0 * pi;
+	let vMz = mat4x4(
+		cos(vAngleZ), -sin(vAngleZ), 0.0, 0.0,
+		sin(vAngleZ), cos(vAngleZ), 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0, 
+		0.0, 0.0, 0.0, 1.0
+	);
+
+	let vAngleX = 2.0 * pi;
+	let vMx = mat4x4(
+		cos(vAngleX), -sin(vAngleX), 0.0, 0.0,
+		sin(vAngleX), cos(vAngleX), 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0, 
+		0.0, 0.0, 0.0, 1.0
+	);
+
+
+	var position3 = vec3f(in.position);
+
+	//let focal_point = vec3f(0.0, 0.0, -2.0);
+	//position3 = position3 - focal_point;
+	//position3.x /= position3.z;
+	//position3.y /= position3.z;
+
+	let objectTransform = vMz * Ry * T * vec4f(position3, 1.0);
+
+
+
+
+	// View transform
+	//
+	let view_t = mat4x4f(
+		1.0, 0.0, 0.0, 0.0, 
+		0.0, 1.0, 0.0, 0.0, 
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.2, 0.8, 1.0
+	);
+
+	let view_angle = 2 * pi;
+	let view_rx = mat4x4f(
+		1.0,             0.0,              0.0, 0.0, 
+		0.0, cos(view_angle), -sin(view_angle), 0.0,
+		0.0, sin(view_angle),  cos(view_angle), 0.0,
+		0.0,             0.0,              0.0, 1.0
+	);
+
+	let view_ry = mat4x4(
+		 cos(view_angle), 0.0, sin(view_angle), 0.0, 
+		             0.0, 1.0,             0.0, 0.0,
+		-sin(view_angle), 0.0, cos(view_angle), 0.0,
+		             0.0, 0.0,             0.0, 1.0
+	);
+
+	//let view = mat4x4f(
+	//	1.0, 0.0, 0.0, 0.0, 
+	//	0.0, 1.0, 0.0, 0.0, 
+	//	0.0, 0.0, 1.0, 0.0, 
+	//	0.0, 0.0, 0.0, 1.0
+	//);
+
+	let view = view_rx * view_t;
+
+
+	let near = -1.0;
+	let far = 1.0;
+	let scale = 1.0;
+	let projection_ortho = transpose(mat4x4f(
+		1.0 / scale, 0.0, 0.0, 0.0, 
+		0.0, ratio / scale, 0.0, 0.0, 
+		0.0, 0.0, 1.0 / (far - near), -near / (far - near),
+		0.0, 0.0, 0.0, 1.0
+	));
+
+
+
+
 	
 
-	let homopos = vec4f(position, 1.0);
-	position = (Rz * S * T * homopos).xyz;
+	out.position = /*projection_ortho * */view * objectTransform;
 
-
-	// Projection / Screen transform
-	let viewportScale = vec3f(1.0, ratio, 1.0);
-	let viewportTranslate = vec3f(0.0, 0.0, 0.5);
-	out.position = vec4f(position * viewportScale + viewportTranslate, 1.0);
-
-	var offset = vec2f(0, 0);
-	//offset += 0.1 * vec2f(cos(uUniforms.time), sin(uUniforms.time));
-
-
-	//out.position = vec4f(in.position.x + offset.x, (in.position.y + offset.y) * ratio, 0.0, 1.0);
-	//out.position = vec4f(position.x + offset.x, (position.y + offset.y) * ratio, position.z * 0.5 + 0.5, 1.0);
-	//out.color = in.color;
 	return out;
 }
 
