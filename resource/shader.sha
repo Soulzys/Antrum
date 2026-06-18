@@ -40,10 +40,10 @@ fn vs_main(in: VertexInput) -> VertexOutput
 
 	let T = mat4x4f(
 					   
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0, 
-		0.0, 0.0, 0.0, 1.0
+		0.3, 0.0, 0.0, 0.0,
+		0.0, 0.3, 0.0, 0.0,
+		0.0, 0.0, 0.3, 0.0, 
+		0.3, 0.0, 0.0, 1.0
 	);
 	
 
@@ -68,7 +68,7 @@ fn vs_main(in: VertexInput) -> VertexOutput
 		0.0, 0.0, 0.0, 1.0
 	);
 
-	let pi = 3.1453;
+	let pi = 3.141592;
 	let vAngleZ = 2.0 * pi;
 	let vMz = mat4x4(
 		cos(vAngleZ), -sin(vAngleZ), 0.0, 0.0,
@@ -104,10 +104,10 @@ fn vs_main(in: VertexInput) -> VertexOutput
 		1.0, 0.0, 0.0, 0.0, 
 		0.0, 1.0, 0.0, 0.0, 
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.2, 0.8, 1.0
+		0.0, -0.2, 0.8, 1.0
 	);
 
-	let view_angle = 2 * pi;
+	let view_angle = -2 * pi / 16;
 	let view_rx = mat4x4f(
 		1.0,             0.0,              0.0, 0.0, 
 		0.0, cos(view_angle), -sin(view_angle), 0.0,
@@ -132,14 +132,14 @@ fn vs_main(in: VertexInput) -> VertexOutput
 	let view = view_rx * view_t;
 
 
-	let near = -1.0;
+	let near = 0.0;
 	let far = 1.0;
 	let scale = 1.0;
 	let projection_ortho = transpose(mat4x4f(
-		1.0 / scale, 0.0, 0.0, 0.0, 
-		0.0, ratio / scale, 0.0, 0.0, 
-		0.0, 0.0, 1.0 / (far - near), -near / (far - near),
-		0.0, 0.0, 0.0, 1.0
+		1.0 / scale,           0.0,                0.0,                  0.0, 
+		        0.0, ratio / scale,                0.0,                  0.0, 
+		        0.0,           0.0, 1.0 / (far - near), -near / (far - near),
+		        0.0,           0.0,                0.0,                  1.0
 	));
 
 
@@ -147,7 +147,7 @@ fn vs_main(in: VertexInput) -> VertexOutput
 
 	
 
-	out.position = /*projection_ortho * */view * objectTransform;
+	out.position = /* projection_ortho * */ view * objectTransform;
 
 	return out;
 }
