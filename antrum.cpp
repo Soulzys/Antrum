@@ -36,6 +36,121 @@ uint8 CharUtil::ToDigit(char c)
 	return uint8(c - '0');
 }
 
+
+M4 M4::identity()
+{
+	M4 o = {};
+	o.m[0][0] = 1.0f; o.m[0][1] = 0.0f; o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] = 1.0f; o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = 0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
+	o.m[3][0] = 0.0f; o.m[3][1] = 0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
+
+	return o;
+}
+
+M4 M4::translate(real32 x, real32 y, real32 z)
+{
+	M4 o = {};
+	o.m[0][0] = 1.0f; o.m[0][1] = 0.0f; o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] = 1.0f; o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = 0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
+	o.m[3][0] =    x; o.m[3][1] =    y; o.m[3][2] =    z; o.m[3][3] = 1.0f;
+
+	return o;
+}
+
+M4 M4::scale(real32 x, real32 y, real32 z)
+{
+	M4 o = {};
+	o.m[0][0] =    x; o.m[0][1] = 0.0f; o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] =    y; o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = 0.0f; o.m[2][2] =    z; o.m[2][3] = 0.0f;
+	o.m[3][0] = 0.0f; o.m[3][1] = 0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
+
+	return o;
+}
+
+M4 M4::scale(real32 v)
+{
+	M4 o = {};
+	o.m[0][0] =    v; o.m[0][1] = 0.0f; o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] =    v; o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = 0.0f; o.m[2][2] =    v; o.m[2][3] = 0.0f;
+	o.m[3][0] = 0.0f; o.m[3][1] = 0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
+
+	return o;
+}
+
+M4 M4::rotateX(real32 a)
+{
+	M4 o = {};
+	o.m[0][0] = 1.0f; o.m[0][1] =           0.0f; o.m[0][2] =              0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] = (real32)cos(a); o.m[1][2] = (real32)(-sin(a)); o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = (real32)sin(a); o.m[2][2] =    (real32)cos(a); o.m[2][3] = 0.0f;
+	o.m[3][0] = 0.0f; o.m[3][1] =           0.0f; o.m[3][2] =              0.0f; o.m[3][3] = 1.0f;
+
+	return o;
+}
+
+M4 M4::rotateY(real32 a)
+{
+	M4 o = {};
+	o.m[0][0] =    (real32)cos(a); o.m[0][1] = 0.0f; o.m[0][2] = (real32)sin(a); o.m[0][3] = 0.0f;
+	o.m[1][0] =              0.0f; o.m[1][1] = 1.0f; o.m[1][2] =           0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = (real32)(-sin(a)); o.m[2][1] = 0.0f; o.m[2][2] = (real32)cos(a); o.m[2][3] = 0.0f;
+	o.m[3][0] =              0.0f; o.m[3][1] = 0.0f; o.m[3][2] =           0.0f; o.m[3][3] = 1.0f;
+	
+	return o;
+}
+
+M4 M4::rotateZ(real32 a)
+{
+	M4 o = {};
+	o.m[0][0] = (real32)cos(a); o.m[0][1] = (real32)(-sin(a)); o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = (real32)sin(a); o.m[1][1] =    (real32)cos(a); o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] =           0.0f; o.m[2][1] =              0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
+	o.m[3][0] =           0.0f; o.m[3][1] =              0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
+	
+	return o;
+}
+
+real32* M4::operator[](uint8 i)
+{
+	return m[i];
+}
+
+const real32* M4::operator[](uint8 i) const
+{
+	return m[i];
+}
+
+M4 M4::operator*(const M4& n)
+{
+	M4 o;
+
+	for (uint8 i = 0; i < 4; i++)
+	{
+		for (uint8 j = 0; j < 4; j++)
+		{
+			o[i][j] = m[i][0] * n[0][j] + 
+					  m[i][1] * n[1][j] + 
+					  m[i][2] * n[2][j] + 
+					  m[i][3] * n[3][j] ;
+		}
+	}
+
+	return o;
+}
+
+M4& M4::operator*=(const M4& n)
+{
+	*this = *this * n;
+	return *this;
+}
+
+
+
+
 ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endChar)
 {
 	ParseNumberResult result = {};
@@ -318,33 +433,33 @@ uint32 CeilToNextMultiple(uint32 value, uint32 multiple)
 void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformStorage* platformStorage)
 {
 	storage->instance = wgpu::helper::createInstance();
-	storage->adapter  = wgpu::helper::createAdapter(storage->instance);
-	storage->device   = wgpu::helper::createDevice(storage->adapter, platformStorage->log);
-	storage->surface  = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
+	storage->adapter = wgpu::helper::createAdapter(storage->instance);
+	storage->device = wgpu::helper::createDevice(storage->adapter, platformStorage->log);
+	storage->surface = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
 
 	ReadFileResult file = platformStorage->readFile("../resource/shader.sha", memory);
 	ASSERT(file.content);
 	WGPUStringView shaderCode = {};
-	shaderCode.data           = (const char*)file.content;
-	shaderCode.length         = file.contentSize;
+	shaderCode.data = (const char*)file.content;
+	shaderCode.length = file.contentSize;
 
-	storage->shaderModule    = wgpu::helper::createShaderModule(storage->device, shaderCode, "Xin Shader Module");
+	storage->shaderModule = wgpu::helper::createShaderModule(storage->device, shaderCode, "Xin Shader Module");
 	storage->bindGroupLayout = wgpu::helper::createBindGroupLayout(storage->device, sizeof(ShaderUniform));
-	storage->pipelineLayout  = wgpu::helper::createPipelineLayout(storage->device, storage->bindGroupLayout);
-	storage->renderPipeline  = wgpu::helper::createRenderPipeline(storage->device, storage->shaderModule, storage->surface.getFormat(storage->adapter), storage->pipelineLayout);
+	storage->pipelineLayout = wgpu::helper::createPipelineLayout(storage->device, storage->bindGroupLayout);
+	storage->renderPipeline = wgpu::helper::createRenderPipeline(storage->device, storage->shaderModule, storage->surface.getFormat(storage->adapter), storage->pipelineLayout);
 
 	WGPUSurfaceConfiguration config = {};
-	config.nextInChain     = nullptr;
-	config.width           = WINDOW_WIDTH;
-	config.height          = WINDOW_HEIGHT;
-	config.format          = storage->surface.getFormat(storage->adapter);
+	config.nextInChain = nullptr;
+	config.width = WINDOW_WIDTH;
+	config.height = WINDOW_HEIGHT;
+	config.format = storage->surface.getFormat(storage->adapter);
 	config.viewFormatCount = 0;
-	config.viewFormats     = nullptr;
-	config.usage           = WGPUTextureUsage_RenderAttachment;
-	config.device          = storage->device.object;
-	config.presentMode     = WGPUPresentMode::WGPUPresentMode_Fifo;
-	config.alphaMode       = WGPUCompositeAlphaMode::WGPUCompositeAlphaMode_Auto;
-	storage->surface.configure(&config);	
+	config.viewFormats = nullptr;
+	config.usage = WGPUTextureUsage_RenderAttachment;
+	config.device = storage->device.object;
+	config.presentMode = WGPUPresentMode::WGPUPresentMode_Fifo;
+	config.alphaMode = WGPUCompositeAlphaMode::WGPUCompositeAlphaMode_Auto;
+	storage->surface.configure(&config);
 
 	storage->adapter.release();
 	storage->shaderModule.release();
@@ -378,8 +493,38 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 
 
+	real32 ratio       = (real32)(WINDOW_WIDTH / WINDOW_HEIGHT);
+	real32 focalLength = 1.0f;
+	real32 near        = 0.01f;
+	real32 far         = 100.0f;
+	real32 divides     = 1.0 / (far - near);
 
 	ShaderUniform shaderUniform = {};
+
+	shaderUniform.projectionMatrix =
+	{
+		focalLength,                 0.0,                   0.0, 0.0,
+		0.0        , focalLength * ratio,                   0.0, 0.0,
+		0.0        ,                 0.0,         far * divides, 1.0,
+		0.0        ,                 0.0, -far * near * divides, 0.0
+	};
+
+	shaderUniform.viewMatrix =
+	{
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	};
+
+	shaderUniform.modelMatrix =
+	{
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	};
+
 	shaderUniform.time = 0.0f;
 	shaderUniform.color[0] = 0.0f;
 	shaderUniform.color[1] = 1.0f;
@@ -443,7 +588,7 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 	//
 	//ReadFile_OBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
 	//ReadFile_OBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
-	ReadFile_OBJ("../resource/Suzane.obj", memory, platformStorage, *asset);
+	ReadFile_OBJ("../resource/Suzy.obj", memory, platformStorage, *asset);
 	size_t vSize = asset->vertices.getElementsLength();
 
 	// Load wgpu
@@ -464,10 +609,32 @@ extern "C" GAME_UPDATE(Game_Update)
 		return;
 	}
 
+	wgpuStorage->shaderUniform.time += 0.005;
+
+	// Object
+	M4 S  = M4::scale(0.3f);
+	M4 T1 = M4::translate(0.5f, 0.0f, 0.0f);
+	M4 R1 = M4::rotateY(wgpuStorage->shaderUniform.time);
+	wgpuStorage->shaderUniform.modelMatrix = R1 * T1 * S;
+
+	// View
+	M4 T2 = M4::translate(0.0, 0.0, -2.0f);
+	M4 R2 = M4::rotateX(-PI / 2.0f);
+	wgpuStorage->shaderUniform.viewMatrix = R2 * T2;
+
+
 	// Update the uniform time 
-	wgpuStorage->shaderUniform.time += 0.01;
 	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), 
 		&wgpuStorage->shaderUniform.time, sizeof(ShaderUniform::time));
+
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::projectionMatrix),
+		&wgpuStorage->shaderUniform.projectionMatrix, sizeof(ShaderUniform::projectionMatrix));
+
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::viewMatrix),
+		&wgpuStorage->shaderUniform.viewMatrix, sizeof(ShaderUniform::viewMatrix));
+
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::modelMatrix),
+		&wgpuStorage->shaderUniform.modelMatrix, sizeof(ShaderUniform::modelMatrix));
 
 	// Update the uniform color
 	//wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), 

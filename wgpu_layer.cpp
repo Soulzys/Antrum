@@ -126,7 +126,7 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, platform_log* log
 	limits.maxInterStageShaderVariables    = 3;
 	limits.maxBindGroups                   = 1;
 	limits.maxUniformBuffersPerShaderStage = 1;
-	limits.maxUniformBufferBindingSize     = 16 * 4;
+	limits.maxUniformBufferBindingSize     = 16 * 4 * sizeof(real32);
 	limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 	limits.maxTextureDimension1D = WINDOW_HEIGHT;
 	limits.maxTextureDimension2D = WINDOW_WIDTH;

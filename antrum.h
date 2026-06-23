@@ -51,6 +51,11 @@ typedef int32    bool32;
 
 
 
+
+constexpr float PI = 3.14159265358979323846f;
+
+
+
 struct MemoryChunk
 {
 	void* allocate(size_t amount);
@@ -179,7 +184,25 @@ struct Vec3
 
 struct M4
 {
+	static M4 identity ();
+	static M4 translate(real32 x, real32 y, real32 z);
+	static M4 scale    (real32 x, real32 y, real32 z);
+	static M4 scale    (real32 v);
+	static M4 rotateX  (real32 a);
+	static M4 rotateY  (real32 a);
+	static M4 rotateZ  (real32 a);
 
+	real32*       operator[](uint8 i);
+	const real32* operator[](uint8 i) const;
+	M4            operator* (const M4& n);
+	M4&           operator*=(const M4& n);
+
+	real32 m[4][4] = {
+	                     {1.0f, 0.0f, 0.0f, 0.0f}, 
+	                     {0.0f, 1.0f, 0.0f, 0.0f}, 
+	                     {0.0f, 0.0f, 1.0f, 0.0f}, 
+	                     {0.0f, 0.0f, 0.0f, 1.0f}, 
+	                 };
 };
 
 struct Vec3I
@@ -293,6 +316,9 @@ ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endCha
 struct ShaderUniform
 {
 	// When dealing with uniform offset, the formula is that for each struct member, its offset has to be a multiple of: offset * sizeof(memberType);
+	M4 projectionMatrix;
+	M4 viewMatrix;
+	M4 modelMatrix;
 	real32 color[4]; // offset = 0 * sizeof(vec4f) --> OK, 0 is a multiple of 16
 	real32 time; // offset = 16 = 4 * sizeof(f32) --> OK, 16 is a multiple of 16
 

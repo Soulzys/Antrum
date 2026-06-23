@@ -12,6 +12,9 @@ struct VertexOutput
 
 struct ShaderUniform
 {
+	projectionMatrix: mat4x4f,
+	viewMatrix: mat4x4f, 
+	modelMatrix: mat4x4f,
 	color: vec4f,
 	time: f32, 
 };
@@ -19,33 +22,57 @@ struct ShaderUniform
 // The memory location of a uniform is defined by a pair of a bind group and a binding
 @group(0) @binding(0) var<uniform> uUniforms: ShaderUniform;
 
-@vertex
-fn vs_main(in: VertexInput) -> VertexOutput 
+
+
+const pi = 3.14159265359;
+
+fn makeOrthographicProj(ratio: f32, near: f32, far: f32, scale: f32) -> mat4x4f
+{
+	return mat4x4f(
+	1.0 / scale,           0.0,                  0.0, 0.0, 
+	        0.0, ratio / scale,                  0.0, 0.0, 
+	        0.0,           0.0,   1.0 / (far - near), 0.0,
+	        0.0,           0.0, -near / (far - near), 1.0
+	);
+}
+
+fn makePerspectiveProj(ratio: f32, near: f32, far: f32, focalLength: f32) -> mat4x4f
+{
+	let divides = 1.0 / (far - near);
+	return mat4x4f(
+		focalLength,                 0.0,                   0.0, 0.0, 
+		        0.0, focalLength * ratio,                   0.0, 0.0,
+		        0.0,                 0.0,         far * divides, 1.0, 
+		        0.0,                 0.0, -far * near * divides, 0.0
+	);
+}
+
+fn vs_main_ortho(in: VertexInput) -> VertexOutput
 {
 	var out: VertexOutput;
 	let ratio = 1200.0 / 800.0;
-	
-	// Object transform
-	//
-	let angle = uUniforms.time;
-	let c1 = cos(angle);
-	let s1 = sin(angle);
+	//let ratio = 640.0 / 480.0;
+	var offset = vec2f(0.0);
 
-	let S = mat4x4(
-		0.1, 0.0, 0.0, 0.0, 
-		0.0, 0.1, 0.0, 0.0, 
-		0.0, 0.0, 0.1, 0.0, 
+	let S = mat4x4f(
+		0.3, 0.0, 0.0, 0.0, 
+		0.0, 0.3, 0.0, 0.0, 
+		0.0, 0.0, 0.3, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
 	let T = mat4x4f(
 					   
-		0.3, 0.0, 0.0, 0.0,
-		0.0, 0.3, 0.0, 0.0,
-		0.0, 0.0, 0.3, 0.0, 
-		0.3, 0.0, 0.0, 1.0
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0, 
+		0.5, 0.0, 0.0, 1.0
 	);
-	
+
+
+	let angle1 = uUniforms.time;
+	let c1 = cos(angle1);
+	let s1 = sin(angle1);
 
 	let Rx = mat4x4(
 		1.0, 0.0, 0.0, 0.0,
@@ -54,102 +81,69 @@ fn vs_main(in: VertexInput) -> VertexOutput
 		0.0, 0.0, 0.0, 1.0
 	);
 
-	let Ry = mat4x4(
+	let Ry = mat4x4f(
 		 c1, 0.0,  s1, 0.0, 
 		0.0, 1.0, 0.0, 0.0, 
 		-s1, 0.0,  c1, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
-	let Rz = mat4x4(
+	let Rz = mat4x4f(
 		 c1, -s1, 0.0, 0.0,
 		 s1,  c1, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0, 
 		0.0, 0.0, 0.0, 1.0
 	);
 
-	let pi = 3.141592;
-	let vAngleZ = 2.0 * pi;
-	let vMz = mat4x4(
-		cos(vAngleZ), -sin(vAngleZ), 0.0, 0.0,
-		sin(vAngleZ), cos(vAngleZ), 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0, 
-		0.0, 0.0, 0.0, 1.0
-	);
-
-	let vAngleX = 2.0 * pi;
-	let vMx = mat4x4(
-		cos(vAngleX), -sin(vAngleX), 0.0, 0.0,
-		sin(vAngleX), cos(vAngleX), 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0, 
-		0.0, 0.0, 0.0, 1.0
-	);
-
-
-	var position3 = vec3f(in.position);
-
-	//let focal_point = vec3f(0.0, 0.0, -2.0);
-	//position3 = position3 - focal_point;
-	//position3.x /= position3.z;
-	//position3.y /= position3.z;
-
-	let objectTransform = vMz * Ry * T * vec4f(position3, 1.0);
-
-
-
-
-	// View transform
-	//
-	let view_t = mat4x4f(
-		1.0, 0.0, 0.0, 0.0, 
-		0.0, 1.0, 0.0, 0.0, 
-		0.0, 0.0, 1.0, 0.0,
-		0.0, -0.2, 0.8, 1.0
-	);
-
-	let view_angle = -2 * pi / 16;
-	let view_rx = mat4x4f(
-		1.0,             0.0,              0.0, 0.0, 
-		0.0, cos(view_angle), -sin(view_angle), 0.0,
-		0.0, sin(view_angle),  cos(view_angle), 0.0,
-		0.0,             0.0,              0.0, 1.0
-	);
-
-	let view_ry = mat4x4(
-		 cos(view_angle), 0.0, sin(view_angle), 0.0, 
-		             0.0, 1.0,             0.0, 0.0,
-		-sin(view_angle), 0.0, cos(view_angle), 0.0,
-		             0.0, 0.0,             0.0, 1.0
-	);
-
-	//let view = mat4x4f(
-	//	1.0, 0.0, 0.0, 0.0, 
-	//	0.0, 1.0, 0.0, 0.0, 
-	//	0.0, 0.0, 1.0, 0.0, 
-	//	0.0, 0.0, 0.0, 1.0
-	//);
-
-	let view = view_rx * view_t;
-
-
-	let near = 0.0;
-	let far = 1.0;
-	let scale = 1.0;
-	let projection_ortho = transpose(mat4x4f(
-		1.0 / scale,           0.0,                0.0,                  0.0, 
-		        0.0, ratio / scale,                0.0,                  0.0, 
-		        0.0,           0.0, 1.0 / (far - near), -near / (far - near),
-		        0.0,           0.0,                0.0,                  1.0
-	));
-
-
-
-
 	
 
-	out.position = /* projection_ortho * */ view * objectTransform;
+	let angle2 = -pi / 8.0;
+	//let angle2 = -pi / 2;
+	let c2 = cos(angle2);
+	let s2 = sin(angle2);
 
+	let R2 = mat4x4f(
+		1.0, 0.0, 0.0, 0.0,
+		0.0,  c2, -s2, 0.0, 
+		0.0,  s2,  c2, 0.0, 
+		0.0, 0.0, 0.0, 1.0
+	);
+
+	let focalPoint = vec3f(0.0, 0.0, -5.0);
+	let T2 = mat4x4f(
+					   
+		          1.0,           0.0,           0.0, 0.0,
+		          0.0,           1.0,           0.0, 0.0,
+		          0.0,           0.0,           1.0, 0.0, 
+		-focalPoint.x, -focalPoint.y, -focalPoint.z, 1.0
+	);
+
+
+	let homoPos = vec4f(in.position, 1.0);
+	let viewspacePos = T2 * R2 * Ry * T * S * homoPos;
+
+	//let P = makeOrthographicProj(ratio, 0.01, 100.0, 1.0);
+	//let P = makeOrthographicProj(ratio, -10.0, 10.0, 1.0);
+	let P = makePerspectiveProj(ratio, 0.01, 100.0, 1.0);
+
+	out.position = P * viewspacePos;
 	return out;
+}
+
+
+fn vs_main_cpu(in: VertexInput) -> VertexOutput
+{
+	var out: VertexOutput;
+	out.position = uUniforms.projectionMatrix * uUniforms.viewMatrix * uUniforms.modelMatrix * vec4f(in.position, 1.0);
+	return out;
+}
+
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput 
+{
+	//return vs_main_ortho(in);
+	return vs_main_cpu(in);
 }
 
 @fragment
