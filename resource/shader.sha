@@ -120,13 +120,17 @@ fn vs_main_ortho(in: VertexInput) -> VertexOutput
 
 
 	let homoPos = vec4f(in.position, 1.0);
-	let viewspacePos = T2 * R2 * Ry * T * S * homoPos;
+	//let viewspacePos = T2 * R2 * Ry * T * S * homoPos;
+	//let viewspacePos = uUniforms.viewMatrix * Ry * T * S * homoPos;
+	//let viewspacePos = T2 * R2 * uUniforms.modelMatrix * homoPos;
+	let viewspacePos = uUniforms.viewMatrix * uUniforms.modelMatrix * homoPos;
 
 	//let P = makeOrthographicProj(ratio, 0.01, 100.0, 1.0);
 	//let P = makeOrthographicProj(ratio, -10.0, 10.0, 1.0);
 	let P = makePerspectiveProj(ratio, 0.01, 100.0, 1.0);
 
-	out.position = P * viewspacePos;
+	//out.position = P * viewspacePos;
+	out.position = uUniforms.projectionMatrix * viewspacePos;
 	return out;
 }
 

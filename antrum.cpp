@@ -54,7 +54,7 @@ M4 M4::translate(real32 x, real32 y, real32 z)
 	o.m[0][0] = 1.0f; o.m[0][1] = 0.0f; o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
 	o.m[1][0] = 0.0f; o.m[1][1] = 1.0f; o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
 	o.m[2][0] = 0.0f; o.m[2][1] = 0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
-	o.m[3][0] =    x; o.m[3][1] =    y; o.m[3][2] =    z; o.m[3][3] = 1.0f;
+	o.m[3][0] =    x; o.m[3][1] =    z; o.m[3][2] =    y; o.m[3][3] = 1.0f;
 
 	return o;
 }
@@ -84,10 +84,10 @@ M4 M4::scale(real32 v)
 M4 M4::rotateX(real32 a)
 {
 	M4 o = {};
-	o.m[0][0] = 1.0f; o.m[0][1] =           0.0f; o.m[0][2] =              0.0f; o.m[0][3] = 0.0f;
-	o.m[1][0] = 0.0f; o.m[1][1] = (real32)cos(a); o.m[1][2] = (real32)(-sin(a)); o.m[1][3] = 0.0f;
-	o.m[2][0] = 0.0f; o.m[2][1] = (real32)sin(a); o.m[2][2] =    (real32)cos(a); o.m[2][3] = 0.0f;
-	o.m[3][0] = 0.0f; o.m[3][1] =           0.0f; o.m[3][2] =              0.0f; o.m[3][3] = 1.0f;
+	o.m[0][0] = 1.0f; o.m[0][1] =              0.0f; o.m[0][2] =           0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] =    (real32)cos(a); o.m[1][2] = (real32)sin(a); o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = (real32)(-sin(a)); o.m[2][2] = (real32)cos(a); o.m[2][3] = 0.0f;
+	o.m[3][0] = 0.0f; o.m[3][1] =              0.0f; o.m[3][2] =           0.0f; o.m[3][3] = 1.0f;
 
 	return o;
 }
@@ -95,10 +95,10 @@ M4 M4::rotateX(real32 a)
 M4 M4::rotateY(real32 a)
 {
 	M4 o = {};
-	o.m[0][0] =    (real32)cos(a); o.m[0][1] = 0.0f; o.m[0][2] = (real32)sin(a); o.m[0][3] = 0.0f;
-	o.m[1][0] =              0.0f; o.m[1][1] = 1.0f; o.m[1][2] =           0.0f; o.m[1][3] = 0.0f;
-	o.m[2][0] = (real32)(-sin(a)); o.m[2][1] = 0.0f; o.m[2][2] = (real32)cos(a); o.m[2][3] = 0.0f;
-	o.m[3][0] =              0.0f; o.m[3][1] = 0.0f; o.m[3][2] =           0.0f; o.m[3][3] = 1.0f;
+	o.m[0][0] = (real32)cos(a); o.m[0][1] = (real32)(-sin(a)); o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = (real32)sin(a); o.m[1][1] =    (real32)cos(a); o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] =           0.0f; o.m[2][1] =              0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
+	o.m[3][0] =           0.0f; o.m[3][1] =              0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
 	
 	return o;
 }
@@ -106,10 +106,10 @@ M4 M4::rotateY(real32 a)
 M4 M4::rotateZ(real32 a)
 {
 	M4 o = {};
-	o.m[0][0] = (real32)cos(a); o.m[0][1] = (real32)(-sin(a)); o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
-	o.m[1][0] = (real32)sin(a); o.m[1][1] =    (real32)cos(a); o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
-	o.m[2][0] =           0.0f; o.m[2][1] =              0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
-	o.m[3][0] =           0.0f; o.m[3][1] =              0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
+	o.m[0][0] =    (real32)cos(a); o.m[0][1] = 0.0f; o.m[0][2] = (real32)sin(a); o.m[0][3] = 0.0f;
+	o.m[1][0] =              0.0f; o.m[1][1] = 1.0f; o.m[1][2] =           0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = (real32)(-sin(a)); o.m[2][1] = 0.0f; o.m[2][2] = (real32)cos(a); o.m[2][3] = 0.0f;
+	o.m[3][0] =              0.0f; o.m[3][1] = 0.0f; o.m[3][2] =           0.0f; o.m[3][3] = 1.0f;
 	
 	return o;
 }
@@ -609,18 +609,19 @@ extern "C" GAME_UPDATE(Game_Update)
 		return;
 	}
 
-	wgpuStorage->shaderUniform.time += 0.005;
+	wgpuStorage->shaderUniform.time += 0.0008;
 
 	// Object
-	M4 S  = M4::scale(0.3f);
-	M4 T1 = M4::translate(0.5f, 0.0f, 0.0f);
-	M4 R1 = M4::rotateY(wgpuStorage->shaderUniform.time);
+	M4 S  = M4::scale(0.6f);
+	M4 T1 = M4::translate(0.0f, 0.0f, 0.0f);
+	M4 R1 = M4::rotateX(wgpuStorage->shaderUniform.time);
 	wgpuStorage->shaderUniform.modelMatrix = R1 * T1 * S;
 
 	// View
-	M4 T2 = M4::translate(0.0, 0.0, -2.0f);
-	M4 R2 = M4::rotateX(-PI / 2.0f);
-	wgpuStorage->shaderUniform.viewMatrix = R2 * T2;
+	M4 T2 = M4::translate(0.0, 5.0, 0.0f);
+	M4 R2 = M4::rotateX(PI / 8.0f);
+	M4 R3 = M4::rotateZ(PI / 4.0f);
+	wgpuStorage->shaderUniform.viewMatrix = /*R3 * R2 * */ T2;
 
 
 	// Update the uniform time 
