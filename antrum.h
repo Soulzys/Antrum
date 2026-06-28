@@ -148,6 +148,7 @@ private:
 struct MeshAsset
 {
 	Vector<real32, ASSET_MAX_POINTS> vertices;
+	Vector<real32, ASSET_MAX_POINTS> normals;
 	Vector<uint16, ASSET_MAX_POINTS> indexes; // >TODO: find a more efficient way to calculate the minimum amount of indexes
 	uint64 size;
 };
@@ -163,24 +164,32 @@ struct ReadFileResult
 };
 
 #define PLATFORM_READ_FILE(name) ReadFileResult name(const char* filename, GameMemory* memory)
-typedef PLATFORM_READ_FILE(platform_read_file);
+typedef PLATFORM_READ_FILE(read_file);
 
 #define PLATFORM_LOG(name) void name(const char* message)
-typedef PLATFORM_LOG(platform_log);
+typedef PLATFORM_LOG(flog);
 
 
-struct PlatformStorage
+struct PlatformFunctions
 {
-	platform_read_file* readFile;
-	platform_log* log;
+	read_file* readFile;
+	flog* log;
 };
 
+template<typename T>
 struct Vec3
 {
-	real32 x;
-	real32 y;
-	real32 z;
+	T x;
+	T y;
+	T z;
 };
+
+//struct Vec3I
+//{
+//	uint16 a;
+//	uint16 b;
+//	uint16 c;
+//};
 
 struct M4
 {
@@ -205,12 +214,7 @@ struct M4
 	                 };
 };
 
-struct Vec3I
-{
-	uint16 a;
-	uint16 b;
-	uint16 c;
-};
+
 
 struct String
 {
@@ -248,15 +252,10 @@ struct FileReader
 
 namespace OBJParser
 {
-	struct Vec3LineResult
+	template<typename T>
+	struct LineResult
 	{
-		Vec3        vector;
-		const char* reader;
-	};
-
-	struct Vec3ILineResult
-	{
-		Vec3I vector;
+		Vec3<T>     vector;
 		const char* reader;
 	};
 
@@ -265,8 +264,8 @@ namespace OBJParser
 
 	};
 
-	Vec3LineResult parseVec3Line(FileReader& fileReader);
-	Vec3ILineResult parseFaceLine(FileReader& fileReader);
+	LineResult<real32> parseVerticesLine(FileReader& fileReader);
+	LineResult<uint16> parseFaceLine    (FileReader& fileReader);
 }
 
 namespace CharUtil
@@ -358,7 +357,7 @@ struct WebGPUStorage
 
 
 
-void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformStorage* platformStorage);
+void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformFunctions* platformFunctions);
 
 
 // Used to display the arguments of the macroed functions
@@ -371,7 +370,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 (                                        \
 	GameMemory* memory,                  \
 	GameState* gameState,                \
-	PlatformStorage* platformStorage,    \
+	PlatformFunctions* platformFunctions,\
 	MeshAsset* asset,                    \
 	WebGPUStorage* wgpuStorage,          \
 	void* wndHandle,                     \
@@ -380,7 +379,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 typedef GAME_INITIALIZE(game_initialize);
 
-#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, WebGPUStorage* wgpuStorage, MeshAsset* asset)
+#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset)
 typedef GAME_UPDATE(game_update);
 
 #define GAME_QUIT(name) void name(WebGPUStorage* storage)

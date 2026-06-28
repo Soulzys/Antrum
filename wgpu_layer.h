@@ -32,7 +32,7 @@ namespace wgpu
 	{
 		wgpu::Instance        createInstance        ();
 		wgpu::Adapter         createAdapter         (wgpu::Instance instance);
-		wgpu::Device          createDevice          (wgpu::Adapter adapter, platform_log* logger);
+		wgpu::Device          createDevice          (wgpu::Adapter adapter, flog* logger);
 		wgpu::Surface         createSurface         (void* wndHandle, void* hInstance, wgpu::Instance instance);
 		wgpu::ShaderModule    createShaderModule    (wgpu::Device device, WGPUStringView shaderData, const char* label);
 		wgpu::BindGroupLayout createBindGroupLayout (wgpu::Device device, uint64_t minBindingSize);
@@ -49,8 +49,8 @@ namespace wgpu
 
 	namespace callback
 	{
-		WGPUDeviceLostCallbackInfo      onDeviceLost(platform_log* log);
-		WGPUUncapturedErrorCallbackInfo onUncapturedError(platform_log* log);
+		WGPUDeviceLostCallbackInfo      onDeviceLost(flog* log);
+		WGPUUncapturedErrorCallbackInfo onUncapturedError(flog* log);
 	}
 
 	namespace stringifier

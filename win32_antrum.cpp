@@ -22,7 +22,7 @@ void* MemoryChunk::allocate(size_t Amount)
 }
 
 XARGS(const char* filename, GameMemory* memory)
-PLATFORM_READ_FILE(Platform_ReadFile)
+PLATFORM_READ_FILE(ReadFile)
 {
 	ReadFileResult res = {};
 
@@ -74,7 +74,7 @@ PLATFORM_READ_FILE(Platform_ReadFile)
 }
 
 XARGS(const char* message)
-PLATFORM_LOG(Platform_Log)
+PLATFORM_LOG(FLog)
 {
 	OutputDebugString(message);
 }
@@ -237,9 +237,9 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	gameMemory.assetsChunk.memory   = gameMemory.readFileChunk.memory + gameMemory.readFileChunk.size;
 
 
-	PlatformStorage platformStorage = {};
-	platformStorage.readFile = Platform_ReadFile;
-	platformStorage.log = Platform_Log;
+	PlatformFunctions platformFunctions = {};
+	platformFunctions.readFile = ReadFile;
+	platformFunctions.log = FLog;
 
 
 
@@ -248,13 +248,13 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	WebGPUStorage webGPUStorage = {};
 
 
-	gameDLL.initialize(&gameMemory, &gameState, &platformStorage, &asset, &webGPUStorage, wndHandle, wndClass.hInstance);
+	gameDLL.initialize(&gameMemory, &gameState, &platformFunctions, &asset, &webGPUStorage, wndHandle, wndClass.hInstance);
 
 	while (!gameState.quit)
 	{
 		Win32_ProcessPendingMessages(&gameState);
 
-		gameDLL.update(&gameMemory, &gameState, &platformStorage, &webGPUStorage, &asset);
+		gameDLL.update(&gameMemory, &gameState, &platformFunctions, &webGPUStorage, &asset);
 	}
 
 	gameDLL.quit(&webGPUStorage);

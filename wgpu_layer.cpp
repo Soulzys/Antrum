@@ -114,7 +114,7 @@ WGPUDevice wgpu::helper::requestDeviceAsync(wgpu::Adapter adapter, const WGPUDev
 	return requestDataResult.device;
 }
 
-wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, platform_log* log)
+wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, flog* log)
 {
 	// GPU Features
 	//
@@ -153,7 +153,7 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, platform_log* log
 	return device;
 }
 
-WGPUDeviceLostCallbackInfo wgpu::callback::onDeviceLost(platform_log* log)
+WGPUDeviceLostCallbackInfo wgpu::callback::onDeviceLost(flog* log)
 {
 	WGPUDeviceLostCallbackInfo callbackInfo = {};
 	callbackInfo.nextInChain = nullptr;
@@ -161,7 +161,7 @@ WGPUDeviceLostCallbackInfo wgpu::callback::onDeviceLost(platform_log* log)
 	callbackInfo.userdata1 = log;
 	callbackInfo.callback = [](WGPUDevice const* device, WGPUDeviceLostReason reason, WGPUStringView message, WGPU_NULLABLE void* ud1, WGPU_NULLABLE void* ud2)
 	{
-		platform_log* log = (platform_log*)ud1;
+		flog* log = (flog*)ud1;
 
 		char buffer[KILOBYTES(2)];
 		if (message.length >= sizeof(buffer))
@@ -214,14 +214,14 @@ const char* wgpu::stringifier::errorType(WGPUErrorType e)
 	}
 }
 
-WGPUUncapturedErrorCallbackInfo wgpu::callback::onUncapturedError(platform_log* log)
+WGPUUncapturedErrorCallbackInfo wgpu::callback::onUncapturedError(flog* log)
 {
 	WGPUUncapturedErrorCallbackInfo callbackInfo = {};
 	callbackInfo.nextInChain = {};
 	callbackInfo.userdata1 = log;
 	callbackInfo.callback = [](WGPUDevice const* device, WGPUErrorType type, WGPUStringView message, WGPU_NULLABLE void* ud1, WGPU_NULLABLE void* ud2)
 		{
-			platform_log* log = (platform_log*)ud1;
+			flog* log = (flog*)ud1;
 
 			char buffer[KILOBYTES(2)];
 			if (message.length >= sizeof(buffer))

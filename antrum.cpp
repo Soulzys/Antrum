@@ -163,66 +163,65 @@ ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endCha
 
 	switch (dataType)
 	{
-	case DataType::INTEGER:
-	{
-		while (*reader != endChar)
+		case DataType::INTEGER:
 		{
-			if (!CharUtil::IsDigit(*reader)) return result;
-
-			result.number.i = result.number.i * 10 + CharUtil::ToDigit(*reader);
-			reader++;
-		}
-
-		if (negative)
-		{
-			result.number.i *= -1;
-		}
-	} break;
-
-
-	case DataType::REAL32:
-	{
-		bool hitDot = false;
-		real32 divider = 0.f;
-
-		while (*reader != endChar)
-		{
-			if (!CharUtil::IsDigit(*reader) && !CharUtil::IsDot(*reader)) return result;
-
-			if (*reader == '.')
+			while (*reader != endChar)
 			{
-				hitDot = true;
+				if (!CharUtil::IsDigit(*reader)) return result;
+
+				result.number.i = result.number.i * 10 + CharUtil::ToDigit(*reader);
 				reader++;
-				continue;
 			}
 
-			if (hitDot)
+			if (negative)
 			{
-				divider *= 10.f;
+				result.number.i *= -1;
+			}
+		} break;
+
+
+		case DataType::REAL32:
+		{
+			bool hitDot = false;
+			real32 divider = 0.f;
+
+			while (*reader != endChar)
+			{
+				if (!CharUtil::IsDigit(*reader) && !CharUtil::IsDot(*reader)) return result;
+
+				if (*reader == '.')
+				{
+					hitDot = true;
+					reader++;
+					continue;
+				}
+
+				if (hitDot)
+				{
+					divider *= 10.f;
+				}
+
+				result.number.r32 = result.number.r32 * 10.f + CharUtil::ToDigit(*reader);
+				reader++;
 			}
 
-			result.number.r32 = result.number.r32 * 10.f + CharUtil::ToDigit(*reader);
-			reader++;
-		}
+			result.number.r32 /= divider;
 
-		result.number.r32 /= divider;
-
-		if (negative)
-		{
-			result.number.r32 *= -1.f;
-		}
-	} break;
+			if (negative)
+			{
+				result.number.r32 *= -1.f;
+			}
+		} break;
 	}
 
 	result.valid = true;
 	return result;
 }
 
-OBJParser::Vec3ILineResult OBJParser::parseFaceLine(FileReader& fileReader)
+OBJParser::LineResult<uint16> OBJParser::parseFaceLine(FileReader& fileReader)
 {
-	Vec3ILineResult res = {};
+	LineResult<uint16> res = {};
 
-	//counter += 2;
 	fileReader += 2;// +2 is the offset, so we start right onto the correct char
 	bool hitSpace = true; // We start with true because we're onto the first char's number
 	uint8 inputCounter = 0;
@@ -236,18 +235,18 @@ OBJParser::Vec3ILineResult OBJParser::parseFaceLine(FileReader& fileReader)
 
 			if (inputCounter == 0)
 			{
-				res.vector.a = (uint16)parsingRes.number.i;
-				res.vector.a--;
+				res.vector.x = (uint16)parsingRes.number.i;
+				res.vector.x--;
 			}
 			else if (inputCounter == 1)
 			{
-				res.vector.b = (uint16)parsingRes.number.i;
-				res.vector.b--;
+				res.vector.y = (uint16)parsingRes.number.i;
+				res.vector.y--;
 			}
 			else
 			{
-				res.vector.c = (uint16)parsingRes.number.i;
-				res.vector.c--;
+				res.vector.z = (uint16)parsingRes.number.i;
+				res.vector.z--;
 			}
 
 			inputCounter++;
@@ -258,48 +257,44 @@ OBJParser::Vec3ILineResult OBJParser::parseFaceLine(FileReader& fileReader)
 		if (*fileReader.reader == ' ')
 		{
 			hitSpace = true;
-			//counter++;
-			//reader++;
 			fileReader++;
 			continue;
 		}
 
-		//counter++;
-		//reader++;
 		fileReader++;
 	}
 
 	return res;
 }
 
-OBJParser::Vec3LineResult OBJParser::parseVec3Line(FileReader& fileReader)
+OBJParser::LineResult<real32> OBJParser::parseVerticesLine(FileReader& fileReader)
 {
-	Vec3LineResult res = {};
-	String         floatString = {};
-	bool           isCurrentlyOntoFloat = false;
-	int            floatHeadCounter = 0;
-	uint8          floatCounter = 0;
+	LineResult<real32> res                  = {};
+	String             floatString          = {};
+	bool               isCurrentlyOntoFloat = false;
+	int                floatHeadCounter     = 0;
+	uint8              floatCounter         = 0;
 
 	while (*fileReader.reader != '\n')
 	{
 		bool wasPreviouslyOntoFloat = isCurrentlyOntoFloat;
 		isCurrentlyOntoFloat = (CharUtil::IsArithmeticSign(*fileReader.reader) || CharUtil::IsDigit(*fileReader.reader) || CharUtil::IsDot(*fileReader.reader));
 
-		// First float char
+		// First char of float number
 		if (!wasPreviouslyOntoFloat && isCurrentlyOntoFloat)
 		{
 			floatString.head = fileReader.reader;
 			floatHeadCounter = 0;
 		}
 
-		// Last float char
+		// Last char of float number
 		if (wasPreviouslyOntoFloat && !isCurrentlyOntoFloat)
 		{
 			floatString.size = floatHeadCounter;
 			switch (floatCounter)
 			{
-			case 0: res.vector.x = StringUtil::ToFloat(floatString); break;
-			case 1: res.vector.y = StringUtil::ToFloat(floatString); break;
+				case 0: res.vector.x = StringUtil::ToFloat(floatString); break;
+				case 1: res.vector.y = StringUtil::ToFloat(floatString); break;
 			}
 			floatString = {};
 			floatCounter++;
@@ -310,9 +305,9 @@ OBJParser::Vec3LineResult OBJParser::parseVec3Line(FileReader& fileReader)
 	}
 
 	// >NOTE: The last char of the line will have us exit the while loop so we finish setting the last float here instead
-	floatString.size = floatHeadCounter - 1;
-	res.vector.z = StringUtil::ToFloat(floatString);
-	res.reader = fileReader.reader;
+	floatString.size = floatHeadCounter;
+	res.vector.z     = StringUtil::ToFloat(floatString);
+	res.reader       = fileReader.reader;
 
 	return res;
 }
@@ -379,24 +374,17 @@ int StringUtil::ToInt(const String& string)
 	return StringUtil::ToInt(string.head, (uint8)string.size);
 }
 
-void ReadFile_OBJ(const char* Filename, GameMemory* Memory, PlatformStorage* platformStorage, MeshAsset& outAsset)
+MeshAsset LoadOBJ(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions)
 {
-	//ReadFileResult res = Win32_Util_ReadFile(Filename, Memory);
-	ReadFileResult res = platformStorage->readFile(Filename, Memory);
+	MeshAsset asset = {};
+	ReadFileResult res = platformFunctions->readFile(filename, memory);
 
-	//OutputDebugString("--------------------------\n");
-	//OutputDebugString(static_cast<const char*>(res.content));
-	//OutputDebugString("--------------------------\n");
-
-	OBJParser::OBJFileResult fileRes = {};
-
-	Vec3 vec = {};
-	Vec3I indexes = {};
 	FileReader fileReader = {};
 	fileReader.reader = (const char*)res.content;
 	
-	OBJParser::Vec3LineResult lineRes = {};
-	OBJParser::Vec3ILineResult lineResFaces = {};
+	OBJParser::LineResult<real32> vertices = {};
+	OBJParser::LineResult<real32> normals  = {};
+	OBJParser::LineResult<uint16> faces    = {};
 
 	while (fileReader.counter < res.contentSize)
 	{
@@ -405,22 +393,31 @@ void ReadFile_OBJ(const char* Filename, GameMemory* Memory, PlatformStorage* pla
 			char nextChar = *(fileReader.reader + 1);
 			if (CharUtil::IsSpace(nextChar))
 			{
-				lineRes = OBJParser::parseVec3Line(fileReader);
-				outAsset.vertices.push(lineRes.vector.x);
-				outAsset.vertices.push(lineRes.vector.y);
-				outAsset.vertices.push(lineRes.vector.z);
+				vertices = OBJParser::parseVerticesLine(fileReader);
+				asset.vertices.push(vertices.vector.x);
+				asset.vertices.push(vertices.vector.y);
+				asset.vertices.push(vertices.vector.z);
+			}
+			else if (nextChar == 'n')
+			{
+				normals = OBJParser::parseVerticesLine(fileReader);
+				asset.normals.push(normals.vector.x);
+				asset.normals.push(normals.vector.y);
+				asset.normals.push(normals.vector.z);
 			}
 		}
 		else if (*fileReader.reader == 'f')
 		{
-			lineResFaces = OBJParser::parseFaceLine(fileReader);
-			outAsset.indexes.push(lineResFaces.vector.a);
-			outAsset.indexes.push(lineResFaces.vector.b);
-			outAsset.indexes.push(lineResFaces.vector.c);
+			faces = OBJParser::parseFaceLine(fileReader);
+			asset.indexes.push(faces.vector.x);
+			asset.indexes.push(faces.vector.y);
+			asset.indexes.push(faces.vector.z);
 		}
 
 		fileReader++;
 	}
+
+	return asset;
 }
 
 
@@ -430,14 +427,14 @@ uint32 CeilToNextMultiple(uint32 value, uint32 multiple)
 	return step * multiple;
 }
 
-void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformStorage* platformStorage)
+void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformFunctions* platformFunctions)
 {
 	storage->instance = wgpu::helper::createInstance();
 	storage->adapter = wgpu::helper::createAdapter(storage->instance);
-	storage->device = wgpu::helper::createDevice(storage->adapter, platformStorage->log);
+	storage->device = wgpu::helper::createDevice(storage->adapter, platformFunctions->log);
 	storage->surface = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
 
-	ReadFileResult file = platformStorage->readFile("../resource/shader.sha", memory);
+	ReadFileResult file = platformFunctions->readFile("../resource/shader.sha", memory);
 	ASSERT(file.content);
 	WGPUStringView shaderCode = {};
 	shaderCode.data = (const char*)file.content;
@@ -581,26 +578,26 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 
 
-XARGS(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, MeshAsset* asset, WebGPUStorage* wgpuStorage, void* wndHandle, void* hInstance)
+XARGS(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, MeshAsset* asset, WebGPUStorage* wgpuStorage, void* wndHandle, void* hInstance)
 extern "C" GAME_INITIALIZE(Game_Initialize)
 {
 	// Load assets
 	//
-	//ReadFile_OBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
-	//ReadFile_OBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
-	ReadFile_OBJ("../resource/Suzy.obj", memory, platformStorage, *asset);
+	//LoadOBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
+	//LoadOBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
+	*asset = LoadOBJ("../resource/Suzy.obj", memory, platformFunctions);
 	size_t vSize = asset->vertices.getElementsLength();
 
 	// Load wgpu
 	//
-	InitializeWebGPU(wgpuStorage, wndHandle, hInstance, memory, asset, platformStorage);
+	InitializeWebGPU(wgpuStorage, wndHandle, hInstance, memory, asset, platformFunctions);
 
 
 	gameState->initialized = true;
 }
 
 
-XARGS(GameMemory* memory, GameState* gameState, PlatformStorage* platformStorage, WebGPUStorage* wgpuStorage, MeshAsset* asset)
+XARGS(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset)
 extern "C" GAME_UPDATE(Game_Update)
 {
 	if (!gameState->initialized)
