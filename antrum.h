@@ -343,6 +343,7 @@ struct WebGPUStorage
 	wgpu::Queue queue;
 
 	wgpu::Buffer pointBuffer;
+	wgpu::Buffer normalBuffer;
 	wgpu::Buffer indexBuffer;
 	wgpu::Buffer uniformBuffer;
 

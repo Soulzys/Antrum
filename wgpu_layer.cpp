@@ -119,18 +119,18 @@ wgpu::Device wgpu::helper::createDevice(wgpu::Adapter adapter, flog* log)
 	// GPU Features
 	//
 	WGPULimits limits = adapter.getDefaultLimits();
-	limits.maxVertexAttributes             = 2;
-	limits.maxVertexBuffers                = 1;
-	limits.maxBufferSize                   = 6 * 6 * sizeof(real32);
-	limits.maxVertexBufferArrayStride      = 6 * sizeof(real32);
-	limits.maxInterStageShaderVariables    = 3;
-	limits.maxBindGroups                   = 1;
-	limits.maxUniformBuffersPerShaderStage = 1;
-	limits.maxUniformBufferBindingSize     = 16 * 4 * sizeof(real32);
+	limits.maxVertexAttributes                       = 2;
+	limits.maxVertexBuffers                          = 1;
+	limits.maxBufferSize                             = 6 * 6 * sizeof(real32);
+	limits.maxVertexBufferArrayStride                = 6 * sizeof(real32);
+	limits.maxInterStageShaderVariables              = 3; // Number of variables transiting from vertex to fragment shader
+	limits.maxBindGroups                             = 1;
+	limits.maxUniformBuffersPerShaderStage           = 1;
+	limits.maxUniformBufferBindingSize               = 16 * 4 * sizeof(real32);
 	limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
-	limits.maxTextureDimension1D = WINDOW_HEIGHT;
-	limits.maxTextureDimension2D = WINDOW_WIDTH;
-	limits.maxTextureArrayLayers = 1;
+	limits.maxTextureDimension1D                     = WINDOW_HEIGHT;
+	limits.maxTextureDimension2D                     = WINDOW_WIDTH;
+	limits.maxTextureArrayLayers                     = 1;
 
 
 	// Requesting a device
@@ -377,18 +377,24 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 	pointAttrib.format = WGPUVertexFormat_Float32x3;
 	pointAttrib.offset = 0;
 
-	WGPUVertexAttribute colorAttrib;
-	colorAttrib.shaderLocation = 1;
-	colorAttrib.format = WGPUVertexFormat_Float32x3;
-	colorAttrib.offset = 3 * sizeof(real32);
+	WGPUVertexAttribute normalAttrib;
+	normalAttrib.shaderLocation = 1;
+	normalAttrib.format = WGPUVertexFormat_Float32x3;
+	normalAttrib.offset = 3 * sizeof(real32);
 
-	WGPUVertexAttribute vertexAttributes[2] = { pointAttrib, colorAttrib };
+
+	//WGPUVertexAttribute colorAttrib;
+	//colorAttrib.shaderLocation = 1;
+	//colorAttrib.format = WGPUVertexFormat_Float32x3;
+	//colorAttrib.offset = 3 * sizeof(real32);
+
+	WGPUVertexAttribute vertexAttributes[2] = { pointAttrib, normalAttrib };
 
 	WGPUVertexBufferLayout vertexBufferLayout = {};
 	vertexBufferLayout.attributeCount = 1; //(uint32)VertexAttributes.size();
-	//vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
-	vertexBufferLayout.attributes = &pointAttrib; //VertexAttributes.data();
-	vertexBufferLayout.arrayStride = 3 * sizeof(real32);
+	vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
+	//vertexBufferLayout.attributes = &pointAttrib; //VertexAttributes.data();
+	vertexBufferLayout.arrayStride = 6 * sizeof(real32);
 	vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
 
 

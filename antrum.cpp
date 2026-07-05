@@ -494,7 +494,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	real32 focalLength = 1.0f;
 	real32 near        = 0.01f;
 	real32 far         = 100.0f;
-	real32 divides     = 1.0 / (far - near);
+	real32 divides     = 1.0f / (far - near);
 
 	ShaderUniform shaderUniform = {};
 
@@ -542,9 +542,17 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->pointBuffer.setLabel("Point buffer");
 	storage->queue.writeBuffer(storage->pointBuffer, 0, asset->vertices.dataPtr(), bufferDesc.size);
 
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+	bufferDesc.size = asset->normals.getElementsSize();
+	bufferDesc.size = (bufferDesc.size + 3) & ~3;
+	bufferDesc.mappedAtCreation = false;
+	storage->normalBuffer = storage->device.createBufferHelper(&bufferDesc);
+	storage->normalBuffer.setLabel("Normal buffer");
+	storage->queue.writeBuffer(storage->normalBuffer, 0, asset->normals.dataPtr(), bufferDesc.size);
+
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
 	bufferDesc.size = asset->indexes.getElementsSize();
 	bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
-	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
 	bufferDesc.mappedAtCreation = false;
 	storage->indexBuffer = storage->device.createBufferHelper(&bufferDesc);
 	storage->indexBuffer.setLabel("Index buffer");
@@ -586,7 +594,7 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 	//LoadOBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
 	//LoadOBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
 	*asset = LoadOBJ("../resource/Suzy.obj", memory, platformFunctions);
-	size_t vSize = asset->vertices.getElementsLength();
+	//size_t vSize = asset->vertices.getElementsLength();
 
 	// Load wgpu
 	//
@@ -606,7 +614,7 @@ extern "C" GAME_UPDATE(Game_Update)
 		return;
 	}
 
-	wgpuStorage->shaderUniform.time += 0.0008;
+	wgpuStorage->shaderUniform.time += 0.0008f;
 
 	// Object
 	M4 S  = M4::scale(0.6f);
@@ -686,6 +694,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	dynamicOffset = 0 * uniformBufferStride;
 	renderPass.setPipeline(wgpuStorage->renderPipeline);
 	renderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
+	//renderPass.setVertexBuffer(1, wgpuStorage->normalBuffer, 0, wgpuStorage->pointBuffer.getSize());
 	renderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->indexBuffer.getSize());
 	renderPass.setBindGroup(0, wgpuStorage->bindGroup, 1, &dynamicOffset);
 	renderPass.drawIndexed((uint32)(asset->indexes.getElementsLength()), 1, 0, 0, 0);
