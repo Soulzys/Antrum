@@ -25,11 +25,46 @@ struct FileData
 
 
 
+struct Vector3
+{
+	float x;
+	float y;
+	float z;
+
+	std::string toString() const
+	{
+		std::string str = "{ " + std::to_string(x) + " ; " + std::to_string(y) + " ; " + std::to_string(z) + " }";
+		return str;
+	}
+};
+
+struct Vector2
+{
+	float x;
+	float y;
+
+	std::string toString() const
+	{
+		std::string str = "{ " + std::to_string(x) + " ; " + std::to_string(y) + " }";
+		return str;
+	}
+};
+
 struct Vertex
 {
-	float position;
-	float texture;
-	float normal;
+	Vector3 position;
+	Vector2 texture;
+	Vector3 normal;
+
+	std::string toString() const
+	{
+		std::string str = "{\n";
+		str += position.toString() + "\n";
+		str += texture.toString() + "\n";
+		str += normal.toString() + "\n";
+		str += "}";
+		return str;
+	}
 };
 
 struct Key
@@ -123,6 +158,42 @@ int toInt(const std::string& str)
 	return integer;
 }
 
+float toFloat(const std::string& str)
+{
+	if (str.empty()) return FLT_MAX;
+
+	bool    negative = str[0] == '-';
+	bool    reachedDot = false;
+	int     integer = 0;
+	int     divider = 1;
+	uint8_t counter = negative ? 1 : 0;
+
+	for (counter; counter < str.size(); counter++)
+	{
+		char c = str[counter];
+		if (c == '.')
+		{
+			reachedDot = true;
+			continue;
+		}
+
+		integer = integer * 10 + toDigit(c);
+
+		if (reachedDot)
+		{
+			divider *= 10;
+		}
+	}
+
+	float res = (float)(integer) / divider;
+	if (negative)
+	{
+		res *= -1.0f;
+	}
+
+	return res;
+}
+
 
 // >NOTE: has to be formatted as such: int/int/int, e.g. 2/43/8
 //        will return Key as such: p/t/n
@@ -135,7 +206,6 @@ Key toKey(const std::string& str)
 	
 	return { p, t, n };
 }
-
 
 
 
@@ -200,10 +270,9 @@ int main(int argc, char* argv[])
 
 
 	std::unordered_set<Key, KeyHash> keys;
-	
 	for (const std::string& lineStr : fileData.faces)
 	{
-		std::cout << lineStr << std::endl;
+		//std::cout << lineStr << std::endl;
 		std::vector<std::string> strs = split(lineStr, ' ');
 		for (const std::string& keyStr : strs)
 		{
@@ -212,12 +281,57 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	
 	size_t keyCount = 0;
 	for (const Key& k : keys)
 	{
-		std::cout << "Key[" << keyCount << "] : " << k.toString() << std::endl;
+		std::cout << "key[" << keyCount << "] : " << k.toString() << std::endl;
 		keyCount++;
+	}
+
+	std::vector<std::string> finalLines;
+	std::vector<Vertex> vertices;
+	for (const Key& k : keys)
+	{
+		std::string finalLine = fileData.positions[k.p - 1] + "|";
+		finalLine += fileData.textures[k.t - 1] + "|";
+		finalLine += fileData.normals[k.n - 1];
+		finalLines.push_back(finalLine);
+
+
+		std::vector<std::string> positions = split(fileData.positions[k.p - 1], ' ');
+		Vector3 position = {};
+		position.x = toFloat(positions[0]);
+		position.y = toFloat(positions[1]);
+		position.z = toFloat(positions[2]);
+
+		std::vector<std::string> textures = split(fileData.textures[k.t - 1], ' ');
+		Vector2 texture = {};
+		texture.x = toFloat(textures[0]);
+		texture.y = toFloat(textures[1]);
+
+		std::vector<std::string> normals = split(fileData.normals[k.n - 1], ' ');
+		Vector3 normal = {};
+		normal.x = toFloat(normals[0]);
+		normal.y = toFloat(normals[1]);
+		normal.z = toFloat(normals[2]);
+
+
+		Vertex vertex = { position, texture, normal };
+		vertices.push_back(vertex);
+	}
+
+	//size_t vertexCount = 0;
+	//for (const Vertex& v : vertices)
+	//{
+	//	std::cout << "vertex[" << vertexCount << "] : " << v.toString();
+	//	vertexCount++;
+	//}
+
+	size_t lineCount = 0;
+	for (const std::string& str : finalLines)
+	{
+		std::cout << "line[" << lineCount << "] : " << str << std::endl;
+		lineCount++;
 	}
 
 
