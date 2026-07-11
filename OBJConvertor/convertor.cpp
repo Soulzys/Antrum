@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 
 
 #define ASSERT(Expression) if (!(Expression)) {*(int*)0 = 0;}
@@ -21,50 +22,6 @@ struct FileData
 	std::vector<std::string> textures;
 	std::vector<std::string> normals;
 	std::vector<std::string> faces;
-};
-
-
-
-struct Vector3
-{
-	float x;
-	float y;
-	float z;
-
-	std::string toString() const
-	{
-		std::string str = "{ " + std::to_string(x) + " ; " + std::to_string(y) + " ; " + std::to_string(z) + " }";
-		return str;
-	}
-};
-
-struct Vector2
-{
-	float x;
-	float y;
-
-	std::string toString() const
-	{
-		std::string str = "{ " + std::to_string(x) + " ; " + std::to_string(y) + " }";
-		return str;
-	}
-};
-
-struct Vertex
-{
-	Vector3 position;
-	Vector2 texture;
-	Vector3 normal;
-
-	std::string toString() const
-	{
-		std::string str = "{\n";
-		str += position.toString() + "\n";
-		str += texture.toString() + "\n";
-		str += normal.toString() + "\n";
-		str += "}";
-		return str;
-	}
 };
 
 struct Key
@@ -158,42 +115,6 @@ int toInt(const std::string& str)
 	return integer;
 }
 
-float toFloat(const std::string& str)
-{
-	if (str.empty()) return FLT_MAX;
-
-	bool    negative = str[0] == '-';
-	bool    reachedDot = false;
-	int     integer = 0;
-	int     divider = 1;
-	uint8_t counter = negative ? 1 : 0;
-
-	for (counter; counter < str.size(); counter++)
-	{
-		char c = str[counter];
-		if (c == '.')
-		{
-			reachedDot = true;
-			continue;
-		}
-
-		integer = integer * 10 + toDigit(c);
-
-		if (reachedDot)
-		{
-			divider *= 10;
-		}
-	}
-
-	float res = (float)(integer) / divider;
-	if (negative)
-	{
-		res *= -1.0f;
-	}
-
-	return res;
-}
-
 
 // >NOTE: has to be formatted as such: int/int/int, e.g. 2/43/8
 //        will return Key as such: p/t/n
@@ -265,76 +186,70 @@ int main(int argc, char* argv[])
 
 			lineCount++;
 		}
+
+		file.close();
 	}
 
 
 
-	std::unordered_set<Key, KeyHash> keys;
-	for (const std::string& lineStr : fileData.faces)
+	std::unordered_map<Key, uint32_t, KeyHash> vertexMap; // Only used to check the uniqueness of face corners
+	std::vector<std::string>                   vertexLines;
+	std::vector<uint32_t>                      indices;
+
+	// OBJ -> GPU representation
+	// 
+	// We extract and store as GPU vertices only the unique vertices described in the OBJ's faces data
+	// On the other hand, we store one indice per OBJ face corner, including duplicates
+	// 
+	// Eventually, for a triangulated cube (12 faces, 8 vertices), we should obtain: 
+	//		24 GPU vertices
+	//		36 GPU indices
 	{
-		//std::cout << lineStr << std::endl;
-		std::vector<std::string> strs = split(lineStr, ' ');
-		for (const std::string& keyStr : strs)
+		for (const std::string& faceLine : fileData.faces)
 		{
-			Key key = toKey(keyStr);
-			keys.insert(key); // Natively ignores the duplicate
+			std::vector<std::string> faceCorners = split(faceLine, ' ');
+			for (const std::string& corner : faceCorners)
+			{
+				Key key = toKey(corner);
+				auto iterator = vertexMap.find(key);
+				if (iterator == vertexMap.end())
+				{
+					const uint32_t index = (uint32_t)vertexLines.size();
+					vertexMap.insert({ key, index });
+
+					indices.push_back(index);
+
+					std::string vertexLine =  fileData.positions[key.p - 1] + "|";
+					            vertexLine += fileData.textures [key.t - 1] + "|";
+					            vertexLine += fileData.normals  [key.n - 1];
+					vertexLines.push_back(vertexLine);
+				}
+				else
+				{
+					indices.push_back(iterator->second);
+				}
+			}
 		}
 	}
 
-	size_t keyCount = 0;
-	for (const Key& k : keys)
+
+	// Debug
 	{
-		std::cout << "key[" << keyCount << "] : " << k.toString() << std::endl;
-		keyCount++;
-	}
+		size_t lineCount = 0;
+		for (const std::string& str : vertexLines)
+		{
+			std::cout << "line[" << lineCount << "] : " << str << std::endl;
+			lineCount++;
+		}
 
-	std::vector<std::string> finalLines;
-	std::vector<Vertex> vertices;
-	for (const Key& k : keys)
-	{
-		std::string finalLine = fileData.positions[k.p - 1] + "|";
-		finalLine += fileData.textures[k.t - 1] + "|";
-		finalLine += fileData.normals[k.n - 1];
-		finalLines.push_back(finalLine);
-
-
-		std::vector<std::string> positions = split(fileData.positions[k.p - 1], ' ');
-		Vector3 position = {};
-		position.x = toFloat(positions[0]);
-		position.y = toFloat(positions[1]);
-		position.z = toFloat(positions[2]);
-
-		std::vector<std::string> textures = split(fileData.textures[k.t - 1], ' ');
-		Vector2 texture = {};
-		texture.x = toFloat(textures[0]);
-		texture.y = toFloat(textures[1]);
-
-		std::vector<std::string> normals = split(fileData.normals[k.n - 1], ' ');
-		Vector3 normal = {};
-		normal.x = toFloat(normals[0]);
-		normal.y = toFloat(normals[1]);
-		normal.z = toFloat(normals[2]);
-
-
-		Vertex vertex = { position, texture, normal };
-		vertices.push_back(vertex);
-	}
-
-	//size_t vertexCount = 0;
-	//for (const Vertex& v : vertices)
-	//{
-	//	std::cout << "vertex[" << vertexCount << "] : " << v.toString();
-	//	vertexCount++;
-	//}
-
-	size_t lineCount = 0;
-	for (const std::string& str : finalLines)
-	{
-		std::cout << "line[" << lineCount << "] : " << str << std::endl;
-		lineCount++;
+		size_t indiceCount = 0;
+		for (uint32_t index : indices)
+		{
+			std::cout << "indice[" << indiceCount << "] : " << index << std::endl;
+			indiceCount++;
+		}
 	}
 
 
-	file.close();
 	return 0;
 }
