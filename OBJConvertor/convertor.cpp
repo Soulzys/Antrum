@@ -2,8 +2,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <unordered_set>
 #include <unordered_map>
+#include "windows.h"
 
 
 #define ASSERT(Expression) if (!(Expression)) {*(int*)0 = 0;}
@@ -11,6 +11,9 @@
 #define START_NORMALS_LINE 3
 #define START_TEXTURES_LINE 3
 #define START_FACES_LINE 2
+#define IN_RESOURCE_PATH "C:\\Antrum\\resource\\meshes\\dirty\\"
+#define OUT_RESOURCE_PATH "C:\\Antrum\\resource\\meshes\\clean\\"
+#define INDICES_PER_LINE 50
 
 
 int toInt(const std::string& str);
@@ -22,6 +25,8 @@ struct FileData
 	std::vector<std::string> textures;
 	std::vector<std::string> normals;
 	std::vector<std::string> faces;
+
+	std::string name;
 };
 
 struct Key
@@ -129,18 +134,14 @@ Key toKey(const std::string& str)
 }
 
 
-
-
-
-
-int main(int argc, char* argv[])
+void convertFile(const std::string& fileName)
 {
-	std::ifstream file("../resource/Cube_Tri.obj");
+	std::ifstream inFile(std::string(IN_RESOURCE_PATH) + fileName);
 
-	if (!file.is_open())
+	if (!inFile.is_open())
 	{
 		std::cout << "Failed to open file\n";
-		return 1;
+		return;
 	}
 
 
@@ -151,7 +152,7 @@ int main(int argc, char* argv[])
 	{
 		std::string line;
 		size_t lineCount = 0;
-		while (std::getline(file, line))
+		while (std::getline(inFile, line))
 		{
 			if (line.size() < 2)
 			{
@@ -160,8 +161,8 @@ int main(int argc, char* argv[])
 				continue;
 			}
 
-			char c0 = line[0];
-			char c1 = line[1];
+			const char c0 = line[0];
+			const char c1 = line[1];
 
 			if (c0 == 'v')
 			{
@@ -187,7 +188,7 @@ int main(int argc, char* argv[])
 			lineCount++;
 		}
 
-		file.close();
+		inFile.close();
 	}
 
 
@@ -219,9 +220,9 @@ int main(int argc, char* argv[])
 
 					indices.push_back(index);
 
-					std::string vertexLine =  fileData.positions[key.p - 1] + "|";
-					            vertexLine += fileData.textures [key.t - 1] + "|";
-					            vertexLine += fileData.normals  [key.n - 1];
+					std::string vertexLine = fileData.positions[key.p - 1] + "|";
+					vertexLine            += fileData.textures [key.t - 1] + "|";
+					vertexLine            += fileData.normals  [key.n - 1];
 					vertexLines.push_back(vertexLine);
 				}
 				else
@@ -233,23 +234,79 @@ int main(int argc, char* argv[])
 	}
 
 
-	// Debug
+	// Write into file
 	{
-		size_t lineCount = 0;
-		for (const std::string& str : vertexLines)
+		// Swap obj for xin
+		std::string xinFileName = fileName;
+		const size_t strSize = xinFileName.size();
+		xinFileName[strSize - 3] = 'x';
+		xinFileName[strSize - 2] = 'i';
+		xinFileName[strSize - 1] = 'n';
+
+		std::string path = std::string(OUT_RESOURCE_PATH) + xinFileName;
+		std::ofstream outFile(path);
+		if (!outFile)
 		{
-			std::cout << "line[" << lineCount << "] : " << str << std::endl;
-			lineCount++;
+			std::cout << "ERROR\n";
+			return;
 		}
 
-		size_t indiceCount = 0;
-		for (uint32_t index : indices)
+		if (outFile.is_open())
 		{
-			std::cout << "indice[" << indiceCount << "] : " << index << std::endl;
-			indiceCount++;
+			for (const std::string& vLine : vertexLines)
+			{
+				outFile << vLine << std::endl;
+			}
+
+			outFile << "I\n";
+
+			for (uint32_t i = 0; i < indices.size(); i++)
+			{
+				if (i % INDICES_PER_LINE == 0)
+				{
+					if (i != 0)
+					{
+						outFile << "\n";
+					}
+				}
+				else
+				{
+					outFile << "|";
+				}
+
+				outFile << indices[i];
+			}
 		}
+
+		outFile.close();
+	}
+}
+
+
+
+
+
+int main(int argc, char* argv[])
+{
+	std::string dirPath = std::string(IN_RESOURCE_PATH) + "*obj";
+	WIN32_FIND_DATA findData = {};
+	HANDLE findHandle = FindFirstFile(dirPath.c_str(), &findData);
+
+	if (findHandle == INVALID_HANDLE_VALUE)
+	{
+		std::cout << "ERROR | Failed to open file (" << GetLastError() << ")\n";
+		return 1;
 	}
 
+
+	do
+	{
+		convertFile(findData.cFileName);
+	} 
+	while (FindNextFile(findHandle, &findData));
+	
+
+	FindClose(findHandle);
 
 	return 0;
 }

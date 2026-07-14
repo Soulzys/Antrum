@@ -434,7 +434,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->device = wgpu::helper::createDevice(storage->adapter, platformFunctions->log);
 	storage->surface = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
 
-	ReadFileResult file = platformFunctions->readFile("../resource/shader.sha", memory);
+	ReadFileResult file = platformFunctions->readFile("../resource/shaders/shader.sha", memory);
 	ASSERT(file.content);
 	WGPUStringView shaderCode = {};
 	shaderCode.data = (const char*)file.content;
