@@ -47,7 +47,10 @@ typedef int32    bool32;
 #define MEMSIZE_GAME      MEGABYTES(64)
 #define MEMSIZE_READ_FILE MEGABYTES(4)
 #define MEMSIZE_ASSETS    MEGABYTES(12)
-#define ASSET_MAX_POINTS  10000
+#define ASSET_MAX_POINTS  3000
+
+#define XIN_FILE__CLOSE_CHAR 'x'
+#define XIN_FILE__INDICE_CHAR 'I'
 
 
 
@@ -87,6 +90,21 @@ struct GameState
 {
 	bool initialized;
 	bool quit;
+};
+
+template<typename T>
+struct Vec3
+{
+	T x;
+	T y;
+	T z;
+};
+
+template<typename T>
+struct Vec2
+{
+	T x;
+	T y;
 };
 
 template<typename T>
@@ -145,12 +163,25 @@ private:
 	size_t m_index = 0;
 };
 
+struct Vertex
+{
+	Vec3<real32> position;
+	Vec3<real32> normals;
+	Vec2<real32> uv;
+};
+
+struct MeshAsset2
+{
+	Vector<Vertex, ASSET_MAX_POINTS> vertices;
+	Vector<uint32, ASSET_MAX_POINTS> indices;
+};
+
 struct MeshAsset
 {
 	Vector<real32, ASSET_MAX_POINTS> vertices;
 	Vector<real32, ASSET_MAX_POINTS> normals;
 	Vector<uint16, ASSET_MAX_POINTS> indexes; // >TODO: find a more efficient way to calculate the minimum amount of indexes
-	uint64 size;
+	//uint64 size;
 };
 
 
@@ -176,13 +207,7 @@ struct PlatformFunctions
 	flog* log;
 };
 
-template<typename T>
-struct Vec3
-{
-	T x;
-	T y;
-	T z;
-};
+
 
 //struct Vec3I
 //{
@@ -249,6 +274,11 @@ struct FileReader
 		return temp;
 	}
 };
+
+namespace XinParser
+{
+	Vertex parseVertexLine(const String& line);
+}
 
 namespace OBJParser
 {

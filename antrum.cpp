@@ -374,6 +374,118 @@ int StringUtil::ToInt(const String& string)
 	return StringUtil::ToInt(string.head, (uint8)string.size);
 }
 
+
+Vertex XinParser::parseVertexLine(const String& line)
+{
+	Vertex v = {};
+
+	return v;
+}
+
+void loadMesh(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions)
+{
+	MeshAsset2 asset = {};
+	ReadFileResult file = platformFunctions->readFile(filename, memory);
+
+	//FileReader fileReader = {};
+	const char* reader = (const char*)file.content;
+	size_t counter = 0;
+
+	bool onStartLine = false;
+
+	String line = {};
+	line.head = (const char*)file.content;
+
+	auto parseFloat = [](const char*& reader, char separator) -> real32
+		{
+			const char* head = reader;
+			uint8 counter = 0;
+
+			while (*reader != separator)
+			{
+				reader++;
+				counter++;
+			}
+			
+			real32 result = StringUtil::ToFloat(head, counter);
+			return result;
+		};
+
+	auto parsePosition = [parseFloat](const char*& reader) -> Vec3<real32>
+		{
+			real32 x, y, z;
+
+			x = parseFloat(reader, ' '); reader++; // Additional increment to get us right onto the next's float char
+			y = parseFloat(reader, ' '); reader++;
+			z = parseFloat(reader, '|'); reader++;
+
+			return { x, y, z };
+		};
+
+	auto parseUV = [parseFloat](const char*& reader) -> Vec2<real32>
+		{
+			real32 x, y;
+
+			x = parseFloat(reader, ' '); reader++;
+			y = parseFloat(reader, '|'); reader++;
+
+			return { x, y };
+		};
+
+	auto parseNormals = [parseFloat](const char*& reader) -> Vec3<real32>
+		{
+			real32 x, y, z;
+
+			x = parseFloat(reader, ' ' ); reader++;
+			y = parseFloat(reader, ' ' ); reader++;
+			z = parseFloat(reader, '\r'); reader++;
+
+			return { x, y, z };
+		};
+
+	auto parseVertexLine = [parsePosition, parseUV, parseNormals](const char*& reader) -> Vertex
+		{
+			Vertex v = {};
+
+			v.position = parsePosition(reader);
+			v.uv       = parseUV      (reader);
+			v.normals  = parseNormals (reader);
+
+			reader++; // Every line ends with two characters (CR and LF) (Carriage Return (\r), Line Feed (\n))
+			return v;
+		};
+
+	while (*reader != XIN_FILE__INDICE_CHAR)
+	{
+		Vertex v = parseVertexLine(reader);
+		asset.vertices.push(v);
+		counter++;
+	}
+
+	int a = 2;
+
+	//while (*reader != XIN_FILE__INDICE_CHAR)
+	//{
+	//	if (onStartLine)
+	//	{
+	//		line.head = reader;
+	//		onStartLine = false;
+	//	}
+	//
+	//	if (*reader == '\n')
+	//	{
+	//		line.size = counter;
+	//		Vertex v = XinParser::parseVertexLine(line);
+	//		onStartLine = true;
+	//	}
+	//
+	//	reader++;
+	//	counter++;
+	//}
+	
+	//return asset;
+}
+
 MeshAsset LoadOBJ(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions)
 {
 	MeshAsset asset = {};
@@ -593,7 +705,10 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 	//
 	//LoadOBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
 	//LoadOBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
-	*asset = LoadOBJ("../resource/Suzy.obj", memory, platformFunctions);
+
+
+	loadMesh("../resource/meshes/clean/Cube.xin", memory, platformFunctions);
+	*asset = LoadOBJ("../resource/meshes/dirty/Suzy.obj", memory, platformFunctions);
 	//size_t vSize = asset->vertices.getElementsLength();
 
 	// Load wgpu

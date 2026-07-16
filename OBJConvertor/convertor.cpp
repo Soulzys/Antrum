@@ -14,6 +14,7 @@
 #define IN_RESOURCE_PATH "C:\\Antrum\\resource\\meshes\\dirty\\"
 #define OUT_RESOURCE_PATH "C:\\Antrum\\resource\\meshes\\clean\\"
 #define INDICES_PER_LINE 50
+#define CLOSE_FILE_CHAR 'x'
 
 
 int toInt(const std::string& str);
@@ -278,6 +279,7 @@ void convertFile(const std::string& fileName)
 			}
 		}
 
+		outFile << CLOSE_FILE_CHAR;
 		outFile.close();
 	}
 }
@@ -307,6 +309,10 @@ int main(int argc, char* argv[])
 	
 
 	FindClose(findHandle);
+
+	const char* test = "abcd";
+	const char* p = test;
+	test++;
 
 	return 0;
 }
