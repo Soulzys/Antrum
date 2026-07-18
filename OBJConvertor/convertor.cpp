@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <unordered_map>
 #include "windows.h"
@@ -15,6 +16,12 @@
 #define OUT_RESOURCE_PATH "C:\\Antrum\\resource\\meshes\\clean\\"
 #define INDICES_PER_LINE 50
 #define CLOSE_FILE_CHAR 'x'
+#define BUILD_PATH "C:\\Antrum\\build.bat"
+#define BUILD_ANCHOR_BEGIN "set MeshFlags=^" // Used to find the end of the text to replace in Antrum's build.bat
+#define BUILD_ANCHOR_END "::XIN_A" 
+#define MESHES_MACRO_PATH "C:\\Antrum\\meshes_macro.h"
+#define VERTICES_SIZE_APPENDIX "_V_SIZE"
+#define INDICES_SIZE_APPENDIX "_I_SIZE"
 
 
 int toInt(const std::string& str);
@@ -64,6 +71,17 @@ struct KeyHash
 	}
 };
 
+struct MeshSizeData
+{
+	uint32_t verticesCount;
+	uint32_t indicesCount;
+};
+
+struct MeshData
+{
+	std::string name;
+	MeshSizeData size;
+};
 
 
 
@@ -134,17 +152,24 @@ Key toKey(const std::string& str)
 	return { p, t, n };
 }
 
+void toUpper(std::string& str)
+{
+	for (size_t i = 0; i < str.size(); i++)
+	{
+		str[i] = (char)std::toupper((int)str[i]);
+	}
+}
 
-void convertFile(const std::string& fileName)
+
+MeshSizeData convertFile(const std::string& fileName)
 {
 	std::ifstream inFile(std::string(IN_RESOURCE_PATH) + fileName);
 
 	if (!inFile.is_open())
 	{
-		std::cout << "Failed to open file\n";
-		return;
+		std::cout << "ERROR | Failed to open file\n";
+		return { 0, 0 };
 	}
-
 
 
 	FileData fileData = {};
@@ -235,7 +260,7 @@ void convertFile(const std::string& fileName)
 	}
 
 
-	// Write into file
+	// Write .xin file
 	{
 		// Swap obj for xin
 		std::string xinFileName = fileName;
@@ -248,8 +273,8 @@ void convertFile(const std::string& fileName)
 		std::ofstream outFile(path);
 		if (!outFile)
 		{
-			std::cout << "ERROR\n";
-			return;
+			std::cout << "ERROR | Could not write into " << path << std::endl;
+			return { 0, 0 };
 		}
 
 		if (outFile.is_open())
@@ -282,6 +307,8 @@ void convertFile(const std::string& fileName)
 		outFile << CLOSE_FILE_CHAR;
 		outFile.close();
 	}
+
+	return { (uint32_t)vertexLines.size(), (uint32_t)indices.size() };
 }
 
 
@@ -290,29 +317,127 @@ void convertFile(const std::string& fileName)
 
 int main(int argc, char* argv[])
 {
-	std::string dirPath = std::string(IN_RESOURCE_PATH) + "*obj";
-	WIN32_FIND_DATA findData = {};
-	HANDLE findHandle = FindFirstFile(dirPath.c_str(), &findData);
+	std::vector<MeshData> meshes;
 
-	if (findHandle == INVALID_HANDLE_VALUE)
+	// Convert files from .obj to .xin
 	{
-		std::cout << "ERROR | Failed to open file (" << GetLastError() << ")\n";
-		return 1;
+		std::string dirPath = std::string(IN_RESOURCE_PATH) + "*obj";
+		WIN32_FIND_DATA findData = {};
+		HANDLE findHandle = FindFirstFile(dirPath.c_str(), &findData);
+
+		if (findHandle == INVALID_HANDLE_VALUE)
+		{
+			std::cout << "ERROR | Failed to open file (" << GetLastError() << ")\n";
+			return 1;
+		}
+
+		do
+		{
+			MeshData mesh = {};
+			mesh.name = findData.cFileName;
+			mesh.name.resize(mesh.name.size() - 4); // Removes .obj
+			toUpper(mesh.name);
+
+			mesh.size = convertFile(findData.cFileName);
+
+			meshes.push_back(mesh);
+		} 
+		while (FindNextFile(findHandle, &findData));
+		FindClose(findHandle);
 	}
-
-
-	do
-	{
-		convertFile(findData.cFileName);
-	} 
-	while (FindNextFile(findHandle, &findData));
 	
 
-	FindClose(findHandle);
+	// >NOTASCOI: idk why I thought of this approach first when the second one is better is every possible way.
+	//            Let this be a reminder of the proportions of my stupidity, and potentially some reusable code.
+	// 
+	// Rewrites the build file for Antrum to update the mesh size data
+	/* {
+		std::ifstream inFile(BUILD_PATH);
+		if (!inFile.is_open())
+		{
+			std::cout << "ERROR | Failed to open Antrum's build.bat file\n";
+			return 1;
+		}
 
-	const char* test = "abcd";
-	const char* p = test;
-	test++;
+		std::stringstream buffer;
+		buffer << inFile.rdbuf();
+		std::string fileContent = buffer.str();
+		inFile.close();
+
+
+		std::string flags = "\n";
+		for (size_t i = 0; i < meshes.size(); i++)
+		{
+			const MeshData& mesh = meshes[i];
+
+			flags += "-D" + mesh.name + std::string(VERTICES_SIZE_APPENDIX) + "=" + std::to_string(mesh.size.verticesCount) + " ^ \n";
+
+			// We don't want to add ^ at the last line
+			if (i == meshes.size() - 1)
+			{
+				flags += "-D" + mesh.name + std::string(INDICES_SIZE_APPENDIX) + "=" + std::to_string(mesh.size.indicesCount) + "\n";
+			}
+			else
+			{
+				flags += "-D" + mesh.name + std::string(INDICES_SIZE_APPENDIX) + "=" + std::to_string(mesh.size.indicesCount) + " ^ \n";
+			}
+		}
+
+
+		size_t beginAnchorPos = fileContent.find(std::string(BUILD_ANCHOR_BEGIN));
+		if (beginAnchorPos == std::string::npos)
+		{
+			std::cout << "ERROR | Could not find " << BUILD_ANCHOR_BEGIN << " :(\n";
+			return 1;
+		}
+
+		// Moving past the anchor
+		beginAnchorPos += std::string(BUILD_ANCHOR_BEGIN).size();
+
+		size_t endAnchorPos = fileContent.find(std::string(BUILD_ANCHOR_END), beginAnchorPos);
+		if (endAnchorPos == std::string::npos)
+		{
+			std::cout << "ERROR | Could not find " << BUILD_ANCHOR_END << " :(\n";
+			return 1;
+		}
+
+		// Replace everything between BUILD_ANCHOR_BEGIN and BUILD_ANCHOR_END with the content of flags
+		fileContent.replace(beginAnchorPos, endAnchorPos - beginAnchorPos, flags);
+
+		// Rewrite Antrum's build.bat
+		std::ofstream outFile(BUILD_PATH, std::ios::binary);
+		if (!outFile)
+		{
+			std::cout << "ERROR | Failed to rewrite Antrum's build.bat file\n";
+			return 1;
+		}
+
+		outFile << fileContent;
+		outFile.close();
+	}*/
+
+
+
+	// Rewrites mesh_macro.h for Antrum to update all the macro containing the meshes size data
+	{
+		std::ofstream outFile(MESHES_MACRO_PATH);
+		if (!outFile.is_open())
+		{
+			std::cout << "ERROR | Failed to open " << std::string(MESHES_MACRO_PATH) << std::endl;
+			return 1;
+		}
+
+		std::string content = "";
+		for (const MeshData& mesh : meshes)
+		{
+			content += "#define " + mesh.name + std::string(VERTICES_SIZE_APPENDIX) + " " + std::to_string(mesh.size.verticesCount) + "\n";
+			content += "#define " + mesh.name + std::string(INDICES_SIZE_APPENDIX)  + " " + std::to_string(mesh.size.indicesCount)  + "\n";
+		}
+
+		outFile << content;
+		outFile.close();
+	}
+	
 
 	return 0;
 }

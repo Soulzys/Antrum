@@ -707,7 +707,7 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 	//LoadOBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
 
 
-	loadMesh("../resource/meshes/clean/Cube.xin", memory, platformFunctions);
+	//loadMesh("../resource/meshes/clean/Cube.xin", memory, platformFunctions);
 	*asset = LoadOBJ("../resource/meshes/dirty/Suzy.obj", memory, platformFunctions);
 	//size_t vSize = asset->vertices.getElementsLength();
 
