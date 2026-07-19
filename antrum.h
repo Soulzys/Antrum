@@ -167,17 +167,17 @@ private:
 struct Vertex
 {
 	Vec3<real32> position;
-	Vec3<real32> normals;
+	Vec3<real32> normal;
 	Vec2<real32> uv;
 };
 
-struct MeshAsset2
+struct MeshAsset
 {
 	Vector<Vertex, ASSET_MAX_POINTS> vertices;
 	Vector<uint32, ASSET_MAX_POINTS> indices;
 };
 
-struct MeshAsset
+struct MeshAsset2
 {
 	Vector<real32, ASSET_MAX_POINTS> vertices;
 	Vector<real32, ASSET_MAX_POINTS> normals;

@@ -382,9 +382,9 @@ Vertex XinParser::parseVertexLine(const String& line)
 	return v;
 }
 
-MeshAsset2 loadMesh(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions)
+MeshAsset loadMesh(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions)
 {
-	MeshAsset2     asset  = {};
+	MeshAsset      asset  = {};
 	ReadFileResult file   = platformFunctions->readFile(filename, memory);
 	const char*    reader = (const char*)file.content;
 
@@ -443,7 +443,7 @@ MeshAsset2 loadMesh(const char* filename, GameMemory* memory, PlatformFunctions*
 
 				v.position = parsePosition(reader);
 				v.uv       = parseUV      (reader);
-				v.normals  = parseNormals (reader);
+				v.normal   = parseNormals (reader);
 
 				reader++; // Every line ends with two characters (CR and LF) (Carriage Return (\r), Line Feed (\n))
 				return v;
@@ -456,12 +456,14 @@ MeshAsset2 loadMesh(const char* filename, GameMemory* memory, PlatformFunctions*
 		}
 	}
 
+
 	// Moves reader to the 1st char of the indices serie
 	{
 		reader++;
 		reader++;
 		reader++;
 	}
+
 
 	// Parse indices
 	{
@@ -509,8 +511,7 @@ MeshAsset2 loadMesh(const char* filename, GameMemory* memory, PlatformFunctions*
 	return asset;
 }
 
-MeshAsset LoadOBJ(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions)
-{
+/*MeshAsset LoadOBJ(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions){
 	MeshAsset asset = {};
 	ReadFileResult res = platformFunctions->readFile(filename, memory);
 
@@ -553,7 +554,7 @@ MeshAsset LoadOBJ(const char* filename, GameMemory* memory, PlatformFunctions* p
 	}
 
 	return asset;
-}
+}*/
 
 
 uint32 CeilToNextMultiple(uint32 value, uint32 multiple)
@@ -666,32 +667,49 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->shaderUniform = shaderUniform; // >TODO: put this inside memory
 
 
-
+	// Vertices buffer
 	WGPUBufferDescriptor bufferDesc = {};
-	bufferDesc.nextInChain = nullptr;
-	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
 	bufferDesc.size = asset->vertices.getElementsSize();
-	bufferDesc.size = (bufferDesc.size + 3) & ~3;
-	bufferDesc.mappedAtCreation = false;
+	bufferDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+
 	storage->pointBuffer = storage->device.createBufferHelper(&bufferDesc);
-	storage->pointBuffer.setLabel("Point buffer");
+	storage->pointBuffer.setLabel("Vertices buffer");
 	storage->queue.writeBuffer(storage->pointBuffer, 0, asset->vertices.dataPtr(), bufferDesc.size);
 
-	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-	bufferDesc.size = asset->normals.getElementsSize();
-	bufferDesc.size = (bufferDesc.size + 3) & ~3;
-	bufferDesc.mappedAtCreation = false;
-	storage->normalBuffer = storage->device.createBufferHelper(&bufferDesc);
-	storage->normalBuffer.setLabel("Normal buffer");
-	storage->queue.writeBuffer(storage->normalBuffer, 0, asset->normals.dataPtr(), bufferDesc.size);
 
-	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
-	bufferDesc.size = asset->indexes.getElementsSize();
-	bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
-	bufferDesc.mappedAtCreation = false;
+	// Indices buffer
+	bufferDesc.size = asset->indices.getElementsSize();
+	bufferDesc.usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst;
+
 	storage->indexBuffer = storage->device.createBufferHelper(&bufferDesc);
-	storage->indexBuffer.setLabel("Index buffer");
-	storage->queue.writeBuffer(storage->indexBuffer, 0, asset->indexes.dataPtr(), bufferDesc.size);
+	storage->indexBuffer.setLabel("Indices buffer");
+	storage->queue.writeBuffer(storage->indexBuffer, 0, asset->indices.dataPtr(), bufferDesc.size);
+
+	//WGPUBufferDescriptor bufferDesc = {};
+	//bufferDesc.nextInChain = nullptr;
+	//bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+	//bufferDesc.size = asset->vertices.getElementsSize();
+	//bufferDesc.size = (bufferDesc.size + 3) & ~3;
+	//bufferDesc.mappedAtCreation = false;
+	//storage->pointBuffer = storage->device.createBufferHelper(&bufferDesc);
+	//storage->pointBuffer.setLabel("Point buffer");
+	//storage->queue.writeBuffer(storage->pointBuffer, 0, asset->vertices.dataPtr(), bufferDesc.size);
+
+	//bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+	//bufferDesc.size = asset->normals.getElementsSize();
+	//bufferDesc.size = (bufferDesc.size + 3) & ~3;
+	//bufferDesc.mappedAtCreation = false;
+	//storage->normalBuffer = storage->device.createBufferHelper(&bufferDesc);
+	//storage->normalBuffer.setLabel("Normal buffer");
+	//storage->queue.writeBuffer(storage->normalBuffer, 0, asset->normals.dataPtr(), bufferDesc.size);
+
+	//bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
+	//bufferDesc.size = asset->indexes.getElementsSize();
+	//bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
+	//bufferDesc.mappedAtCreation = false;
+	//storage->indexBuffer = storage->device.createBufferHelper(&bufferDesc);
+	//storage->indexBuffer.setLabel("Index buffer");
+	//storage->queue.writeBuffer(storage->indexBuffer, 0, asset->indexes.dataPtr(), bufferDesc.size);
 
 	WGPULimits supportedLimits = storage->adapter.getDefaultLimits();
 	uint32 uniformBufferStride = CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
@@ -730,8 +748,23 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 	//LoadOBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
 
 
-	loadMesh("../resource/meshes/clean/Cube.xin", memory, platformFunctions);
-	*asset = LoadOBJ("../resource/meshes/dirty/Suzy.obj", memory, platformFunctions);
+	*asset = loadMesh("../resource/meshes/clean/Cube.xin", memory, platformFunctions);
+
+	// Debug
+	for (size_t i = 0; i < asset->vertices.getElementsLength(); i++)
+	{
+		const Vertex& v = asset->vertices.at(i);
+		int a = 2;
+
+		//for (size_t j = 0; j < 3; j++)
+		//{
+		//	real32 x = v.position.x;
+		//	real32 y = v.position.y;
+		//	real32 z = v.position.z;
+		//}
+	}
+
+	//*asset = LoadOBJ("../resource/meshes/dirty/Suzy.obj", memory, platformFunctions);
 	//size_t vSize = asset->vertices.getElementsLength();
 
 	// Load wgpu
@@ -808,7 +841,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	depthStencilAttachment.view = wgpuStorage->depthTextureView.object;
 	depthStencilAttachment.depthClearValue = 1.0f;
 	depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
-	depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
+	depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;	
 	depthStencilAttachment.depthReadOnly = WGPUOptionalBool_False;
 	depthStencilAttachment.stencilClearValue = 0;
 	depthStencilAttachment.stencilLoadOp = WGPULoadOp_Undefined; // Dawn specific
@@ -835,7 +868,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	//renderPass.setVertexBuffer(1, wgpuStorage->normalBuffer, 0, wgpuStorage->pointBuffer.getSize());
 	renderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->indexBuffer.getSize());
 	renderPass.setBindGroup(0, wgpuStorage->bindGroup, 1, &dynamicOffset);
-	renderPass.drawIndexed((uint32)(asset->indexes.getElementsLength()), 1, 0, 0, 0);
+	renderPass.drawIndexed((uint32)(asset->indices.getElementsLength()), 1, 0, 0, 0);
 	renderPass.end();
 	renderPass.release();
 
