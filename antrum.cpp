@@ -511,51 +511,6 @@ MeshAsset loadMesh(const char* filename, GameMemory* memory, PlatformFunctions* 
 	return asset;
 }
 
-/*MeshAsset LoadOBJ(const char* filename, GameMemory* memory, PlatformFunctions* platformFunctions){
-	MeshAsset asset = {};
-	ReadFileResult res = platformFunctions->readFile(filename, memory);
-
-	FileReader fileReader = {};
-	fileReader.reader = (const char*)res.content;
-	
-	OBJParser::LineResult<real32> vertices = {};
-	OBJParser::LineResult<real32> normals  = {};
-	OBJParser::LineResult<uint16> faces    = {};
-
-	while (fileReader.counter < res.contentSize)
-	{
-		if (*fileReader.reader == 'v')
-		{
-			char nextChar = *(fileReader.reader + 1);
-			if (CharUtil::IsSpace(nextChar))
-			{
-				vertices = OBJParser::parseVerticesLine(fileReader);
-				asset.vertices.push(vertices.vector.x);
-				asset.vertices.push(vertices.vector.y);
-				asset.vertices.push(vertices.vector.z);
-			}
-			else if (nextChar == 'n')
-			{
-				normals = OBJParser::parseVerticesLine(fileReader);
-				asset.normals.push(normals.vector.x);
-				asset.normals.push(normals.vector.y);
-				asset.normals.push(normals.vector.z);
-			}
-		}
-		else if (*fileReader.reader == 'f')
-		{
-			faces = OBJParser::parseFaceLine(fileReader);
-			asset.indexes.push(faces.vector.x);
-			asset.indexes.push(faces.vector.y);
-			asset.indexes.push(faces.vector.z);
-		}
-
-		fileReader++;
-	}
-
-	return asset;
-}*/
-
 
 uint32 CeilToNextMultiple(uint32 value, uint32 multiple)
 {
@@ -744,28 +699,7 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 {
 	// Load assets
 	//
-	//LoadOBJ("../resource/TestOBJ.obj", memory, platformStorage, *asset);
-	//LoadOBJ("../resource/Pyramid_01.obj", memory, platformStorage, *asset);
-
-
-	*asset = loadMesh("../resource/meshes/clean/Cube.xin", memory, platformFunctions);
-
-	// Debug
-	for (size_t i = 0; i < asset->vertices.getElementsLength(); i++)
-	{
-		const Vertex& v = asset->vertices.at(i);
-		int a = 2;
-
-		//for (size_t j = 0; j < 3; j++)
-		//{
-		//	real32 x = v.position.x;
-		//	real32 y = v.position.y;
-		//	real32 z = v.position.z;
-		//}
-	}
-
-	//*asset = LoadOBJ("../resource/meshes/dirty/Suzy.obj", memory, platformFunctions);
-	//size_t vSize = asset->vertices.getElementsLength();
+	*asset = loadMesh("../resource/meshes/clean/Suzy.xin", memory, platformFunctions);
 
 	// Load wgpu
 	//
@@ -866,7 +800,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	renderPass.setPipeline(wgpuStorage->renderPipeline);
 	renderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
 	//renderPass.setVertexBuffer(1, wgpuStorage->normalBuffer, 0, wgpuStorage->pointBuffer.getSize());
-	renderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->indexBuffer.getSize());
+	renderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint32, 0, wgpuStorage->indexBuffer.getSize());
 	renderPass.setBindGroup(0, wgpuStorage->bindGroup, 1, &dynamicOffset);
 	renderPass.drawIndexed((uint32)(asset->indices.getElementsLength()), 1, 0, 0, 0);
 	renderPass.end();

@@ -152,13 +152,6 @@ public:
 	inline const T& dataRef()            const { return m_arr[0];                        }
 	inline const T* dataPtr()            const { return &m_arr[0];                       }
 
-	//inline VectorGPU<T> trimForGPU() const
-	//{
-	//	VectorGPU<T> v = {};
-	//	v.arr = m_arr.at(0);
-	//	v.counter = m_index;
-	//}
-
 private:
 	T m_arr[N];
 	size_t m_index = 0;
@@ -182,7 +175,6 @@ struct MeshAsset2
 	Vector<real32, ASSET_MAX_POINTS> vertices;
 	Vector<real32, ASSET_MAX_POINTS> normals;
 	Vector<uint16, ASSET_MAX_POINTS> indexes; // >TODO: find a more efficient way to calculate the minimum amount of indexes
-	//uint64 size;
 };
 
 
