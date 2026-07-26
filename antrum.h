@@ -218,6 +218,8 @@ struct M4
 	static M4 rotateX  (real32 a);
 	static M4 rotateY  (real32 a);
 	static M4 rotateZ  (real32 a);
+	M4& transpose();
+	void swap(real32& a, real32& b);
 
 	real32*       operator[](uint8 i);
 	const real32* operator[](uint8 i) const;

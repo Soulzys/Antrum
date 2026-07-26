@@ -54,7 +54,7 @@ M4 M4::translate(real32 x, real32 y, real32 z)
 	o.m[0][0] = 1.0f; o.m[0][1] = 0.0f; o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
 	o.m[1][0] = 0.0f; o.m[1][1] = 1.0f; o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
 	o.m[2][0] = 0.0f; o.m[2][1] = 0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
-	o.m[3][0] =    x; o.m[3][1] =    z; o.m[3][2] =    y; o.m[3][3] = 1.0f;
+	o.m[3][0] =    x; o.m[3][1] =    z; o.m[3][2] =   -y; o.m[3][3] = 1.0f;
 
 	return o;
 }
@@ -83,35 +83,62 @@ M4 M4::scale(real32 v)
 
 M4 M4::rotateX(real32 a)
 {
+	a *= PI * 1.0f / 180.0f;
+
 	M4 o = {};
-	o.m[0][0] = 1.0f; o.m[0][1] =              0.0f; o.m[0][2] =           0.0f; o.m[0][3] = 0.0f;
-	o.m[1][0] = 0.0f; o.m[1][1] =    (real32)cos(a); o.m[1][2] = (real32)sin(a); o.m[1][3] = 0.0f;
-	o.m[2][0] = 0.0f; o.m[2][1] = (real32)(-sin(a)); o.m[2][2] = (real32)cos(a); o.m[2][3] = 0.0f;
-	o.m[3][0] = 0.0f; o.m[3][1] =              0.0f; o.m[3][2] =           0.0f; o.m[3][3] = 1.0f;
+	o.m[0][0] = 1.0f; o.m[0][1] =             0.0f; o.m[0][2] =              0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = 0.0f; o.m[1][1] =   (real32)cos(a); o.m[1][2] = (real32)(-sin(a)); o.m[1][3] = 0.0f;
+	o.m[2][0] = 0.0f; o.m[2][1] = (real32)(sin(a)); o.m[2][2] =    (real32)cos(a); o.m[2][3] = 0.0f;
+	o.m[3][0] = 0.0f; o.m[3][1] =             0.0f; o.m[3][2] =              0.0f; o.m[3][3] = 1.0f;
 
 	return o;
 }
 
 M4 M4::rotateY(real32 a)
 {
+	a *= PI * 1.0f / 180.0f; // -1 is to align with Blender
+
+	// Z rotation matrix. We set it to Y to have our Z up.
 	M4 o = {};
-	o.m[0][0] = (real32)cos(a); o.m[0][1] = (real32)(-sin(a)); o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
-	o.m[1][0] = (real32)sin(a); o.m[1][1] =    (real32)cos(a); o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
-	o.m[2][0] =           0.0f; o.m[2][1] =              0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
-	o.m[3][0] =           0.0f; o.m[3][1] =              0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
+	o.m[0][0] =   (real32)cos(a); o.m[0][1] = (real32)(-sin(a)); o.m[0][2] = 0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] = (real32)(sin(a)); o.m[1][1] =    (real32)cos(a); o.m[1][2] = 0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] =             0.0f; o.m[2][1] =              0.0f; o.m[2][2] = 1.0f; o.m[2][3] = 0.0f;
+	o.m[3][0] =             0.0f; o.m[3][1] =              0.0f; o.m[3][2] = 0.0f; o.m[3][3] = 1.0f;
 	
 	return o;
 }
 
 M4 M4::rotateZ(real32 a)
 {
+	a *= PI * 1.0f / 180.0f;
+
+	// Y rotation matrix. We set it to Z to have our Y forward.
 	M4 o = {};
-	o.m[0][0] =    (real32)cos(a); o.m[0][1] = 0.0f; o.m[0][2] = (real32)sin(a); o.m[0][3] = 0.0f;
-	o.m[1][0] =              0.0f; o.m[1][1] = 1.0f; o.m[1][2] =           0.0f; o.m[1][3] = 0.0f;
-	o.m[2][0] = (real32)(-sin(a)); o.m[2][1] = 0.0f; o.m[2][2] = (real32)cos(a); o.m[2][3] = 0.0f;
-	o.m[3][0] =              0.0f; o.m[3][1] = 0.0f; o.m[3][2] =           0.0f; o.m[3][3] = 1.0f;
+	o.m[0][0] =    (real32)cos(a); o.m[0][1] = 0.0f; o.m[0][2] = (real32)(sin(a)); o.m[0][3] = 0.0f;
+	o.m[1][0] =              0.0f; o.m[1][1] = 1.0f; o.m[1][2] =             0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] = (real32)(-sin(a)); o.m[2][1] = 0.0f; o.m[2][2] =   (real32)cos(a); o.m[2][3] = 0.0f;
+	o.m[3][0] =              0.0f; o.m[3][1] = 0.0f; o.m[3][2] =             0.0f; o.m[3][3] = 1.0f;	
 	
 	return o;
+}
+
+M4& M4::transpose()
+{
+	swap(m[0][1], m[1][0]);
+	swap(m[0][2], m[2][0]);
+	swap(m[0][3], m[3][0]);
+	swap(m[1][3], m[3][1]);
+	swap(m[2][3], m[3][2]);
+	swap(m[1][2], m[2][1]);
+
+	return *this;
+}
+
+void M4::swap(real32& a, real32& b)
+{
+	real32 t = a;
+	a = b;
+	b = t;
 }
 
 real32* M4::operator[](uint8 i)
@@ -583,18 +610,42 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 	real32 ratio       = (real32)(WINDOW_WIDTH / WINDOW_HEIGHT);
 	real32 focalLength = 1.0f;
-	real32 near        = 0.01f;
-	real32 far         = 100.0f;
-	real32 divides     = 1.0f / (far - near);
+	real32 nearP       = 0.01f;
+	real32 farP        = 100.0f;
+	real32 nearO       = -100.0f;
+	real32 farO        = 100.0f;
+	real32 divides     = 1.0f / (farP - nearP);
+	real32 l = -1.0f;
+	real32 r = 1.0f;
+	real32 t = 1.0f;
+	real32 b = -1.0f;
 
 	ShaderUniform shaderUniform = {};
 
+	// Perspective
+	//shaderUniform.projectionMatrix =
+	//{
+	//	focalLength,                 0.0,                     0.0, 0.0,
+	//	0.0        , focalLength * ratio,                     0.0, 0.0,
+	//	0.0        ,                 0.0,          farP * divides, 1.0,
+	//	0.0        ,                 0.0, -farP * nearP * divides, 0.0
+	//};
+
+	// Orthographic
+	//shaderUniform.projectionMatrix =
+	//{
+	//	1.0,   0.0,                     0.0, 0.0,
+	//	0.0, ratio,                     0.0, 0.0,
+	//	0.0,   0.0,   1.0f / (farO - nearO), 0.0,
+	//	0.0,   0.0, -nearO / (farO - nearO), 1.0
+	//};
+
 	shaderUniform.projectionMatrix =
 	{
-		focalLength,                 0.0,                   0.0, 0.0,
-		0.0        , focalLength * ratio,                   0.0, 0.0,
-		0.0        ,                 0.0,         far * divides, 1.0,
-		0.0        ,                 0.0, -far * near * divides, 0.0
+		   2.0f / (r - l),                   0.0,                              0.0,  0.0,
+		              0.0,        2.0f / (t - b),                              0.0,  0.0,
+		              0.0,                  0.0f,           -2.0f / (farO - nearO),  0.0,
+		-(r + l) /(r - l),   - (t + b) / (t - b), -(farO + nearO) / (farO - nearO), 1.0f
 	};
 
 	shaderUniform.viewMatrix =
@@ -719,19 +770,20 @@ extern "C" GAME_UPDATE(Game_Update)
 		return;
 	}
 
-	wgpuStorage->shaderUniform.time += 0.0008f;
+	//wgpuStorage->shaderUniform.time += 0.01f;
 
 	// Object
-	M4 S  = M4::scale(0.6f);
-	M4 T1 = M4::translate(0.0f, 0.0f, 0.0f);
-	M4 R1 = M4::rotateX(wgpuStorage->shaderUniform.time);
+	M4 S  = M4::scale(0.4f);
+	M4 T1 = M4::translate(0.0f, 1.0f, 0.0f);
+	//M4 R4 = M4::rotateZ(PI / 2.0f);
+	M4 R1 = M4::rotateZ(wgpuStorage->shaderUniform.time);
 	wgpuStorage->shaderUniform.modelMatrix = R1 * T1 * S;
 
 	// View
-	M4 T2 = M4::translate(0.0, 5.0, 0.0f);
-	M4 R2 = M4::rotateX(PI / 8.0f);
-	M4 R3 = M4::rotateZ(PI / 4.0f);
-	wgpuStorage->shaderUniform.viewMatrix = /*R3 * R2 * */ T2;
+	M4 T2 = M4::translate(0.0f, 2.0f, 0.0f);
+	M4 R2 = M4::rotateX(-90);
+	//M4 R3 = M4::rotateZ(PI / 4.0f);
+	wgpuStorage->shaderUniform.viewMatrix = /*R3 * R2 * */ R2 * T2;
 
 
 	// Update the uniform time 
@@ -775,7 +827,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	depthStencilAttachment.view = wgpuStorage->depthTextureView.object;
 	depthStencilAttachment.depthClearValue = 1.0f;
 	depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
-	depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;	
+	depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
 	depthStencilAttachment.depthReadOnly = WGPUOptionalBool_False;
 	depthStencilAttachment.stencilClearValue = 0;
 	depthStencilAttachment.stencilLoadOp = WGPULoadOp_Undefined; // Dawn specific

@@ -450,7 +450,7 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 	WGPUDepthStencilState depthStencilState = {};
 	wgpu::helper::setDefault(depthStencilState);
 	depthStencilState.depthCompare = WGPUCompareFunction_Less;
-	depthStencilState.depthWriteEnabled = WGPUOptionalBool_False;
+	depthStencilState.depthWriteEnabled = WGPUOptionalBool_True;
 	depthStencilState.format = depthTextureFormat;
 	depthStencilState.stencilReadMask = 0;
 	depthStencilState.stencilWriteMask = 0;
