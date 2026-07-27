@@ -31,6 +31,7 @@ typedef int32    bool32;
 #define GIGABYTES(Value) (MEGABYTES(Value) * 1024LL)
 
 #define ASSERT(Expression) if (!(Expression)) {*(int*)0 = 0;}
+#define ARR_COUNT(Array) (sizeof(Array) / sizeof((Array[0])))
 
 
 
@@ -60,13 +61,50 @@ constexpr float PI = 3.14159265358979323846f;
 
 
 
+
+enum KeyState
+{
+	UP,
+	DOWN
+};
+
+
+
 struct MemoryChunk
 {
 	void* allocate(size_t amount);
 
 	uint64 size;
 	uint64 offset;
-	char* memory;
+	char*  memory;
+};
+
+
+
+struct GameKeyState
+{
+	uint8    halfTransitionCount;
+	KeyState state;
+};
+
+struct GameInputController
+{
+	void copyState(GameInputController* inputs);
+
+	union
+	{
+		GameKeyState keys[6];
+
+		struct
+		{
+			GameKeyState moveLeft;
+			GameKeyState moveRight;
+			GameKeyState moveForward;
+			GameKeyState moveBackward;
+			GameKeyState rotateLeft;
+			GameKeyState rotateRight; // 6
+		};
+	};
 };
 
 
@@ -405,7 +443,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 typedef GAME_INITIALIZE(game_initialize);
 
-#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset)
+#define GAME_UPDATE(name) void name(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset, GameInputController* inputs)
 typedef GAME_UPDATE(game_update);
 
 #define GAME_QUIT(name) void name(WebGPUStorage* storage)

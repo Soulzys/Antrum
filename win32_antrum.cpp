@@ -1,4 +1,4 @@
-#include "antrum.h"
+#include "antrum.cpp"
 
 #include "windows.h"
 #include "win32_antrum.h"
@@ -105,7 +105,7 @@ char* Win32_Util_AllocateReadFileMemory(GameMemory* Memory, size_t Size)
 }
 
 
-void Win32_ProcessPendingMessages(GameState* gameState)
+void Win32_ProcessPendingMessages(GameState* gameState, GameInputController* inputs)
 {
 	MSG msg = {};
 	while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -123,9 +123,16 @@ void Win32_ProcessPendingMessages(GameState* gameState)
 			case WM_KEYUP:
 			{
 				uint32 vkCode = (uint32)msg.wParam;
-				if (vkCode == 'A') OutputDebugString("A KEY PRESSED !\n");
-				if (vkCode == 'D') OutputDebugString("D KEY PRESSED !\n");
-				if (vkCode == VK_ESCAPE) gameState->quit = true;
+				KeyState previousKeyState = ((msg.lParam & (1 << 30)) != 0) ? KeyState::DOWN : KeyState::UP;
+				KeyState currentKeyState  = ((msg.lParam & (1 << 31)) == 0) ? KeyState::DOWN : KeyState::UP;
+
+				if (vkCode == 'A'       ) inputs->moveLeft    .state = currentKeyState; inputs->moveLeft    .halfTransitionCount++;
+				if (vkCode == 'D'       ) inputs->moveRight   .state = currentKeyState; inputs->moveRight   .halfTransitionCount++;
+				if (vkCode == 'W'       ) inputs->moveForward .state = currentKeyState; inputs->moveForward .halfTransitionCount++;
+				if (vkCode == 'S'       ) inputs->moveBackward.state = currentKeyState; inputs->moveBackward.halfTransitionCount++;
+				if (vkCode == VK_NUMPAD4) inputs->rotateLeft  .state = currentKeyState; inputs->rotateLeft  .halfTransitionCount++;
+				if (vkCode == VK_NUMPAD6) inputs->rotateRight .state = currentKeyState; inputs->rotateRight .halfTransitionCount++;
+				if (vkCode == VK_ESCAPE ) gameState->quit = true;
 			} break;
 
 			default:
@@ -247,14 +254,26 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	MeshAsset asset = {};
 	WebGPUStorage webGPUStorage = {};
 
+	GameInputController gameInputs[2] = {};
+	GameInputController* oldGameInputs = &gameInputs[0];
+	GameInputController* newGameInputs = &gameInputs[1];
+
 
 	gameDLL.initialize(&gameMemory, &gameState, &platformFunctions, &asset, &webGPUStorage, wndHandle, wndClass.hInstance);
 
 	while (!gameState.quit)
 	{
-		Win32_ProcessPendingMessages(&gameState);
+		*newGameInputs = {};
+		newGameInputs->copyState(oldGameInputs);
 
-		gameDLL.update(&gameMemory, &gameState, &platformFunctions, &webGPUStorage, &asset);
+		Win32_ProcessPendingMessages(&gameState, newGameInputs);
+
+
+		gameDLL.update(&gameMemory, &gameState, &platformFunctions, &webGPUStorage, &asset, newGameInputs);
+
+		GameInputController* temp = newGameInputs;
+		newGameInputs = oldGameInputs;
+		oldGameInputs = temp;
 	}
 
 	gameDLL.quit(&webGPUStorage);

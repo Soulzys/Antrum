@@ -37,6 +37,18 @@ uint8 CharUtil::ToDigit(char c)
 }
 
 
+void GameInputController::copyState(GameInputController* inputs)
+{
+	if (inputs)
+	{
+		for (int iKey = 0; iKey < ARR_COUNT(inputs->keys); iKey++)
+		{
+			keys[iKey].state = inputs->keys[iKey].state;
+		}
+	}
+}
+
+
 M4 M4::identity()
 {
 	M4 o = {};
@@ -761,7 +773,7 @@ extern "C" GAME_INITIALIZE(Game_Initialize)
 }
 
 
-XARGS(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset)
+XARGS(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset, GameInputController* inputs)
 extern "C" GAME_UPDATE(Game_Update)
 {
 	if (!gameState->initialized)
@@ -772,19 +784,51 @@ extern "C" GAME_UPDATE(Game_Update)
 
 	//wgpuStorage->shaderUniform.time += 0.01f;
 
+
 	// Object
 	M4 S  = M4::scale(0.4f);
-	M4 T1 = M4::translate(0.0f, 1.0f, 0.0f);
-	//M4 R4 = M4::rotateZ(PI / 2.0f);
+	M4 T1 = M4::translate(0.0f, 0.0f, 0.0f);
 	M4 R1 = M4::rotateZ(wgpuStorage->shaderUniform.time);
 	wgpuStorage->shaderUniform.modelMatrix = R1 * T1 * S;
 
 	// View
-	M4 T2 = M4::translate(0.0f, 2.0f, 0.0f);
-	M4 R2 = M4::rotateX(-90);
-	//M4 R3 = M4::rotateZ(PI / 4.0f);
-	wgpuStorage->shaderUniform.viewMatrix = /*R3 * R2 * */ R2 * T2;
+	//M4 T2 = M4::translate(1.f, 0.0f, 0.0f);
+	//M4 R2 = M4::rotateX(0.0f);
+	//wgpuStorage->shaderUniform.viewMatrix = R2 * T2;
 
+	const real32 moveIncrement = 0.01f;
+	const real32 rotateIncrement = 1.0f;
+	
+	if (inputs->moveLeft.state == DOWN)
+	{
+		M4 move = M4::translate(moveIncrement, 0.0f, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->moveRight.state == DOWN)
+	{
+		M4 move = M4::translate(-moveIncrement, 0.0f, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->moveForward.state == DOWN)
+	{
+		M4 move = M4::translate(0.0f, moveIncrement, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->moveBackward.state == DOWN)
+	{
+		M4 move = M4::translate(0.0f, -moveIncrement, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->rotateLeft.state == DOWN)
+	{
+		M4 rotate = M4::rotateZ(rotateIncrement);
+		wgpuStorage->shaderUniform.viewMatrix *= rotate;
+	}
+	if (inputs->rotateRight.state == DOWN)
+	{
+		M4 rotate = M4::rotateZ(-rotateIncrement);
+		wgpuStorage->shaderUniform.viewMatrix *= rotate;
+	}
 
 	// Update the uniform time 
 	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), 
