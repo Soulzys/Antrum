@@ -1,4 +1,4 @@
-#include "antrum.cpp"
+#include "antrum.h"
 
 #include "windows.h"
 #include "win32_antrum.h"
@@ -123,7 +123,7 @@ void Win32_ProcessPendingMessages(GameState* gameState, GameInputController* inp
 			case WM_KEYUP:
 			{
 				uint32 vkCode = (uint32)msg.wParam;
-				KeyState previousKeyState = ((msg.lParam & (1 << 30)) != 0) ? KeyState::DOWN : KeyState::UP;
+				//KeyState previousKeyState = ((msg.lParam & (1 << 30)) != 0) ? KeyState::DOWN : KeyState::UP;
 				KeyState currentKeyState  = ((msg.lParam & (1 << 31)) == 0) ? KeyState::DOWN : KeyState::UP;
 
 				if (vkCode == 'A'       ) inputs->moveLeft    .state = currentKeyState; inputs->moveLeft    .halfTransitionCount++;
@@ -132,6 +132,8 @@ void Win32_ProcessPendingMessages(GameState* gameState, GameInputController* inp
 				if (vkCode == 'S'       ) inputs->moveBackward.state = currentKeyState; inputs->moveBackward.halfTransitionCount++;
 				if (vkCode == VK_NUMPAD4) inputs->rotateLeft  .state = currentKeyState; inputs->rotateLeft  .halfTransitionCount++;
 				if (vkCode == VK_NUMPAD6) inputs->rotateRight .state = currentKeyState; inputs->rotateRight .halfTransitionCount++;
+				if (vkCode == VK_NUMPAD8) inputs->rotateFront .state = currentKeyState; inputs->rotateFront .halfTransitionCount++;
+				if (vkCode == VK_NUMPAD2) inputs->rotateBack  .state = currentKeyState; inputs->rotateBack  .halfTransitionCount++;
 				if (vkCode == VK_ESCAPE ) gameState->quit = true;
 			} break;
 
@@ -264,7 +266,14 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, 
 	while (!gameState.quit)
 	{
 		*newGameInputs = {};
-		newGameInputs->copyState(oldGameInputs);
+		// Copying the state of oldGameInputs into newGameInputs
+		if (oldGameInputs)
+		{
+			for (int iKey = 0; iKey < ARR_COUNT(oldGameInputs->keys); iKey++)
+			{
+				newGameInputs->keys[iKey].state = oldGameInputs->keys[iKey].state;
+			}
+		}
 
 		Win32_ProcessPendingMessages(&gameState, newGameInputs);
 

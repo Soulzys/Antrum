@@ -37,18 +37,6 @@ uint8 CharUtil::ToDigit(char c)
 }
 
 
-void GameInputController::copyState(GameInputController* inputs)
-{
-	if (inputs)
-	{
-		for (int iKey = 0; iKey < ARR_COUNT(inputs->keys); iKey++)
-		{
-			keys[iKey].state = inputs->keys[iKey].state;
-		}
-	}
-}
-
-
 M4 M4::identity()
 {
 	M4 o = {};
@@ -131,6 +119,30 @@ M4 M4::rotateZ(real32 a)
 	o.m[2][0] = (real32)(-sin(a)); o.m[2][1] = 0.0f; o.m[2][2] =   (real32)cos(a); o.m[2][3] = 0.0f;
 	o.m[3][0] =              0.0f; o.m[3][1] = 0.0f; o.m[3][2] =             0.0f; o.m[3][3] = 1.0f;	
 	
+	return o;
+}
+
+M4 M4::orthographic(real32 top, real32 bottom, real32 left, real32 right, real32 near, real32 far)
+{
+	M4 o = {};
+	o.m[0][0] =            2.0f / (right - left); o.m[0][1] =                             0.0f; o.m[0][2] =                         0.0f; o.m[0][3] = 0.0f;
+	o.m[1][0] =                             0.0f; o.m[1][1] =            2.0f / (top - bottom); o.m[1][2] =                         0.0f; o.m[1][3] = 0.0f;
+	o.m[2][0] =                             0.0f; o.m[2][1] =                             0.0f; o.m[2][2] =         -2.0f / (far - near); o.m[2][3] = 0.0f;
+	o.m[3][0] = -(right + left) / (right - left); o.m[3][1] = -(top + bottom) / (top - bottom); o.m[3][2] = -(far + near) / (far - near); o.m[3][3] = 1.0f;
+
+	return o;
+}
+
+M4 M4::perspective(real32 angleOfView, real32 near, real32 far)
+{
+	const real32 scale = 1.0f / (real32)((tan(angleOfView * 0.5f * PI / 180.0f)));
+	
+	M4 o = {};
+	o.m[0][0] = scale; o.m[0][1] =  0.0f; o.m[0][2] =                  0.0f; o.m[0][3] =                           0.0f;
+	o.m[1][0] =  0.0f; o.m[1][1] = scale; o.m[1][2] =                  0.0f; o.m[1][3] =                           0.0f;
+	o.m[2][0] =  0.0f; o.m[2][1] =  0.0f; o.m[2][2] = -(far / (far - near)); o.m[2][3] = -((far * near) / (far - near));
+	o.m[3][0] =  0.0f; o.m[3][1] =  0.0f; o.m[3][2] =                 -1.0f; o.m[3][3] =                           0.0f;
+
 	return o;
 }
 
@@ -322,7 +334,7 @@ OBJParser::LineResult<real32> OBJParser::parseVerticesLine(FileReader& fileReade
 		// First char of float number
 		if (!wasPreviouslyOntoFloat && isCurrentlyOntoFloat)
 		{
-			floatString.head = fileReader.reader;
+			floatString.data = fileReader.reader;
 			floatHeadCounter = 0;
 		}
 
@@ -386,7 +398,7 @@ real32 StringUtil::ToFloat(const char* string, uint8 size)
 
 real32 StringUtil::ToFloat(const String& string)
 {
-	return StringUtil::ToFloat(string.head, (uint8)string.size);
+	return StringUtil::ToFloat(string.data, (uint8)string.size);
 }
 
 int StringUtil::ToInt(const char* string, uint8 size)
@@ -410,7 +422,7 @@ int StringUtil::ToInt(const char* string, uint8 size)
 
 int StringUtil::ToInt(const String& string)
 {
-	return StringUtil::ToInt(string.head, (uint8)string.size);
+	return StringUtil::ToInt(string.data, (uint8)string.size);
 }
 
 
@@ -557,12 +569,21 @@ uint32 CeilToNextMultiple(uint32 value, uint32 multiple)
 	return step * multiple;
 }
 
+void String2::print(flog* log)
+{
+	log(content);
+}
+
 void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformFunctions* platformFunctions)
 {
 	storage->instance = wgpu::helper::createInstance();
 	storage->adapter = wgpu::helper::createAdapter(storage->instance);
 	storage->device = wgpu::helper::createDevice(storage->adapter, platformFunctions->log);
 	storage->surface = wgpu::helper::createSurface(wndHandle, hInstance, storage->instance);
+
+	String2 str = {};
+	str.content = "Hello there";
+	str.print(platformFunctions->log);
 
 	ReadFileResult file = platformFunctions->readFile("../resource/shaders/shader.sha", memory);
 	ASSERT(file.content);
@@ -573,7 +594,7 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->shaderModule = wgpu::helper::createShaderModule(storage->device, shaderCode, "Xin Shader Module");
 	storage->bindGroupLayout = wgpu::helper::createBindGroupLayout(storage->device, sizeof(ShaderUniform));
 	storage->pipelineLayout = wgpu::helper::createPipelineLayout(storage->device, storage->bindGroupLayout);
-	storage->renderPipeline = wgpu::helper::createRenderPipeline(storage->device, storage->shaderModule, storage->surface.getFormat(storage->adapter), storage->pipelineLayout);
+	storage->gamePipeline = wgpu::helper::createRenderPipeline(storage->device, storage->shaderModule, storage->surface.getFormat(storage->adapter), storage->pipelineLayout);
 
 	WGPUSurfaceConfiguration config = {};
 	config.nextInChain = nullptr;
@@ -620,61 +641,12 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 
 
-	real32 ratio       = (real32)(WINDOW_WIDTH / WINDOW_HEIGHT);
-	real32 focalLength = 1.0f;
-	real32 nearP       = 0.01f;
-	real32 farP        = 100.0f;
-	real32 nearO       = -100.0f;
-	real32 farO        = 100.0f;
-	real32 divides     = 1.0f / (farP - nearP);
-	real32 l = -1.0f;
-	real32 r = 1.0f;
-	real32 t = 1.0f;
-	real32 b = -1.0f;
-
 	ShaderUniform shaderUniform = {};
 
-	// Perspective
-	//shaderUniform.projectionMatrix =
-	//{
-	//	focalLength,                 0.0,                     0.0, 0.0,
-	//	0.0        , focalLength * ratio,                     0.0, 0.0,
-	//	0.0        ,                 0.0,          farP * divides, 1.0,
-	//	0.0        ,                 0.0, -farP * nearP * divides, 0.0
-	//};
-
-	// Orthographic
-	//shaderUniform.projectionMatrix =
-	//{
-	//	1.0,   0.0,                     0.0, 0.0,
-	//	0.0, ratio,                     0.0, 0.0,
-	//	0.0,   0.0,   1.0f / (farO - nearO), 0.0,
-	//	0.0,   0.0, -nearO / (farO - nearO), 1.0
-	//};
-
-	shaderUniform.projectionMatrix =
-	{
-		   2.0f / (r - l),                   0.0,                              0.0,  0.0,
-		              0.0,        2.0f / (t - b),                              0.0,  0.0,
-		              0.0,                  0.0f,           -2.0f / (farO - nearO),  0.0,
-		-(r + l) /(r - l),   - (t + b) / (t - b), -(farO + nearO) / (farO - nearO), 1.0f
-	};
-
-	shaderUniform.viewMatrix =
-	{
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
-	};
-
-	shaderUniform.modelMatrix =
-	{
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
-	};
+	//shaderUniform.projectionMatrix = M4::orthographic(1.0f, -1.0f, -1.0f, 1.0f, -100.0f, 100.0f);
+	shaderUniform.projectionMatrix = M4::perspective(45.0f, 1.00f, 100.0f);
+	shaderUniform.viewMatrix       = M4::identity() * M4::translate(0.0f, 5.0f, 0.0f);
+	shaderUniform.modelMatrix      = M4::identity();
 
 	shaderUniform.time = 0.0f;
 	shaderUniform.color[0] = 0.0f;
@@ -756,6 +728,83 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 }
 
 
+void updateGame(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset, GameInputController* inputs)
+{
+	// Object
+	M4 S  = M4::scale(0.4f);
+	M4 T1 = M4::translate(0.0f, 0.0f, 0.0f);
+	M4 R1 = M4::rotateZ(wgpuStorage->shaderUniform.time);
+	wgpuStorage->shaderUniform.modelMatrix = R1 * T1 * S;
+
+	// View
+	//M4 T2 = M4::translate(0.0f, 1.0f, 0.0f);
+	//M4 R2 = M4::rotateX(0.0f);
+	//wgpuStorage->shaderUniform.viewMatrix = T2;
+
+	const real32 moveIncrement = 0.01f;
+	const real32 rotateIncrement = 1.0f;
+	
+	if (inputs->moveLeft.state == DOWN)
+	{
+		M4 move = M4::translate(moveIncrement, 0.0f, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->moveRight.state == DOWN)
+	{
+		M4 move = M4::translate(-moveIncrement, 0.0f, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->moveForward.state == DOWN)
+	{
+		M4 move = M4::translate(0.0f, -moveIncrement, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->moveBackward.state == DOWN)
+	{
+		M4 move = M4::translate(0.0f, moveIncrement, 0.0f);
+		wgpuStorage->shaderUniform.viewMatrix *= move;
+	}
+	if (inputs->rotateLeft.state == DOWN)
+	{
+		M4 rotate = M4::rotateZ(rotateIncrement);
+		wgpuStorage->shaderUniform.viewMatrix *= rotate;
+	}
+	if (inputs->rotateRight.state == DOWN)
+	{
+		M4 rotate = M4::rotateZ(-rotateIncrement);
+		wgpuStorage->shaderUniform.viewMatrix *= rotate;
+	}
+	if (inputs->rotateFront.state == DOWN)
+	{
+		M4 rotate = M4::rotateX(rotateIncrement);
+		wgpuStorage->shaderUniform.viewMatrix *= rotate;
+	}
+	if (inputs->rotateBack.state == DOWN)
+	{
+		M4 rotate = M4::rotateX(-rotateIncrement);
+		wgpuStorage->shaderUniform.viewMatrix *= rotate;
+	}
+
+	// Update the uniform time 
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), 
+		&wgpuStorage->shaderUniform.time, sizeof(ShaderUniform::time));
+
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::projectionMatrix),
+		&wgpuStorage->shaderUniform.projectionMatrix, sizeof(ShaderUniform::projectionMatrix));
+
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::viewMatrix),
+		&wgpuStorage->shaderUniform.viewMatrix, sizeof(ShaderUniform::viewMatrix));
+
+	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::modelMatrix),
+		&wgpuStorage->shaderUniform.modelMatrix, sizeof(ShaderUniform::modelMatrix));
+
+
+	// Update the uniform color
+	//wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), 
+	//	&wgpuStorage->shaderUniform.color, sizeof(ShaderUniform::color));
+}
+
+
 
 XARGS(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, MeshAsset* asset, WebGPUStorage* wgpuStorage, void* wndHandle, void* hInstance)
 extern "C" GAME_INITIALIZE(Game_Initialize)
@@ -784,68 +833,10 @@ extern "C" GAME_UPDATE(Game_Update)
 
 	//wgpuStorage->shaderUniform.time += 0.01f;
 
-
-	// Object
-	M4 S  = M4::scale(0.4f);
-	M4 T1 = M4::translate(0.0f, 0.0f, 0.0f);
-	M4 R1 = M4::rotateZ(wgpuStorage->shaderUniform.time);
-	wgpuStorage->shaderUniform.modelMatrix = R1 * T1 * S;
-
-	// View
-	//M4 T2 = M4::translate(1.f, 0.0f, 0.0f);
-	//M4 R2 = M4::rotateX(0.0f);
-	//wgpuStorage->shaderUniform.viewMatrix = R2 * T2;
-
-	const real32 moveIncrement = 0.01f;
-	const real32 rotateIncrement = 1.0f;
+	updateGame(memory, gameState, platformFunctions, wgpuStorage, asset, inputs);
 	
-	if (inputs->moveLeft.state == DOWN)
-	{
-		M4 move = M4::translate(moveIncrement, 0.0f, 0.0f);
-		wgpuStorage->shaderUniform.viewMatrix *= move;
-	}
-	if (inputs->moveRight.state == DOWN)
-	{
-		M4 move = M4::translate(-moveIncrement, 0.0f, 0.0f);
-		wgpuStorage->shaderUniform.viewMatrix *= move;
-	}
-	if (inputs->moveForward.state == DOWN)
-	{
-		M4 move = M4::translate(0.0f, moveIncrement, 0.0f);
-		wgpuStorage->shaderUniform.viewMatrix *= move;
-	}
-	if (inputs->moveBackward.state == DOWN)
-	{
-		M4 move = M4::translate(0.0f, -moveIncrement, 0.0f);
-		wgpuStorage->shaderUniform.viewMatrix *= move;
-	}
-	if (inputs->rotateLeft.state == DOWN)
-	{
-		M4 rotate = M4::rotateZ(rotateIncrement);
-		wgpuStorage->shaderUniform.viewMatrix *= rotate;
-	}
-	if (inputs->rotateRight.state == DOWN)
-	{
-		M4 rotate = M4::rotateZ(-rotateIncrement);
-		wgpuStorage->shaderUniform.viewMatrix *= rotate;
-	}
 
-	// Update the uniform time 
-	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::time), 
-		&wgpuStorage->shaderUniform.time, sizeof(ShaderUniform::time));
-
-	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::projectionMatrix),
-		&wgpuStorage->shaderUniform.projectionMatrix, sizeof(ShaderUniform::projectionMatrix));
-
-	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::viewMatrix),
-		&wgpuStorage->shaderUniform.viewMatrix, sizeof(ShaderUniform::viewMatrix));
-
-	wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::modelMatrix),
-		&wgpuStorage->shaderUniform.modelMatrix, sizeof(ShaderUniform::modelMatrix));
-
-	// Update the uniform color
-	//wgpuStorage->queue.writeBuffer(wgpuStorage->uniformBuffer, offsetof(ShaderUniform, ShaderUniform::color), 
-	//	&wgpuStorage->shaderUniform.color, sizeof(ShaderUniform::color));
+	
 
 	wgpu::TextureView targetView = wgpuStorage->surface.getCurrentTextureView();
 	ASSERT(targetView.object);
@@ -893,7 +884,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	WGPULimits supportedLimits = wgpuStorage->adapter.getDefaultLimits();
 	uint32 uniformBufferStride = CeilToNextMultiple((uint32)sizeof(ShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	dynamicOffset = 0 * uniformBufferStride;
-	renderPass.setPipeline(wgpuStorage->renderPipeline);
+	renderPass.setPipeline(wgpuStorage->gamePipeline);
 	renderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
 	//renderPass.setVertexBuffer(1, wgpuStorage->normalBuffer, 0, wgpuStorage->pointBuffer.getSize());
 	renderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint32, 0, wgpuStorage->indexBuffer.getSize());
@@ -919,7 +910,7 @@ extern "C" GAME_UPDATE(Game_Update)
 XARGS(WebGPUStorage* storage)
 extern "C" GAME_QUIT(Game_Quit)
 {
-	storage->renderPipeline.release();
+	storage->gamePipeline.release();
 	storage->surface.unconfigure();
 	storage->queue.release();
 	storage->surface.release();

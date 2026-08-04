@@ -89,21 +89,21 @@ struct GameKeyState
 
 struct GameInputController
 {
-	void copyState(GameInputController* inputs);
-
 	union
 	{
-		GameKeyState keys[6];
-
 		struct
 		{
-			GameKeyState moveLeft;
-			GameKeyState moveRight;
-			GameKeyState moveForward;
-			GameKeyState moveBackward;
-			GameKeyState rotateLeft;
-			GameKeyState rotateRight; // 6
+			GameKeyState moveLeft     ;
+			GameKeyState moveRight    ;
+			GameKeyState moveForward  ;
+			GameKeyState moveBackward ;
+			GameKeyState rotateLeft   ;
+			GameKeyState rotateRight  ; 
+			GameKeyState rotateFront  ; 
+			GameKeyState rotateBack   ; // 8
 		};
+
+		GameKeyState keys[8];
 	};
 };
 
@@ -249,14 +249,19 @@ struct PlatformFunctions
 
 struct M4
 {
-	static M4 identity ();
-	static M4 translate(real32 x, real32 y, real32 z);
-	static M4 scale    (real32 x, real32 y, real32 z);
-	static M4 scale    (real32 v);
-	static M4 rotateX  (real32 a);
-	static M4 rotateY  (real32 a);
-	static M4 rotateZ  (real32 a);
+	static M4 identity     ();
+	static M4 translate    (real32 x, real32 y, real32 z);
+	static M4 scale        (real32 x, real32 y, real32 z);
+	static M4 scale        (real32 v);
+	static M4 rotateX      (real32 a);
+	static M4 rotateY      (real32 a);
+	static M4 rotateZ      (real32 a);
+	static M4 orthographic (real32 top, real32 bottom, real32 left, real32 right, real32 near, real32 far);
+	static M4 perspective  (real32 angleOfView, real32 near, real32 far);
+
 	M4& transpose();
+
+	// >TODO: probably needs to be extracted to a Math namespace
 	void swap(real32& a, real32& b);
 
 	real32*       operator[](uint8 i);
@@ -276,7 +281,7 @@ struct M4
 
 struct String
 {
-	const char* head;
+	const char* data;
 	size_t size;
 };
 
@@ -402,7 +407,8 @@ struct WebGPUStorage
 	wgpu::ShaderModule shaderModule;
 	wgpu::BindGroupLayout bindGroupLayout;
 	wgpu::PipelineLayout pipelineLayout;
-	wgpu::RenderPipeline renderPipeline;
+	wgpu::RenderPipeline gamePipeline;
+	wgpu::RenderPipeline uiPipeline;
 	wgpu::Queue queue;
 
 	wgpu::Buffer pointBuffer;
@@ -419,9 +425,20 @@ struct WebGPUStorage
 	ShaderUniform shaderUniform;
 };
 
+struct String2
+{
+	void print(flog* log);
+
+	char* content;
+	int32 length;
+};
+
+
 
 
 void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, GameMemory* memory, MeshAsset* asset, PlatformFunctions* platformFunctions);
+void updateGame(GameMemory* memory, GameState* gameState, PlatformFunctions* platformFunctions, WebGPUStorage* wgpuStorage, MeshAsset* asset, GameInputController* inputs);
+void updateUI();
 
 
 // Used to display the arguments of the macroed functions
