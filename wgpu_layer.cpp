@@ -320,9 +320,9 @@ void wgpu::helper::setDefault(WGPUStencilFaceState& stencilFaceState)
 
 void wgpu::helper::setDefault(WGPUDepthStencilState& depthStencilState)
 {
-	depthStencilState.format              = WGPUTextureFormat_Undefined;
-	depthStencilState.depthWriteEnabled   = WGPUOptionalBool_False;
-	depthStencilState.depthCompare        = WGPUCompareFunction_Always;
+	depthStencilState.format              = toWGPU(wgpu::TextureFormat::Undefined);
+	depthStencilState.depthWriteEnabled   = toWGPU(wgpu::OptionalBool::False);
+	depthStencilState.depthCompare        = toWGPU(wgpu::CompareFunction::Always);
 	depthStencilState.stencilReadMask     = 0xFFFFFFFF;
 	depthStencilState.stencilWriteMask    = 0xFFFFFFFF;
 	depthStencilState.depthBias           = 0;
@@ -332,7 +332,7 @@ void wgpu::helper::setDefault(WGPUDepthStencilState& depthStencilState)
 	wgpu::helper::setDefault(depthStencilState.stencilBack);
 }
 
-wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, uint64_t minBindingSize)
+wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, uint64_t minBindingSize, const char* label)
 {
 	// Create a bind group
 	//
@@ -340,7 +340,7 @@ wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, u
 	wgpu::helper::setDefault(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
 	bindingLayoutEntry.binding     = 0; // This is the binding index we use in our shader
 	bindingLayoutEntry.visibility  = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
-	bindingLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
+	bindingLayoutEntry.buffer.type = toWGPU(wgpu::BufferBindingType::Uniform);
 	bindingLayoutEntry.buffer.minBindingSize = minBindingSize;
 	bindingLayoutEntry.buffer.hasDynamicOffset = true;
 
@@ -351,6 +351,7 @@ wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, u
 
 	wgpu::BindGroupLayout bindGroupLayout = {};
 	bindGroupLayout.object = device.createBindGroupLayout(&bindGroupLayoutDesc);
+	bindGroupLayout.setLabel(label);
 
 	return bindGroupLayout;
 }
@@ -368,66 +369,42 @@ wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, wgp
 	return pipelineLayout;
 }
 
-wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgpu::ShaderModule shaderModule, WGPUTextureFormat textureFormat, wgpu::PipelineLayout pipelineLayout)
+wgpu::RenderPipeline wgpu::helper::createGameRenderPipeline(wgpu::Device device, wgpu::ShaderModule shaderModule, WGPUTextureFormat textureFormat, wgpu::PipelineLayout pipelineLayout, const char* label)
 {
-	//std::vector<WGPUVertexAttribute> VertexAttributes(2);
-
-	/*WGPUVertexAttribute pointAttrib;
-	pointAttrib.shaderLocation = 0;
-	pointAttrib.format = WGPUVertexFormat_Float32x3;
-	pointAttrib.offset = 0;
-
-	WGPUVertexAttribute normalAttrib;
-	normalAttrib.shaderLocation = 1;
-	normalAttrib.format = WGPUVertexFormat_Float32x3;
-	normalAttrib.offset = 3 * sizeof(real32);
-
-
-	//WGPUVertexAttribute colorAttrib;
-	//colorAttrib.shaderLocation = 1;
-	//colorAttrib.format = WGPUVertexFormat_Float32x3;
-	//colorAttrib.offset = 3 * sizeof(real32);
-
-	WGPUVertexAttribute vertexAttributes[2] = { pointAttrib, normalAttrib };
-	*/
-
-
-
 	// Position attribute
 	WGPUVertexAttribute vertexAttributes[3] = {};
 	vertexAttributes[0].shaderLocation = 0;
-	vertexAttributes[0].format = WGPUVertexFormat_Float32x3;
+	vertexAttributes[0].format = toWGPU(wgpu::VertexFormat::Float32x3);
 	vertexAttributes[0].offset = 0;
 
 	// Normal attribute
 	vertexAttributes[1].shaderLocation = 1;
-	vertexAttributes[1].format = WGPUVertexFormat_Float32x3;
+	vertexAttributes[1].format = toWGPU(wgpu::VertexFormat::Float32x3);
 	vertexAttributes[1].offset = offsetof(Vertex, normal);
 
 	// Texture attribute (currently not used)
 	vertexAttributes[2].shaderLocation = 2;
-	vertexAttributes[2].format = WGPUVertexFormat_Float32x2;
+	vertexAttributes[2].format = toWGPU(wgpu::VertexFormat::Float32x2);
 	vertexAttributes[2].offset = offsetof(Vertex, uv);
 
 
 	WGPUVertexBufferLayout vertexBufferLayout = {};
-	vertexBufferLayout.attributeCount = 3; //(uint32)VertexAttributes.size();
-	vertexBufferLayout.attributes             = vertexAttributes; //VertexAttributes.data();
-	//vertexBufferLayout.attributes = &pointAttrib; //VertexAttributes.data();
-	vertexBufferLayout.arrayStride = sizeof(Vertex); //6 * sizeof(real32);
-	vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
+	vertexBufferLayout.attributeCount = 3;
+	vertexBufferLayout.attributes  = vertexAttributes;
+	vertexBufferLayout.arrayStride = sizeof(Vertex);
+	vertexBufferLayout.stepMode = toWGPU(wgpu::VertexStepMode::Vertex);
 
 
 
 	// Pipeline stuff
 	//
 	WGPUBlendState blendState = {};
-	blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-	blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-	blendState.color.operation = WGPUBlendOperation_Add;
-	blendState.alpha.srcFactor = WGPUBlendFactor_Zero;
-	blendState.alpha.dstFactor = WGPUBlendFactor_One;
-	blendState.alpha.operation = WGPUBlendOperation_Add;
+	blendState.color.srcFactor = toWGPU(wgpu::BlendFactor::SrcAlpha);
+	blendState.color.dstFactor = toWGPU(wgpu::BlendFactor::OneMinusSrcAlpha);
+	blendState.color.operation = toWGPU(wgpu::BlendOperation::Add);
+	blendState.alpha.srcFactor = toWGPU(wgpu::BlendFactor::Zero);
+	blendState.alpha.dstFactor = toWGPU(wgpu::BlendFactor::One);
+	blendState.alpha.operation = toWGPU(wgpu::BlendOperation::Add);
 
 	WGPUColorTargetState colorTarget = {};
 	colorTarget.format = textureFormat;
@@ -446,11 +423,11 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 
 
 
-	WGPUTextureFormat depthTextureFormat = WGPUTextureFormat_Depth24Plus;
+	WGPUTextureFormat depthTextureFormat = toWGPU(wgpu::TextureFormat::Depth24Plus);
 	WGPUDepthStencilState depthStencilState = {};
 	wgpu::helper::setDefault(depthStencilState);
-	depthStencilState.depthCompare = WGPUCompareFunction_Less;
-	depthStencilState.depthWriteEnabled = WGPUOptionalBool_True;
+	depthStencilState.depthCompare = toWGPU(wgpu::CompareFunction::Less);
+	depthStencilState.depthWriteEnabled = toWGPU(wgpu::OptionalBool::True);
 	depthStencilState.format = depthTextureFormat;
 	depthStencilState.stencilReadMask = 0;
 	depthStencilState.stencilWriteMask = 0;
@@ -466,11 +443,11 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 	pipelineDesc.vertex.constantCount = 0;
 	pipelineDesc.vertex.constants = nullptr;
 	pipelineDesc.vertex.nextInChain = nullptr;
-	pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-	pipelineDesc.primitive.stripIndexFormat = WGPUIndexFormat_Undefined;
-	pipelineDesc.primitive.frontFace = WGPUFrontFace_CCW;
+	pipelineDesc.primitive.topology = toWGPU(wgpu::PrimitiveTopology::TriangleList);
+	pipelineDesc.primitive.stripIndexFormat = toWGPU(wgpu::IndexFormat::Undefined);
+	pipelineDesc.primitive.frontFace = toWGPU(wgpu::FrontFace::CCW);
 	// >NOTASCOI: Based on the face orientation. Should eventually set it to 'front'. None is only for debug, so we see everything, nothing is hidden.
-	pipelineDesc.primitive.cullMode = WGPUCullMode_None;
+	pipelineDesc.primitive.cullMode = toWGPU(wgpu::CullMode::None);
 	pipelineDesc.fragment = &fragmentState;
 	pipelineDesc.depthStencil = &depthStencilState;
 	pipelineDesc.multisample.count = 1;
@@ -480,6 +457,75 @@ wgpu::RenderPipeline wgpu::helper::createRenderPipeline(wgpu::Device device, wgp
 
 	wgpu::RenderPipeline renderPipeline = {};
 	renderPipeline.object = device.createRenderPipeline(&pipelineDesc);
+	renderPipeline.setLabel(label);
+
+	return renderPipeline;
+}
+
+wgpu::RenderPipeline wgpu::helper::createUIRenderPipeline(wgpu::Device device, wgpu::ShaderModule shaderModule, WGPUTextureFormat textureFormat, wgpu::PipelineLayout pipelineLayout, const char* label)
+{
+	WGPUVertexAttribute pointAttribute = {};
+	pointAttribute.shaderLocation = 0;
+	pointAttribute.format = toWGPU(wgpu::VertexFormat::Float32x2);
+	pointAttribute.offset = 0;
+
+	WGPUVertexBufferLayout pointBufferLayout = {};
+	pointBufferLayout.attributeCount = 1;
+	pointBufferLayout.attributes = &pointAttribute;
+	pointBufferLayout.arrayStride = sizeof(Point);
+	pointBufferLayout.stepMode = toWGPU(wgpu::VertexStepMode::Vertex);
+
+	// Pipeline stuff
+	//
+	WGPUBlendState blendState = {};
+	blendState.color.srcFactor = toWGPU(wgpu::BlendFactor::SrcAlpha);
+	blendState.color.dstFactor = toWGPU(wgpu::BlendFactor::OneMinusSrcAlpha);
+	blendState.color.operation = toWGPU(wgpu::BlendOperation::Add);
+	// For translucency, to use our alpha value
+	blendState.alpha.srcFactor = toWGPU(wgpu::BlendFactor::One);
+	blendState.alpha.dstFactor = toWGPU(wgpu::BlendFactor::OneMinusSrcAlpha);
+	blendState.alpha.operation = toWGPU(wgpu::BlendOperation::Add);
+
+	WGPUColorTargetState colorTarget = {};
+	colorTarget.format = textureFormat;
+	colorTarget.blend = &blendState;
+	colorTarget.writeMask = WGPUColorWriteMask_All; // We could write to only some of the color channels
+
+	WGPUFragmentState fragmentState = {};
+	fragmentState.module = shaderModule.object;
+	fragmentState.entryPoint.data = "fs_main";
+	fragmentState.entryPoint.length = strlen(fragmentState.entryPoint.data);
+	fragmentState.constantCount = 0;
+	fragmentState.constants = nullptr;
+	fragmentState.targetCount = 1; // We have only one target because our render pass has only one output color attachment
+	fragmentState.targets = &colorTarget;
+	fragmentState.nextInChain = nullptr;
+
+	WGPURenderPipelineDescriptor pipelineDesc = {};
+	pipelineDesc.nextInChain = nullptr;
+	pipelineDesc.vertex.bufferCount = 1;
+	pipelineDesc.vertex.buffers = &pointBufferLayout;
+	pipelineDesc.vertex.module = shaderModule.object;
+	pipelineDesc.vertex.entryPoint.data = "vs_main";
+	pipelineDesc.vertex.entryPoint.length = strlen(pipelineDesc.vertex.entryPoint.data);
+	pipelineDesc.vertex.constantCount = 0;
+	pipelineDesc.vertex.constants = nullptr;
+	pipelineDesc.vertex.nextInChain = nullptr;
+	pipelineDesc.primitive.topology = toWGPU(wgpu::PrimitiveTopology::TriangleList);
+	pipelineDesc.primitive.stripIndexFormat = toWGPU(wgpu::IndexFormat::Undefined);
+	pipelineDesc.primitive.frontFace = toWGPU(wgpu::FrontFace::CCW);
+	// >NOTASCOI: Based on the face orientation. Should eventually set it to 'front'. None is only for debug, so we see everything, nothing is hidden.
+	pipelineDesc.primitive.cullMode = toWGPU(wgpu::CullMode::None);
+	pipelineDesc.fragment = &fragmentState;
+	pipelineDesc.depthStencil = nullptr;
+	pipelineDesc.multisample.count = 1;
+	pipelineDesc.multisample.mask = ~0u; // Default value for the mask. It means "all bits on"
+	pipelineDesc.multisample.alphaToCoverageEnabled = false; // Default value as well. It is irrelevant for count = 1 anyways
+	pipelineDesc.layout = pipelineLayout.object;
+
+	wgpu::RenderPipeline renderPipeline = {};
+	renderPipeline.object = device.createRenderPipeline(&pipelineDesc);
+	renderPipeline.setLabel(label);
 
 	return renderPipeline;
 }
@@ -495,10 +541,11 @@ wgpu::Device::createBindGroup
 WGPU_XIN_EXTRA
 wgpu::BindGroup 
 wgpu::Device::createBindGroupHelper
-(WGPUBindGroupDescriptor const* descriptor) 
+(WGPUBindGroupDescriptor const* descriptor, const char* label) 
 {
 	wgpu::BindGroup bindGroup = {};
 	bindGroup.object = createBindGroup(descriptor);
+	bindGroup.setLabel(label);
 	return bindGroup;
 }
 
@@ -513,10 +560,11 @@ wgpu::Device::createBuffer
 WGPU_XIN_EXTRA
 wgpu::Buffer
 wgpu::Device::createBufferHelper
-(WGPUBufferDescriptor const* descriptor) 
+(WGPUBufferDescriptor const* descriptor, const char* label) 
 {
 	wgpu::Buffer buffer = {};
 	buffer.object = createBuffer(descriptor);
+	buffer.setLabel(label);
 	return buffer;
 }
 
@@ -527,10 +575,11 @@ wgpu::Device::createCommandEncoder
 WGPU_XIN_EXTRA
 wgpu::CommandEncoder 
 wgpu::Device::createCommandEncoderHelper
-(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor) 
+(WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor, const char* label) 
 {
 	wgpu::CommandEncoder encoder = {};
 	encoder.object = createCommandEncoder(descriptor);
+	encoder.setLabel(label);
 	return encoder;
 }
 
@@ -1117,10 +1166,11 @@ wgpu::CommandEncoder::beginRenderPass
 WGPU_XIN_EXTRA
 wgpu::RenderPassEncoder 
 wgpu::CommandEncoder::beginRenderPassHelper
-(WGPURenderPassDescriptor const* descriptor) 
+(WGPURenderPassDescriptor const* descriptor, const char* label) 
 {
 	wgpu::RenderPassEncoder encoder = {};
 	encoder.object = beginRenderPass(descriptor);
+	encoder.setLabel(label);
 	return encoder;
 }
 
@@ -1155,10 +1205,11 @@ wgpu::CommandEncoder::finish
 WGPU_XIN_EXTRA
 wgpu::CommandBuffer 
 wgpu::CommandEncoder::finishHelper
-(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor) 
+(WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor, const char* label) 
 {
 	wgpu::CommandBuffer commandBuffer = {};
 	commandBuffer.object = finish(descriptor);
+	commandBuffer.setLabel(label);
 	return commandBuffer;
 }
 

@@ -215,6 +215,11 @@ struct MeshAsset2
 	Vector<uint16, ASSET_MAX_POINTS> indexes; // >TODO: find a more efficient way to calculate the minimum amount of indexes
 };
 
+struct Point
+{
+	Vec2<real32> position;
+};
+
 
 // Platform-specific structs & functions
 //
@@ -380,7 +385,7 @@ struct ParseNumberResult
 ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endChar);
 
 
-struct ShaderUniform
+struct GameShaderUniform
 {
 	// When dealing with uniform offset, the formula is that for each struct member, its offset has to be a multiple of: offset * sizeof(memberType);
 	M4 projectionMatrix;
@@ -393,7 +398,16 @@ struct ShaderUniform
 	// as its total size would then be 32 bytes).
 	real32 __padding[3];
 };
-static_assert(sizeof(ShaderUniform) % sizeof(ShaderUniform::color) == 0);
+static_assert(sizeof(GameShaderUniform) % sizeof(GameShaderUniform::color) == 0);
+
+struct UIShaderUniform
+{
+	real32 color[4];
+	real32 time;
+
+	real32 __padding[3];
+};
+static_assert(sizeof(UIShaderUniform) % sizeof(UIShaderUniform::color) == 0);
 
 
 #include "wgpu_layer.cpp"
@@ -404,25 +418,32 @@ struct WebGPUStorage
 	wgpu::Adapter adapter;
 	wgpu::Device device;
 	wgpu::Surface surface;
-	wgpu::ShaderModule shaderModule;
-	wgpu::BindGroupLayout bindGroupLayout;
-	wgpu::PipelineLayout pipelineLayout;
+	wgpu::ShaderModule gameShaderModule;
+	wgpu::ShaderModule uiShaderModule;
+	wgpu::BindGroupLayout gameBindGroupLayout;
+	wgpu::BindGroupLayout uiBindGroupLayout;
+	wgpu::PipelineLayout gamePipelineLayout;
+	wgpu::PipelineLayout uiPipelineLayout;
 	wgpu::RenderPipeline gamePipeline;
 	wgpu::RenderPipeline uiPipeline;
 	wgpu::Queue queue;
 
-	wgpu::Buffer pointBuffer;
+	wgpu::Buffer vertexBuffer;
 	wgpu::Buffer normalBuffer;
 	wgpu::Buffer indexBuffer;
-	wgpu::Buffer uniformBuffer;
+	wgpu::Buffer gameUniformBuffer;
+	wgpu::Buffer pointBuffer;
+	wgpu::Buffer uiUniformBuffer;
 
 	wgpu::Texture depthTexture;
 	wgpu::TextureView depthTextureView;
 
-	wgpu::BindGroup bindGroup;
+	wgpu::BindGroup gameBindGroup;
+	wgpu::BindGroup uiBindGroup;
 
 
-	ShaderUniform shaderUniform;
+	GameShaderUniform gameShaderUniform;
+	UIShaderUniform uiShaderUniform;
 };
 
 struct String2

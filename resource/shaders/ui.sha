@@ -1,0 +1,42 @@
+struct PointInput
+{
+	@location(0) position: vec2f, 
+};
+
+struct PointOutput
+{
+	@builtin(position) position: vec4f, 
+};
+
+struct ShaderUniform
+{
+	color: vec4f,
+	time: f32, 
+};
+
+// The memory location of a uniform is defined by a pair of a bind group and a binding
+@group(0) @binding(0) var<uniform> uUniforms: ShaderUniform;
+
+
+@vertex
+fn vs_main(in: PointInput) -> PointOutput 
+{
+	var out: PointOutput;
+
+	//out.position = uUniforms.projectionMatrix * uUniforms.viewMatrix * uUniforms.modelMatrix * vec4f(in.position, 1.0);
+	//out.normal = (uUniforms.modelMatrix * vec4f(in.normal, 0.0)).xzy;
+
+	out.position = vec4f(in.position, 1.0, 1.0);
+	return out;
+}
+
+@fragment
+fn fs_main(in: PointOutput) -> @location(0) vec4f
+{
+	let color = uUniforms.color.rgb;
+
+	// Gamma-correction
+	//
+	let linear_color = pow(color, vec3f(2.2));
+	return vec4f(linear_color, 1.0);
+}

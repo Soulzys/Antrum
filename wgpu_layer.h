@@ -30,14 +30,15 @@ namespace wgpu
 
 	namespace helper
 	{
-		wgpu::Instance        createInstance        ();
-		wgpu::Adapter         createAdapter         (wgpu::Instance instance);
-		wgpu::Device          createDevice          (wgpu::Adapter adapter, flog* logger);
-		wgpu::Surface         createSurface         (void* wndHandle, void* hInstance, wgpu::Instance instance);
-		wgpu::ShaderModule    createShaderModule    (wgpu::Device device, WGPUStringView shaderData, const char* label);
-		wgpu::BindGroupLayout createBindGroupLayout (wgpu::Device device, uint64_t minBindingSize);
-		wgpu::PipelineLayout  createPipelineLayout  (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout);
-		wgpu::RenderPipeline  createRenderPipeline  (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout);
+		wgpu::Instance        createInstance           ();
+		wgpu::Adapter         createAdapter            (wgpu::Instance instance);
+		wgpu::Device          createDevice             (wgpu::Adapter adapter, flog* logger);
+		wgpu::Surface         createSurface            (void* wndHandle, void* hInstance, wgpu::Instance instance);
+		wgpu::ShaderModule    createShaderModule       (wgpu::Device device, WGPUStringView shaderData, const char* label);
+		wgpu::BindGroupLayout createBindGroupLayout    (wgpu::Device device, uint64_t minBindingSize, const char* label);
+		wgpu::PipelineLayout  createPipelineLayout     (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout);
+		wgpu::RenderPipeline  createGameRenderPipeline (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout, const char* label);
+		wgpu::RenderPipeline  createUIRenderPipeline   (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout, const char* label);
 
 		WGPUAdapter requestAdapterAsync (wgpu::Instance instance, WGPURequestAdapterOptions const* options);
 		WGPUDevice  requestDeviceAsync  (wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor);
@@ -59,21 +60,302 @@ namespace wgpu
 		const char* errorType(WGPUErrorType e);
 	}
 
-	// 
-	//struct ObjectContainer
-	//{
-	//	Instance*           instance;
-	//	WGPUAdapter         adapter;
-	//	WGPUDevice          device;
-	//	WGPUSurface         surface;
-	//	WGPUTextureFormat   surfaceFormat;
-	//	WGPUShaderModule    shaderModule;
-	//	WGPUPipelineLayout  pipelineLayout;
-	//	WGPUBindGroupLayout bindGroupLayout;
-	//	WGPUBindGroup       bindGroup;
-	//	WGPURenderPipeline  renderPipeline;
-	//	WGPUQueue           queue;
-	//};
+
+
+
+
+	enum class LoadOp : uint32
+	{
+		Undefined            = WGPULoadOp_Undefined            ,
+		Load                 = WGPULoadOp_Load                 ,
+		Clear                = WGPULoadOp_Clear                ,
+		ExpandResolveTexture = WGPULoadOp_ExpandResolveTexture ,
+	};
+	inline WGPULoadOp toWGPU(LoadOp e) { return (WGPULoadOp)e; }
+
+	enum class TextureViewDimension : uint32
+	{
+		Undefined = WGPUTextureViewDimension_Undefined ,
+		_1D       = WGPUTextureViewDimension_1D        ,
+		_2D       = WGPUTextureViewDimension_2D        ,
+		_2DArray  = WGPUTextureViewDimension_2DArray   ,
+		Cube      = WGPUTextureViewDimension_Cube      ,
+		CubeArray = WGPUTextureViewDimension_CubeArray ,
+		_3D       = WGPUTextureViewDimension_3D        ,
+	};
+	inline WGPUTextureViewDimension toWGPU(TextureViewDimension e) { return (WGPUTextureViewDimension)e; }
+
+	enum class PrimitiveTopology : uint32
+	{
+		Undefined     = WGPUPrimitiveTopology_Undefined     ,
+		PointList     = WGPUPrimitiveTopology_PointList     ,
+		LineList      = WGPUPrimitiveTopology_LineList      ,
+		LineStrip     = WGPUPrimitiveTopology_LineStrip     ,
+		TriangleList  = WGPUPrimitiveTopology_TriangleList  ,
+		TriangleStrip = WGPUPrimitiveTopology_TriangleStrip ,
+	};
+	inline WGPUPrimitiveTopology toWGPU(PrimitiveTopology e) { return (WGPUPrimitiveTopology)e; }
+
+	enum class IndexFormat : uint32
+	{
+		Undefined = WGPUIndexFormat_Undefined ,
+		Uint16    = WGPUIndexFormat_Uint16    ,
+		Uint32    = WGPUIndexFormat_Uint32    ,
+	};
+	inline WGPUIndexFormat toWGPU(IndexFormat e) { return (WGPUIndexFormat)e; }
+
+	enum class FrontFace : uint32
+	{
+		Undefined = WGPUFrontFace_Undefined ,
+		CCW       = WGPUFrontFace_CCW       ,
+		CW        = WGPUFrontFace_CW        ,
+	};
+	inline WGPUFrontFace toWGPU(FrontFace e) { return (WGPUFrontFace)e; }
+
+	enum class VertexStepMode : uint32
+	{
+		Undefined = WGPUVertexStepMode_Undefined ,
+		Vertex    = WGPUVertexStepMode_Vertex    ,
+		Instance  = WGPUVertexStepMode_Instance  ,
+	};
+	inline WGPUVertexStepMode toWGPU(VertexStepMode e) { return (WGPUVertexStepMode)e; }
+
+	enum class BlendFactor : uint32
+	{
+		Undefined         = WGPUBlendFactor_Undefined         ,
+		Zero              = WGPUBlendFactor_Zero              ,
+		One               = WGPUBlendFactor_One               ,
+		Src               = WGPUBlendFactor_Src               ,
+		OneMinusSrc       = WGPUBlendFactor_OneMinusSrc       ,
+		SrcAlpha          = WGPUBlendFactor_SrcAlpha          ,
+		OneMinusSrcAlpha  = WGPUBlendFactor_OneMinusSrcAlpha  ,
+		Dst               = WGPUBlendFactor_Dst               ,
+		OneMinusDst       = WGPUBlendFactor_OneMinusDst       ,
+		DstAlpha          = WGPUBlendFactor_DstAlpha          ,
+		OneMinusDstAlpha  = WGPUBlendFactor_OneMinusDstAlpha  ,
+		SrcAlphaSaturated = WGPUBlendFactor_SrcAlphaSaturated ,
+		Constant          = WGPUBlendFactor_Constant          ,
+		OneMinusConstant  = WGPUBlendFactor_OneMinusConstant  ,
+		Src1              = WGPUBlendFactor_Src1              ,
+		OneMinusSrc1      = WGPUBlendFactor_OneMinusSrc1      ,
+		Src1Alpha         = WGPUBlendFactor_Src1Alpha         ,
+		OneMinusSrc1Alpha = WGPUBlendFactor_OneMinusSrc1Alpha ,
+	};
+	inline WGPUBlendFactor toWGPU(BlendFactor e) { return (WGPUBlendFactor)e; }
+
+	enum class BlendOperation : uint32
+	{
+		Undefined       = WGPUBlendOperation_Undefined       ,
+		Add             = WGPUBlendOperation_Add             ,
+		Subtract        = WGPUBlendOperation_Subtract        ,
+		ReverseSubtract = WGPUBlendOperation_ReverseSubtract ,
+		Min             = WGPUBlendOperation_Min             ,
+		Max             = WGPUBlendOperation_Max             ,
+	};
+	inline WGPUBlendOperation toWGPU(BlendOperation e) { return (WGPUBlendOperation)e; }
+
+	enum class CullMode : uint32
+	{
+		Undefined = WGPUCullMode_Undefined ,
+		None      = WGPUCullMode_None      ,
+		Front     = WGPUCullMode_Front     ,
+		Back      = WGPUCullMode_Back      ,
+	};
+	inline WGPUCullMode toWGPU(CullMode e) { return (WGPUCullMode)e; }
+
+	enum class VertexFormat : uint32
+	{
+		Uint8           = WGPUVertexFormat_Uint8           ,
+		Uint8x2         = WGPUVertexFormat_Uint8x2         ,
+		Uint8x4         = WGPUVertexFormat_Uint8x4         ,
+		Sint8           = WGPUVertexFormat_Sint8           ,
+		Sint8x2         = WGPUVertexFormat_Sint8x2         ,
+		Sint8x4         = WGPUVertexFormat_Sint8x4         ,
+		Unorm8          = WGPUVertexFormat_Unorm8          ,
+		Unorm8x2        = WGPUVertexFormat_Unorm8x2        ,
+		Unorm8x4        = WGPUVertexFormat_Unorm8x4        ,
+		Snorm8          = WGPUVertexFormat_Snorm8          ,
+		Snorm8x2        = WGPUVertexFormat_Snorm8x2        ,
+		Snorm8x4        = WGPUVertexFormat_Snorm8x4        ,
+		Uint16          = WGPUVertexFormat_Uint16          ,
+		Uint16x2        = WGPUVertexFormat_Uint16x2        ,
+		Uint16x4        = WGPUVertexFormat_Uint16x4        ,
+		Sint16          = WGPUVertexFormat_Sint16          ,
+		Sint16x2        = WGPUVertexFormat_Sint16x2        ,
+		Sint16x4        = WGPUVertexFormat_Sint16x4        ,
+		Unorm16         = WGPUVertexFormat_Unorm16         ,
+		Unorm16x2       = WGPUVertexFormat_Unorm16x2       ,
+		Unorm16x4       = WGPUVertexFormat_Unorm16x4       ,
+		Snorm16         = WGPUVertexFormat_Snorm16         ,
+		Snorm16x2       = WGPUVertexFormat_Snorm16x2       ,
+		Snorm16x4       = WGPUVertexFormat_Snorm16x4       ,
+		Float16         = WGPUVertexFormat_Float16         ,
+		Float16x2       = WGPUVertexFormat_Float16x2       ,
+		Float16x4       = WGPUVertexFormat_Float16x4       ,
+		Float32         = WGPUVertexFormat_Float32         ,
+		Float32x2       = WGPUVertexFormat_Float32x2       ,
+		Float32x3       = WGPUVertexFormat_Float32x3       ,
+		Float32x4       = WGPUVertexFormat_Float32x4       ,
+		Uint32          = WGPUVertexFormat_Uint32          ,
+		Uint32x2        = WGPUVertexFormat_Uint32x2        ,
+		Uint32x3        = WGPUVertexFormat_Uint32x3        ,
+		Uint32x4        = WGPUVertexFormat_Uint32x4        ,
+		Sint32          = WGPUVertexFormat_Sint32          ,
+		Sint32x2        = WGPUVertexFormat_Sint32x2        ,
+		Sint32x3        = WGPUVertexFormat_Sint32x3        ,
+		Sint32x4        = WGPUVertexFormat_Sint32x4        ,
+		Unorm10_10_10_2 = WGPUVertexFormat_Unorm10_10_10_2 ,
+		Unorm8x4BGRA    = WGPUVertexFormat_Unorm8x4BGRA    ,
+	};
+	inline WGPUVertexFormat toWGPU(VertexFormat e) { return (WGPUVertexFormat)e; }
+
+	enum class CompareFunction : uint32
+	{
+		Undefined    = WGPUCompareFunction_Undefined    ,
+		Never        = WGPUCompareFunction_Never        ,
+		Less         = WGPUCompareFunction_Less         ,
+		Equal        = WGPUCompareFunction_Equal        ,
+		LessEqual    = WGPUCompareFunction_LessEqual    ,
+		Greater      = WGPUCompareFunction_Greater      ,
+		NotEqual     = WGPUCompareFunction_NotEqual     ,
+		GreaterEqual = WGPUCompareFunction_GreaterEqual ,
+		Always       = WGPUCompareFunction_Always       ,
+	};
+	inline WGPUCompareFunction toWGPU(CompareFunction e) { return (WGPUCompareFunction)e; }
+
+	enum class OptionalBool : uint32
+	{
+		False     = WGPUOptionalBool_False     ,
+		True      = WGPUOptionalBool_True      ,
+		Undefined = WGPUOptionalBool_Undefined ,
+	};
+	inline WGPUOptionalBool toWGPU(OptionalBool e) { return (WGPUOptionalBool)e; }
+
+	enum class TextureFormat : uint32
+	{
+		Undefined                   = WGPUTextureFormat_Undefined                   ,
+		R8Unorm                     = WGPUTextureFormat_R8Unorm                     ,
+		R8Snorm                     = WGPUTextureFormat_R8Snorm                     ,
+		R8Uint                      = WGPUTextureFormat_R8Uint                      ,
+		R8Sint                      = WGPUTextureFormat_R8Sint                      ,
+		R16Unorm                    = WGPUTextureFormat_R16Unorm                    ,
+		R16Snorm                    = WGPUTextureFormat_R16Snorm                    ,
+		R16Uint                     = WGPUTextureFormat_R16Uint                     ,
+		R16Sint                     = WGPUTextureFormat_R16Sint                     ,
+		R16Float                    = WGPUTextureFormat_R16Float                    ,
+		RG8Unorm                    = WGPUTextureFormat_RG8Unorm                    ,
+		RG8Snorm                    = WGPUTextureFormat_RG8Snorm                    ,
+		RG8Uint                     = WGPUTextureFormat_RG8Uint                     ,
+		RG8Sint                     = WGPUTextureFormat_RG8Sint                     ,
+		R32Float                    = WGPUTextureFormat_R32Float                    ,
+		R32Uint                     = WGPUTextureFormat_R32Uint                     ,
+		R32Sint                     = WGPUTextureFormat_R32Sint                     ,
+		RG16Unorm                   = WGPUTextureFormat_RG16Unorm                   ,
+		RG16Snorm                   = WGPUTextureFormat_RG16Snorm                   ,
+		RG16Uint                    = WGPUTextureFormat_RG16Uint                    ,
+		RG16Sint                    = WGPUTextureFormat_RG16Sint                    ,
+		RG16Float                   = WGPUTextureFormat_RG16Float                   ,
+		RGBA8Unorm                  = WGPUTextureFormat_RGBA8Unorm                  ,
+		RGBA8UnormSrgb              = WGPUTextureFormat_RGBA8UnormSrgb              ,
+		RGBA8Snorm                  = WGPUTextureFormat_RGBA8Snorm                  ,
+		RGBA8Uint                   = WGPUTextureFormat_RGBA8Uint                   ,
+		RGBA8Sint                   = WGPUTextureFormat_RGBA8Sint                   ,
+		BGRA8Unorm                  = WGPUTextureFormat_BGRA8Unorm                  ,
+		BGRA8UnormSrgb              = WGPUTextureFormat_BGRA8UnormSrgb              ,
+		RGB10A2Uint                 = WGPUTextureFormat_RGB10A2Uint                 ,
+		RGB10A2Unorm                = WGPUTextureFormat_RGB10A2Unorm                ,
+		RG11B10Ufloat               = WGPUTextureFormat_RG11B10Ufloat               ,
+		RGB9E5Ufloat                = WGPUTextureFormat_RGB9E5Ufloat                ,
+		RG32Float                   = WGPUTextureFormat_RG32Float                   ,
+		RG32Uint                    = WGPUTextureFormat_RG32Uint                    ,
+		RG32Sint                    = WGPUTextureFormat_RG32Sint                    ,
+		RGBA16Unorm                 = WGPUTextureFormat_RGBA16Unorm                 ,
+		RGBA16Snorm                 = WGPUTextureFormat_RGBA16Snorm                 ,
+		RGBA16Uint                  = WGPUTextureFormat_RGBA16Uint                  ,
+		RGBA16Sint                  = WGPUTextureFormat_RGBA16Sint                  ,
+		RGBA16Float                 = WGPUTextureFormat_RGBA16Float                 ,
+		RGBA32Float                 = WGPUTextureFormat_RGBA32Float                 ,
+		RGBA32Uint                  = WGPUTextureFormat_RGBA32Uint                  ,
+		RGBA32Sint                  = WGPUTextureFormat_RGBA32Sint                  ,
+		Stencil8                    = WGPUTextureFormat_Stencil8                    ,
+		Depth16Unorm                = WGPUTextureFormat_Depth16Unorm                ,
+		Depth24Plus                 = WGPUTextureFormat_Depth24Plus                 ,
+		Depth24PlusStencil8         = WGPUTextureFormat_Depth24PlusStencil8         ,
+		Depth32Float                = WGPUTextureFormat_Depth32Float                ,
+		Depth32FloatStencil8        = WGPUTextureFormat_Depth32FloatStencil8        ,
+		BC1RGBAUnorm                = WGPUTextureFormat_BC1RGBAUnorm                ,
+		BC1RGBAUnormSrgb            = WGPUTextureFormat_BC1RGBAUnormSrgb            ,
+		BC2RGBAUnorm                = WGPUTextureFormat_BC2RGBAUnorm                ,
+		BC2RGBAUnormSrgb            = WGPUTextureFormat_BC2RGBAUnormSrgb            ,
+		BC3RGBAUnorm                = WGPUTextureFormat_BC3RGBAUnorm                ,
+		BC3RGBAUnormSrgb            = WGPUTextureFormat_BC3RGBAUnormSrgb            ,
+		BC4RUnorm                   = WGPUTextureFormat_BC4RUnorm                   ,
+		BC4RSnorm                   = WGPUTextureFormat_BC4RSnorm                   ,
+		BC5RGUnorm                  = WGPUTextureFormat_BC5RGUnorm                  ,
+		BC5RGSnorm                  = WGPUTextureFormat_BC5RGSnorm                  ,
+		BC6HRGBUfloat               = WGPUTextureFormat_BC6HRGBUfloat               ,
+		BC6HRGBFloat                = WGPUTextureFormat_BC6HRGBFloat                ,
+		BC7RGBAUnorm                = WGPUTextureFormat_BC7RGBAUnorm                ,
+		BC7RGBAUnormSrgb            = WGPUTextureFormat_BC7RGBAUnormSrgb            ,
+		ETC2RGB8Unorm               = WGPUTextureFormat_ETC2RGB8Unorm               ,
+		ETC2RGB8UnormSrgb           = WGPUTextureFormat_ETC2RGB8UnormSrgb           ,
+		ETC2RGB8A1Unorm             = WGPUTextureFormat_ETC2RGB8A1Unorm             ,
+		ETC2RGB8A1UnormSrgb         = WGPUTextureFormat_ETC2RGB8A1UnormSrgb         ,
+		ETC2RGBA8Unorm              = WGPUTextureFormat_ETC2RGBA8Unorm              ,
+		ETC2RGBA8UnormSrgb          = WGPUTextureFormat_ETC2RGBA8UnormSrgb          ,
+		EACR11Unorm                 = WGPUTextureFormat_EACR11Unorm                 ,
+		EACR11Snorm                 = WGPUTextureFormat_EACR11Snorm                 ,
+		EACRG11Unorm                = WGPUTextureFormat_EACRG11Unorm                ,
+		EACRG11Snorm                = WGPUTextureFormat_EACRG11Snorm                ,
+		ASTC4x4Unorm                = WGPUTextureFormat_ASTC4x4Unorm                ,
+		ASTC4x4UnormSrgb            = WGPUTextureFormat_ASTC4x4UnormSrgb            ,
+		ASTC5x4Unorm                = WGPUTextureFormat_ASTC5x4Unorm                ,
+		ASTC5x4UnormSrgb            = WGPUTextureFormat_ASTC5x4UnormSrgb            ,
+		ASTC5x5Unorm                = WGPUTextureFormat_ASTC5x5Unorm                ,
+		ASTC5x5UnormSrgb            = WGPUTextureFormat_ASTC5x5UnormSrgb            ,
+		ASTC6x5Unorm                = WGPUTextureFormat_ASTC6x5Unorm                ,
+		ASTC6x5UnormSrgb            = WGPUTextureFormat_ASTC6x5UnormSrgb            ,
+		ASTC6x6Unorm                = WGPUTextureFormat_ASTC6x6Unorm                ,
+		ASTC6x6UnormSrgb            = WGPUTextureFormat_ASTC6x6UnormSrgb            ,
+		ASTC8x5Unorm                = WGPUTextureFormat_ASTC8x5Unorm                ,
+		ASTC8x5UnormSrgb            = WGPUTextureFormat_ASTC8x5UnormSrgb            ,
+		ASTC8x6Unorm                = WGPUTextureFormat_ASTC8x6Unorm                ,
+		ASTC8x6UnormSrgb            = WGPUTextureFormat_ASTC8x6UnormSrgb            ,
+		ASTC8x8Unorm                = WGPUTextureFormat_ASTC8x8Unorm                ,
+		ASTC8x8UnormSrgb            = WGPUTextureFormat_ASTC8x8UnormSrgb            ,
+		ASTC10x5Unorm               = WGPUTextureFormat_ASTC10x5Unorm               ,
+		ASTC10x5UnormSrgb           = WGPUTextureFormat_ASTC10x5UnormSrgb           ,
+		ASTC10x6Unorm               = WGPUTextureFormat_ASTC10x6Unorm               ,
+		ASTC10x6UnormSrgb           = WGPUTextureFormat_ASTC10x6UnormSrgb           ,
+		ASTC10x8Unorm               = WGPUTextureFormat_ASTC10x8Unorm               ,
+		ASTC10x8UnormSrgb           = WGPUTextureFormat_ASTC10x8UnormSrgb           ,
+		ASTC10x10Unorm              = WGPUTextureFormat_ASTC10x10Unorm              ,
+		ASTC10x10UnormSrgb          = WGPUTextureFormat_ASTC10x10UnormSrgb          ,
+		ASTC12x10Unorm              = WGPUTextureFormat_ASTC12x10Unorm              ,
+		ASTC12x10UnormSrgb          = WGPUTextureFormat_ASTC12x10UnormSrgb          ,
+		ASTC12x12Unorm              = WGPUTextureFormat_ASTC12x12Unorm              ,
+		ASTC12x12UnormSrgb          = WGPUTextureFormat_ASTC12x12UnormSrgb          ,
+		R8BG8Biplanar420Unorm       = WGPUTextureFormat_R8BG8Biplanar420Unorm       ,
+		R10X6BG10X6Biplanar420Unorm = WGPUTextureFormat_R10X6BG10X6Biplanar420Unorm ,
+		R8BG8A8Triplanar420Unorm    = WGPUTextureFormat_R8BG8A8Triplanar420Unorm    ,
+		R8BG8Biplanar422Unorm       = WGPUTextureFormat_R8BG8Biplanar422Unorm       ,
+		R8BG8Biplanar444Unorm       = WGPUTextureFormat_R8BG8Biplanar444Unorm       ,
+		R10X6BG10X6Biplanar422Unorm = WGPUTextureFormat_R10X6BG10X6Biplanar422Unorm ,
+		R10X6BG10X6Biplanar444Unorm = WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm ,
+		External                    = WGPUTextureFormat_External                    ,
+	};
+	inline WGPUTextureFormat toWGPU(TextureFormat e) { return (WGPUTextureFormat)e; }
+
+	enum class BufferBindingType
+	{
+		BindingNotUsed   = WGPUBufferBindingType_BindingNotUsed  ,
+		Undefined        = WGPUBufferBindingType_Undefined       ,
+		Uniform          = WGPUBufferBindingType_Uniform         ,
+		Storage          = WGPUBufferBindingType_Storage         ,
+		ReadOnlyStorage  = WGPUBufferBindingType_ReadOnlyStorage ,
+	};
+	inline WGPUBufferBindingType toWGPU(BufferBindingType e) { return (WGPUBufferBindingType)e; }
+
 
 
 	// >NOTE: All of these structs are referred to as "helpers"
@@ -81,12 +363,12 @@ namespace wgpu
 	struct Device
 	{
 		WGPUBindGroup           createBindGroup              (WGPUBindGroupDescriptor const* descriptor);
-		wgpu::BindGroup         createBindGroupHelper        (WGPUBindGroupDescriptor const* descriptor) WGPU_XIN_EXTRA;
+		wgpu::BindGroup         createBindGroupHelper        (WGPUBindGroupDescriptor const* descriptor, const char* label) WGPU_XIN_EXTRA;
 		WGPUBindGroupLayout     createBindGroupLayout        (WGPUBindGroupLayoutDescriptor const* descriptor);
 		WGPUBuffer              createBuffer                 (WGPUBufferDescriptor const* descriptor);
-		wgpu::Buffer            createBufferHelper           (WGPUBufferDescriptor const* descriptor) WGPU_XIN_EXTRA;
+		wgpu::Buffer            createBufferHelper           (WGPUBufferDescriptor const* descriptor, const char* label) WGPU_XIN_EXTRA;
 		WGPUCommandEncoder      createCommandEncoder         (WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor);
-		wgpu::CommandEncoder    createCommandEncoderHelper   (WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor) WGPU_XIN_EXTRA;
+		wgpu::CommandEncoder    createCommandEncoderHelper   (WGPU_NULLABLE WGPUCommandEncoderDescriptor const* descriptor, const char* label) WGPU_XIN_EXTRA;
 		WGPUComputePipeline     createComputePipeline        (WGPUComputePipelineDescriptor const* descriptor);
 		WGPUFuture              createComputePipelineAsync   (WGPUComputePipelineDescriptor const* descriptor, WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo);
 		WGPUBuffer              createErrorBuffer            (WGPUBufferDescriptor const* descriptor);
@@ -240,14 +522,14 @@ namespace wgpu
 	{
 		WGPUComputePassEncoder   beginComputePass      (WGPU_NULLABLE WGPUComputePassDescriptor const* descriptor);
 		WGPURenderPassEncoder    beginRenderPass       (WGPURenderPassDescriptor const* descriptor);
-		wgpu::RenderPassEncoder  beginRenderPassHelper (WGPURenderPassDescriptor const* descriptor) WGPU_XIN_EXTRA;
+		wgpu::RenderPassEncoder  beginRenderPassHelper (WGPURenderPassDescriptor const* descriptor, const char* label) WGPU_XIN_EXTRA;
 		void                     clearBuffer           (WGPUBuffer buffer, uint64_t offset, uint64_t size);
 		void                     copyBufferToBuffer    (WGPUBuffer source, uint64_t sourceOffset, WGPUBuffer destination, uint64_t destinationOffset, uint64_t size);
 		void                     copyBufferToTexture   (WGPUTexelCopyBufferInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize);
 		void                     copyTextureToBuffer   (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyBufferInfo const* destination, WGPUExtent3D const* copySize);
 		void                     copyTextureToTexture  (WGPUTexelCopyTextureInfo const* source, WGPUTexelCopyTextureInfo const* destination, WGPUExtent3D const* copySize);
 		WGPUCommandBuffer        finish                (WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor);
-		wgpu::CommandBuffer      finishHelper          (WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor);
+		wgpu::CommandBuffer      finishHelper          (WGPU_NULLABLE WGPUCommandBufferDescriptor const* descriptor, const char* label);
 		void                     injectValidationError (WGPUStringView message);
 		void                     injectDebugMarker     (WGPUStringView markerLabel);
 		void                     popDebugGroup         ();
