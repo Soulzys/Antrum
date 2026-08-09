@@ -615,8 +615,8 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	config.viewFormats = nullptr;
 	config.usage = WGPUTextureUsage_RenderAttachment;
 	config.device = storage->device.object;
-	config.presentMode = WGPUPresentMode::WGPUPresentMode_Fifo;
-	config.alphaMode = WGPUCompositeAlphaMode::WGPUCompositeAlphaMode_Auto;
+	config.presentMode = wgpu::PresentMode::Fifo;
+	config.alphaMode = wgpu::CompositeAlphaMode::Auto;
 	storage->surface.configure(&config);
 
 	storage->adapter.release();
@@ -627,9 +627,9 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 
 
 
-	WGPUTextureFormat depthTextureFormat = WGPUTextureFormat_Depth24Plus;
+	WGPUTextureFormat depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
 	WGPUTextureDescriptor depthTextureDesc = {};
-	depthTextureDesc.dimension = WGPUTextureDimension_2D;
+	depthTextureDesc.dimension = wgpu::TextureDimension::_2D;
 	depthTextureDesc.format = depthTextureFormat;
 	depthTextureDesc.mipLevelCount = 1;
 	depthTextureDesc.sampleCount = 1;
@@ -640,12 +640,12 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->depthTexture = storage->device.createTextureHelper(&depthTextureDesc);
 
 	WGPUTextureViewDescriptor depthTextureViewDesc = {};
-	depthTextureViewDesc.aspect = WGPUTextureAspect_DepthOnly;
+	depthTextureViewDesc.aspect = wgpu::TextureAspect::DepthOnly;
 	depthTextureViewDesc.baseArrayLayer = 0;
 	depthTextureViewDesc.arrayLayerCount = 1;
 	depthTextureViewDesc.baseMipLevel = 0;
 	depthTextureViewDesc.mipLevelCount = 1;
-	depthTextureViewDesc.dimension = WGPUTextureViewDimension_2D;
+	depthTextureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
 	depthTextureViewDesc.format = depthTextureFormat;
 	storage->depthTextureView = storage->depthTexture.createViewHelper(&depthTextureViewDesc);
 
@@ -703,16 +703,20 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->uiShaderUniform = uiShaderUniform;
 	 
 	// Points buffer
-	Point points[4];
-	points[0] = { {0.2f, 0.8f} }; // Top Left
-	points[1] = { {0.8f, 0.8f} }; // Top Right
-	points[2] = { {0.8f, 0.2f} }; // Bottom Right
-	points[3] = { {0.2f, 0.2f} }; // Bottom Left
+	GPURectangle rect = {};
+	rect.points[0] = {0.2f, 0.8f}; // Top Left
+	rect.points[1] = {0.8f, 0.8f}; // Top Right
+	rect.points[2] = {0.8f, 0.2f}; // Bottom Right
+	rect.points[3] = {0.2f, 0.2f}; // Bottom Left
 	bufferDesc.size = sizeof(Point) * 4;
 	bufferDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-
 	storage->pointBuffer = storage->device.createBufferHelper(&bufferDesc, "Points Buffer");
-	storage->queue.writeBuffer(storage->pointBuffer, 0, &points, bufferDesc.size);
+	storage->queue.writeBuffer(storage->pointBuffer, 0, &rect.points, bufferDesc.size);
+
+	bufferDesc.size = sizeof(uint16) * 6;
+	bufferDesc.usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst;
+	storage->rectangleIndexBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Indices Buffer");
+	storage->queue.writeBuffer(storage->rectangleIndexBuffer, 0, rect.indices, bufferDesc.size);
 
 
 	//WGPUBufferDescriptor bufferDesc = {};
@@ -914,21 +918,21 @@ extern "C" GAME_UPDATE(Game_Update)
 	WGPURenderPassColorAttachment gameRenderPassColorAttachment = {};
 	gameRenderPassColorAttachment.view = targetView.object;
 	gameRenderPassColorAttachment.resolveTarget = nullptr;
-	gameRenderPassColorAttachment.loadOp = WGPULoadOp_Clear;
-	gameRenderPassColorAttachment.storeOp = WGPUStoreOp_Store;
+	gameRenderPassColorAttachment.loadOp = wgpu::LoadOp::Clear;
+	gameRenderPassColorAttachment.storeOp = wgpu::StoreOp::Store;
 	gameRenderPassColorAttachment.clearValue = WGPUColor{ 0.15, 0.2, 0.33, 1.0f };
 	gameRenderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
 
 	WGPURenderPassDepthStencilAttachment depthStencilAttachment = {};
 	depthStencilAttachment.view = wgpuStorage->depthTextureView.object;
 	depthStencilAttachment.depthClearValue = 1.0f;
-	depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
-	depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
-	depthStencilAttachment.depthReadOnly = WGPUOptionalBool_False;
+	depthStencilAttachment.depthLoadOp = wgpu::LoadOp::Clear;
+	depthStencilAttachment.depthStoreOp = wgpu::StoreOp::Store;
+	depthStencilAttachment.depthReadOnly = wgpu::OptionalBool::False;
 	depthStencilAttachment.stencilClearValue = 0;
-	depthStencilAttachment.stencilLoadOp = WGPULoadOp_Undefined; // Dawn specific
-	depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Undefined; // Dawn specific
-	depthStencilAttachment.stencilReadOnly = WGPUOptionalBool_True;
+	depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Undefined; // Dawn specific
+	depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Undefined; // Dawn specific
+	depthStencilAttachment.stencilReadOnly = wgpu::OptionalBool::True;
 
 	WGPURenderPassDescriptor gameRenderPassDesc = {};
 	gameRenderPassDesc.colorAttachmentCount = 1;
@@ -947,8 +951,7 @@ extern "C" GAME_UPDATE(Game_Update)
 	dynamicOffset = 0 * uniformBufferStride;
 	gameRenderPass.setPipeline(wgpuStorage->gamePipeline);
 	gameRenderPass.setVertexBuffer(0, wgpuStorage->vertexBuffer, 0, wgpuStorage->vertexBuffer.getSize());
-	//gameRenderPass.setVertexBuffer(1, wgpuStorage->normalBuffer, 0, wgpuStorage->vertexBuffer.getSize());
-	gameRenderPass.setIndexBuffer(wgpuStorage->indexBuffer, WGPUIndexFormat_Uint32, 0, wgpuStorage->indexBuffer.getSize());
+	gameRenderPass.setIndexBuffer(wgpuStorage->indexBuffer, wgpu::IndexFormat::Uint32, 0, wgpuStorage->indexBuffer.getSize());
 	gameRenderPass.setBindGroup(0, wgpuStorage->gameBindGroup, 1, &dynamicOffset);
 	gameRenderPass.drawIndexed((uint32)(asset->indices.getElementsLength()), 1, 0, 0, 0);
 	gameRenderPass.end();
@@ -959,8 +962,8 @@ extern "C" GAME_UPDATE(Game_Update)
 	//
 	WGPURenderPassColorAttachment uiRenderPassColorAttachment = {};
 	uiRenderPassColorAttachment.view = targetView.object;
-	uiRenderPassColorAttachment.loadOp = WGPULoadOp_Load; // !!! We don't clear, we keep what was drawn above !!!
-	uiRenderPassColorAttachment.storeOp = WGPUStoreOp_Store;
+	uiRenderPassColorAttachment.loadOp = wgpu::LoadOp::Load; // !!! We don't clear, we keep what was drawn above !!!
+	uiRenderPassColorAttachment.storeOp = wgpu::StoreOp::Store;
 	uiRenderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
 
 	WGPURenderPassDescriptor uiRenderPassDesc = {};
@@ -972,13 +975,16 @@ extern "C" GAME_UPDATE(Game_Update)
 
 	wgpu::RenderPassEncoder uiRenderPass = encoder.beginRenderPassHelper(&uiRenderPassDesc, "UI Render Pass Encoder-san");
 
+
+
 	// UI Render Pass
 
 	//uniformBufferStride = CeilToNextMultiple((uint32)sizeof(UIShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	uiRenderPass.setPipeline(wgpuStorage->uiPipeline);
 	uiRenderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
+	uiRenderPass.setIndexBuffer(wgpuStorage->rectangleIndexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->rectangleIndexBuffer.getSize());
 	uiRenderPass.setBindGroup(0, wgpuStorage->uiBindGroup, 1, &dynamicOffset);
-	uiRenderPass.draw(4, 1, 0, 0);
+	uiRenderPass.drawIndexed(6, 1, 0, 0, 0);
 	uiRenderPass.end();
 	uiRenderPass.release();
 

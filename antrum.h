@@ -217,7 +217,22 @@ struct MeshAsset2
 
 struct Point
 {
-	Vec2<real32> position;
+	real32 x;
+	real32 y;
+};
+
+struct GPURectangle
+{
+	Point  points [4];
+	uint16 indices[6] = { 0, 1, 2, 0, 2, 3};
+};
+
+struct Rectangle
+{
+	Point topLeft;
+	Point topRight;
+	Point bottomLeft;
+	Point bottomRight;
 };
 
 
@@ -243,14 +258,6 @@ struct PlatformFunctions
 	flog* log;
 };
 
-
-
-//struct Vec3I
-//{
-//	uint16 a;
-//	uint16 b;
-//	uint16 c;
-//};
 
 struct M4
 {
@@ -433,6 +440,7 @@ struct WebGPUStorage
 	wgpu::Buffer indexBuffer;
 	wgpu::Buffer gameUniformBuffer;
 	wgpu::Buffer pointBuffer;
+	wgpu::Buffer rectangleIndexBuffer;
 	wgpu::Buffer uiUniformBuffer;
 
 	wgpu::Texture depthTexture;

@@ -320,9 +320,9 @@ void wgpu::helper::setDefault(WGPUStencilFaceState& stencilFaceState)
 
 void wgpu::helper::setDefault(WGPUDepthStencilState& depthStencilState)
 {
-	depthStencilState.format              = toWGPU(wgpu::TextureFormat::Undefined);
-	depthStencilState.depthWriteEnabled   = toWGPU(wgpu::OptionalBool::False);
-	depthStencilState.depthCompare        = toWGPU(wgpu::CompareFunction::Always);
+	depthStencilState.format              = wgpu::TextureFormat::Undefined;
+	depthStencilState.depthWriteEnabled   = wgpu::OptionalBool::False;
+	depthStencilState.depthCompare        = wgpu::CompareFunction::Always;
 	depthStencilState.stencilReadMask     = 0xFFFFFFFF;
 	depthStencilState.stencilWriteMask    = 0xFFFFFFFF;
 	depthStencilState.depthBias           = 0;
@@ -340,7 +340,7 @@ wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, u
 	wgpu::helper::setDefault(bindingLayoutEntry); // Setting every other unused fields to default values unsure we only use what we want
 	bindingLayoutEntry.binding     = 0; // This is the binding index we use in our shader
 	bindingLayoutEntry.visibility  = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
-	bindingLayoutEntry.buffer.type = toWGPU(wgpu::BufferBindingType::Uniform);
+	bindingLayoutEntry.buffer.type = wgpu::BufferBindingType::Uniform;
 	bindingLayoutEntry.buffer.minBindingSize = minBindingSize;
 	bindingLayoutEntry.buffer.hasDynamicOffset = true;
 
@@ -374,17 +374,17 @@ wgpu::RenderPipeline wgpu::helper::createGameRenderPipeline(wgpu::Device device,
 	// Position attribute
 	WGPUVertexAttribute vertexAttributes[3] = {};
 	vertexAttributes[0].shaderLocation = 0;
-	vertexAttributes[0].format = toWGPU(wgpu::VertexFormat::Float32x3);
+	vertexAttributes[0].format = wgpu::VertexFormat::Float32x3;
 	vertexAttributes[0].offset = 0;
 
 	// Normal attribute
 	vertexAttributes[1].shaderLocation = 1;
-	vertexAttributes[1].format = toWGPU(wgpu::VertexFormat::Float32x3);
+	vertexAttributes[1].format = wgpu::VertexFormat::Float32x3;
 	vertexAttributes[1].offset = offsetof(Vertex, normal);
 
 	// Texture attribute (currently not used)
 	vertexAttributes[2].shaderLocation = 2;
-	vertexAttributes[2].format = toWGPU(wgpu::VertexFormat::Float32x2);
+	vertexAttributes[2].format = wgpu::VertexFormat::Float32x2;
 	vertexAttributes[2].offset = offsetof(Vertex, uv);
 
 
@@ -392,19 +392,19 @@ wgpu::RenderPipeline wgpu::helper::createGameRenderPipeline(wgpu::Device device,
 	vertexBufferLayout.attributeCount = 3;
 	vertexBufferLayout.attributes  = vertexAttributes;
 	vertexBufferLayout.arrayStride = sizeof(Vertex);
-	vertexBufferLayout.stepMode = toWGPU(wgpu::VertexStepMode::Vertex);
+	vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
 
 
 
 	// Pipeline stuff
 	//
 	WGPUBlendState blendState = {};
-	blendState.color.srcFactor = toWGPU(wgpu::BlendFactor::SrcAlpha);
-	blendState.color.dstFactor = toWGPU(wgpu::BlendFactor::OneMinusSrcAlpha);
-	blendState.color.operation = toWGPU(wgpu::BlendOperation::Add);
-	blendState.alpha.srcFactor = toWGPU(wgpu::BlendFactor::Zero);
-	blendState.alpha.dstFactor = toWGPU(wgpu::BlendFactor::One);
-	blendState.alpha.operation = toWGPU(wgpu::BlendOperation::Add);
+	blendState.color.srcFactor = wgpu::BlendFactor::SrcAlpha;
+	blendState.color.dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha;
+	blendState.color.operation = wgpu::BlendOperation::Add;
+	blendState.alpha.srcFactor = wgpu::BlendFactor::Zero;
+	blendState.alpha.dstFactor = wgpu::BlendFactor::One;
+	blendState.alpha.operation = wgpu::BlendOperation::Add;
 
 	WGPUColorTargetState colorTarget = {};
 	colorTarget.format = textureFormat;
@@ -423,11 +423,11 @@ wgpu::RenderPipeline wgpu::helper::createGameRenderPipeline(wgpu::Device device,
 
 
 
-	WGPUTextureFormat depthTextureFormat = toWGPU(wgpu::TextureFormat::Depth24Plus);
+	WGPUTextureFormat depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
 	WGPUDepthStencilState depthStencilState = {};
 	wgpu::helper::setDefault(depthStencilState);
-	depthStencilState.depthCompare = toWGPU(wgpu::CompareFunction::Less);
-	depthStencilState.depthWriteEnabled = toWGPU(wgpu::OptionalBool::True);
+	depthStencilState.depthCompare = wgpu::CompareFunction::Less;
+	depthStencilState.depthWriteEnabled = wgpu::OptionalBool::True;
 	depthStencilState.format = depthTextureFormat;
 	depthStencilState.stencilReadMask = 0;
 	depthStencilState.stencilWriteMask = 0;
@@ -443,11 +443,11 @@ wgpu::RenderPipeline wgpu::helper::createGameRenderPipeline(wgpu::Device device,
 	pipelineDesc.vertex.constantCount = 0;
 	pipelineDesc.vertex.constants = nullptr;
 	pipelineDesc.vertex.nextInChain = nullptr;
-	pipelineDesc.primitive.topology = toWGPU(wgpu::PrimitiveTopology::TriangleList);
-	pipelineDesc.primitive.stripIndexFormat = toWGPU(wgpu::IndexFormat::Undefined);
-	pipelineDesc.primitive.frontFace = toWGPU(wgpu::FrontFace::CCW);
+	pipelineDesc.primitive.topology = wgpu::PrimitiveTopology::TriangleList;
+	pipelineDesc.primitive.stripIndexFormat = wgpu::IndexFormat::Undefined;
+	pipelineDesc.primitive.frontFace = wgpu::FrontFace::CCW;
 	// >NOTASCOI: Based on the face orientation. Should eventually set it to 'front'. None is only for debug, so we see everything, nothing is hidden.
-	pipelineDesc.primitive.cullMode = toWGPU(wgpu::CullMode::None);
+	pipelineDesc.primitive.cullMode = wgpu::CullMode::None;
 	pipelineDesc.fragment = &fragmentState;
 	pipelineDesc.depthStencil = &depthStencilState;
 	pipelineDesc.multisample.count = 1;
@@ -466,25 +466,25 @@ wgpu::RenderPipeline wgpu::helper::createUIRenderPipeline(wgpu::Device device, w
 {
 	WGPUVertexAttribute pointAttribute = {};
 	pointAttribute.shaderLocation = 0;
-	pointAttribute.format = toWGPU(wgpu::VertexFormat::Float32x2);
+	pointAttribute.format = wgpu::VertexFormat::Float32x2;
 	pointAttribute.offset = 0;
 
 	WGPUVertexBufferLayout pointBufferLayout = {};
 	pointBufferLayout.attributeCount = 1;
 	pointBufferLayout.attributes = &pointAttribute;
 	pointBufferLayout.arrayStride = sizeof(Point);
-	pointBufferLayout.stepMode = toWGPU(wgpu::VertexStepMode::Vertex);
+	pointBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
 
 	// Pipeline stuff
 	//
 	WGPUBlendState blendState = {};
-	blendState.color.srcFactor = toWGPU(wgpu::BlendFactor::SrcAlpha);
-	blendState.color.dstFactor = toWGPU(wgpu::BlendFactor::OneMinusSrcAlpha);
-	blendState.color.operation = toWGPU(wgpu::BlendOperation::Add);
+	blendState.color.srcFactor = wgpu::BlendFactor::SrcAlpha;
+	blendState.color.dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha;
+	blendState.color.operation = wgpu::BlendOperation::Add;
 	// For translucency, to use our alpha value
-	blendState.alpha.srcFactor = toWGPU(wgpu::BlendFactor::One);
-	blendState.alpha.dstFactor = toWGPU(wgpu::BlendFactor::OneMinusSrcAlpha);
-	blendState.alpha.operation = toWGPU(wgpu::BlendOperation::Add);
+	blendState.alpha.srcFactor = wgpu::BlendFactor::One;
+	blendState.alpha.dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha;
+	blendState.alpha.operation = wgpu::BlendOperation::Add;
 
 	WGPUColorTargetState colorTarget = {};
 	colorTarget.format = textureFormat;
@@ -511,11 +511,11 @@ wgpu::RenderPipeline wgpu::helper::createUIRenderPipeline(wgpu::Device device, w
 	pipelineDesc.vertex.constantCount = 0;
 	pipelineDesc.vertex.constants = nullptr;
 	pipelineDesc.vertex.nextInChain = nullptr;
-	pipelineDesc.primitive.topology = toWGPU(wgpu::PrimitiveTopology::TriangleList);
-	pipelineDesc.primitive.stripIndexFormat = toWGPU(wgpu::IndexFormat::Undefined);
-	pipelineDesc.primitive.frontFace = toWGPU(wgpu::FrontFace::CCW);
+	pipelineDesc.primitive.topology = wgpu::PrimitiveTopology::TriangleList;
+	pipelineDesc.primitive.stripIndexFormat = wgpu::IndexFormat::Undefined;
+	pipelineDesc.primitive.frontFace = wgpu::FrontFace::CCW;
 	// >NOTASCOI: Based on the face orientation. Should eventually set it to 'front'. None is only for debug, so we see everything, nothing is hidden.
-	pipelineDesc.primitive.cullMode = toWGPU(wgpu::CullMode::None);
+	pipelineDesc.primitive.cullMode = wgpu::CullMode::None;
 	pipelineDesc.fragment = &fragmentState;
 	pipelineDesc.depthStencil = nullptr;
 	pipelineDesc.multisample.count = 1;
