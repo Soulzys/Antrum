@@ -125,11 +125,7 @@ struct GameMemory
 
 };
 
-struct GameState
-{
-	bool initialized;
-	bool quit;
-};
+
 
 template<typename T>
 struct Vec3
@@ -195,6 +191,13 @@ private:
 	size_t m_index = 0;
 };
 
+struct GameState
+{
+	bool initialized;
+	bool quit;
+	Vec2<real32> windowSize;
+};
+
 struct Vertex
 {
 	Vec3<real32> position;
@@ -223,17 +226,21 @@ struct Point
 
 struct GPURectangle
 {
-	Point  points [4];
-	uint16 indices[6] = { 0, 1, 2, 0, 2, 3};
+	Point points[6];
 };
 
 struct Rectangle
 {
-	Point topLeft;
-	Point topRight;
-	Point bottomLeft;
-	Point bottomRight;
+	GPURectangle toGPU() const;
+	Point getCenter() const;
+	Vec2<real32> getHalfSize() const;
+
+	Point  origin;
+	real32 width;
+	real32 height;
 };
+
+
 
 
 // Platform-specific structs & functions
@@ -395,26 +402,32 @@ ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endCha
 struct GameShaderUniform
 {
 	// When dealing with uniform offset, the formula is that for each struct member, its offset has to be a multiple of: offset * sizeof(memberType);
-	M4 projectionMatrix;
-	M4 viewMatrix;
-	M4 modelMatrix;
-	real32 color[4]; // offset = 0 * sizeof(vec4f) --> OK, 0 is a multiple of 16
-	real32 time; // offset = 16 = 4 * sizeof(f32) --> OK, 16 is a multiple of 16
+	M4     projectionMatrix;
+	M4     viewMatrix;
+	M4     modelMatrix;
+	real32 color[4];
+	real32 time;
 
-	// Makes it host-shareable by adding padding at the end of the struct so its total size if a multiple of its largest bit-field (here, a multiple of 16,
-	// as its total size would then be 32 bytes).
-	real32 __padding[3];
+	real32 __padding1[11]; // For alignment purposes
 };
-static_assert(sizeof(GameShaderUniform) % sizeof(GameShaderUniform::color) == 0);
+static_assert(sizeof(GameShaderUniform) % sizeof(GameShaderUniform::projectionMatrix) == 0);
 
 struct UIShaderUniform
 {
-	real32 color[4];
-	real32 time;
+	real32       color[4];
+	Point        center;
+	Vec2<real32> halfSize;
+	real32       radius;
 
 	real32 __padding[3];
 };
 static_assert(sizeof(UIShaderUniform) % sizeof(UIShaderUniform::color) == 0);
+
+struct GlobalUniform
+{
+	Vec2<real32> windowSize;
+};
+static_assert(sizeof(GlobalUniform) % sizeof(GlobalUniform::windowSize) == 0);
 
 
 #include "wgpu_layer.cpp"
@@ -429,11 +442,14 @@ struct WebGPUStorage
 	wgpu::ShaderModule uiShaderModule;
 	wgpu::BindGroupLayout gameBindGroupLayout;
 	wgpu::BindGroupLayout uiBindGroupLayout;
+	wgpu::BindGroupLayout globalBindGroupLayout;
 	wgpu::PipelineLayout gamePipelineLayout;
 	wgpu::PipelineLayout uiPipelineLayout;
 	wgpu::RenderPipeline gamePipeline;
 	wgpu::RenderPipeline uiPipeline;
 	wgpu::Queue queue;
+
+	WGPUBindGroupLayout uiLayouts[2];
 
 	wgpu::Buffer vertexBuffer;
 	wgpu::Buffer normalBuffer;
@@ -442,16 +458,19 @@ struct WebGPUStorage
 	wgpu::Buffer pointBuffer;
 	wgpu::Buffer rectangleIndexBuffer;
 	wgpu::Buffer uiUniformBuffer;
+	wgpu::Buffer globalUniformBuffer;
 
 	wgpu::Texture depthTexture;
 	wgpu::TextureView depthTextureView;
 
 	wgpu::BindGroup gameBindGroup;
 	wgpu::BindGroup uiBindGroup;
+	wgpu::BindGroup globalBindGroup;
 
 
 	GameShaderUniform gameShaderUniform;
 	UIShaderUniform uiShaderUniform;
+	GlobalUniform globalShaderUniform;
 };
 
 struct String2

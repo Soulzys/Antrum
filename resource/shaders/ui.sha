@@ -11,22 +11,52 @@ struct PointOutput
 struct ShaderUniform
 {
 	color: vec4f,
-	time: f32, 
+	center: vec2f,
+	halfSize: vec2f,
+	radius: f32, 
+};
+
+struct GlobalUniform
+{
+	windowSize: vec2f,
 };
 
 // The memory location of a uniform is defined by a pair of a bind group and a binding
-@group(0) @binding(0) var<uniform> uUniforms: ShaderUniform;
+@group(0) @binding(0) var<uniform> uUniforms  : ShaderUniform;
+@group(1) @binding(0) var<uniform> uni_global : GlobalUniform;
 
+
+
+
+fn sdBox(p : vec2f, b : vec2f) -> f32
+{
+	let d = abs(p) - b;
+	
+	return length(max(d, vec2f(0.0))) + min(max(d.x, d.y), 0.0);
+}
+
+fn sdBoxRound(p : vec2f, b : vec2f, r_in : vec4f) -> f32
+{
+	var r = r_in;
+	r     = select(r.zwxy, r, p.x > 0.0) ;
+	r.x   = select(r.y, r.x, p.y > 0.0)  ;
+	let q = abs(p) - b + r.x;
+	
+	return length(max(q, vec2f(0.0))) + min(max(q.x, q.y), 0.0) - r.x;
+}
 
 @vertex
 fn vs_main(in: PointInput) -> PointOutput 
 {
 	var out: PointOutput;
 
-	//out.position = uUniforms.projectionMatrix * uUniforms.viewMatrix * uUniforms.modelMatrix * vec4f(in.position, 1.0);
-	//out.normal = (uUniforms.modelMatrix * vec4f(in.normal, 0.0)).xzy;
+	// Convert to clip space
+	let x = (in.position.x / uni_global.windowSize.x) * 2.0 - 1.0;
+	//let x = (in.position.x / 1200) * 2.0 - 1.0;
+	let y = 1.0 - (in.position.y / uni_global.windowSize.y) * 2.0;
+	//let y = 1.0 - (in.position.y / 800) * 2.0;
 
-	out.position = vec4f(in.position, 1.0, 1.0);
+	out.position = vec4f(x, y, 1.0, 1.0);
 	return out;
 }
 
@@ -34,6 +64,47 @@ fn vs_main(in: PointInput) -> PointOutput
 fn fs_main(in: PointOutput) -> @location(0) vec4f
 {
 	let color = uUniforms.color.rgb;
+	let NDC = vec2f((in.position.x / uni_global.windowSize.x) * 2.0 - 1.0, (in.position.y / uni_global.windowSize.y) * 2.0 - 1.0);
+	let pixel = NDC - uUniforms.center;
+	let r = vec4f(0.1, 0.1, 0.1, 0.1);
+	let d = sdBox(pixel, uUniforms.halfSize);
+	//let d = sdBoxRound(pixel, uUniforms.halfSize, r);
+	//let d = sdBoxRound(in.position.xy, uUniforms.halfSize, r);
+
+
+	//
+
+	let p = in.position.xy;
+
+
+	//if (p.x >= uni_global.windowSize.x)
+	//if (d >= 0.0)
+	if (p.x >= 600)
+	{
+		return vec4f(1.0, 0.0, 0.0, 1.0);
+	}
+	else
+	{
+		return vec4f(0.0, 1.0, 0.0, 1.0);
+	}
+
+	if (NDC.x >= 0.0 && NDC.x <= 0.8 && NDC.y >= 0.0 && NDC.y <= 0.8)
+	{
+		return vec4f(0.0, 0.0, 1.0, 1.0);
+	}
+	else
+	{
+		return vec4f(1.0, 0.0, 0.0, 1.0);
+	}
+
+	//if (d < 0) // inside I guess
+	//{
+	//	return vec4f(0.0, 0.0, 1.0, 1.0);
+	//}
+	//else
+	//{
+	//	return vec4f(0.0, 1.0, 0.0, 1.0);
+	//}
 
 	// Gamma-correction
 	//

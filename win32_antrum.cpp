@@ -165,6 +165,14 @@ LRESULT CALLBACK Win32_MainWindowCallback(HWND Window, UINT Message, WPARAM WPar
 			GameState* gameState = (GameState*)(GetWindowLongPtr(Window, GWLP_USERDATA));
 			gameState->quit = true;
 		} break;
+		case WM_SIZE:
+		{
+			GameState* gameState = (GameState*)(GetWindowLongPtr(Window, GWLP_USERDATA));
+			real32 width = (real32)(LOWORD(LParam));
+			real32 height = (real32)(HIWORD(LParam));
+			gameState->windowSize = { width, height };
+			OutputDebugString("Resize !\n");
+		} break;
 		default:
 		{
 			result = DefWindowProc(Window, Message, WParam, LParam);

@@ -30,15 +30,18 @@ namespace wgpu
 
 	namespace helper
 	{
-		wgpu::Instance        createInstance           ();
-		wgpu::Adapter         createAdapter            (wgpu::Instance instance);
-		wgpu::Device          createDevice             (wgpu::Adapter adapter, flog* logger);
-		wgpu::Surface         createSurface            (void* wndHandle, void* hInstance, wgpu::Instance instance);
-		wgpu::ShaderModule    createShaderModule       (wgpu::Device device, WGPUStringView shaderData, const char* label);
-		wgpu::BindGroupLayout createBindGroupLayout    (wgpu::Device device, uint64_t minBindingSize, const char* label);
-		wgpu::PipelineLayout  createPipelineLayout     (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout);
-		wgpu::RenderPipeline  createGameRenderPipeline (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout, const char* label);
-		wgpu::RenderPipeline  createUIRenderPipeline   (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout, const char* label);
+		wgpu::Instance        createInstance              ();
+		wgpu::Adapter         createAdapter               (wgpu::Instance instance);
+		wgpu::Device          createDevice                (wgpu::Adapter adapter, flog* logger);
+		wgpu::Surface         createSurface               (void* wndHandle, void* hInstance, wgpu::Instance instance);
+		wgpu::ShaderModule    createShaderModule          (wgpu::Device device, WGPUStringView shaderData, const char* label);
+		wgpu::BindGroupLayout createGameBindGroupLayout   (wgpu::Device device, uint64_t minBindingSize, const char* label);
+		wgpu::BindGroupLayout createUIBindGroupLayout     (wgpu::Device device, uint64_t minBindingSize, const char* label);
+		wgpu::BindGroupLayout createGlobalBindGroupLayout (wgpu::Device device, uint64_t minBindingSize, const char* label);
+		wgpu::PipelineLayout  createPipelineLayout        (wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout, const char* label);
+		wgpu::PipelineLayout  createPipelineLayout        (wgpu::Device device, const WGPUBindGroupLayout* bindGroupLayout, const char* label);
+		wgpu::RenderPipeline  createGameRenderPipeline    (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout, const char* label);
+		wgpu::RenderPipeline  createUIRenderPipeline      (wgpu::Device, wgpu::ShaderModule, WGPUTextureFormat, wgpu::PipelineLayout, const char* label);
 
 		WGPUAdapter requestAdapterAsync (wgpu::Instance instance, WGPURequestAdapterOptions const* options);
 		WGPUDevice  requestDeviceAsync  (wgpu::Adapter adapter, const WGPUDeviceDescriptor* descriptor);

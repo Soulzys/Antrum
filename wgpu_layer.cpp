@@ -332,7 +332,7 @@ void wgpu::helper::setDefault(WGPUDepthStencilState& depthStencilState)
 	wgpu::helper::setDefault(depthStencilState.stencilBack);
 }
 
-wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, uint64_t minBindingSize, const char* label)
+wgpu::BindGroupLayout wgpu::helper::createGameBindGroupLayout(wgpu::Device device, uint64_t minBindingSize, const char* label)
 {
 	// Create a bind group
 	//
@@ -356,7 +356,55 @@ wgpu::BindGroupLayout wgpu::helper::createBindGroupLayout(wgpu::Device device, u
 	return bindGroupLayout;
 }
 
-wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout)
+wgpu::BindGroupLayout wgpu::helper::createUIBindGroupLayout(wgpu::Device device, uint64_t minBindingSize, const char* label)
+{
+	// Create a bind group
+	//
+	WGPUBindGroupLayoutEntry entries[1] = {};
+	wgpu::helper::setDefault(entries[0]); // Setting every other unused fields to default values unsure we only use what we want
+	entries[0].binding = 0; // This is the binding index we use in our shader
+	entries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
+	entries[0].buffer.type = wgpu::BufferBindingType::Uniform;
+	entries[0].buffer.minBindingSize = minBindingSize;
+	entries[0].buffer.hasDynamicOffset = false;
+
+	WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
+	bindGroupLayoutDesc.nextInChain = nullptr;
+	bindGroupLayoutDesc.entryCount = 1;
+	bindGroupLayoutDesc.entries = entries;
+
+	wgpu::BindGroupLayout bindGroupLayout = {};
+	bindGroupLayout.object = device.createBindGroupLayout(&bindGroupLayoutDesc);
+	bindGroupLayout.setLabel(label);
+
+	return bindGroupLayout;
+}
+
+wgpu::BindGroupLayout wgpu::helper::createGlobalBindGroupLayout(wgpu::Device device, uint64_t minBindingSize, const char* label)
+{
+	// Create a bind group
+	//
+	WGPUBindGroupLayoutEntry entry = {};
+	wgpu::helper::setDefault(entry); // Setting every other unused fields to default values unsure we only use what we want
+	entry.binding = 0; // This is the binding index we use in our shader
+	entry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment; // This is the stage that needs to access this resource
+	entry.buffer.type = wgpu::BufferBindingType::Uniform;
+	entry.buffer.minBindingSize = 8;
+	entry.buffer.hasDynamicOffset = false;
+
+	WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
+	bindGroupLayoutDesc.nextInChain = nullptr;
+	bindGroupLayoutDesc.entryCount = 1;
+	bindGroupLayoutDesc.entries = &entry;
+
+	wgpu::BindGroupLayout bindGroupLayout = {};
+	bindGroupLayout.object = device.createBindGroupLayout(&bindGroupLayoutDesc);
+	bindGroupLayout.setLabel(label);
+
+	return bindGroupLayout;
+}
+
+wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, wgpu::BindGroupLayout bindGroupLayout, const char* label)
 {
 	WGPUPipelineLayoutDescriptor layoutDesc = {};
 	layoutDesc.nextInChain          = nullptr;
@@ -365,6 +413,21 @@ wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, wgp
 
 	wgpu::PipelineLayout pipelineLayout = {};
 	pipelineLayout.object = device.createPipelineLayout(&layoutDesc);
+	pipelineLayout.setLabel(label);
+
+	return pipelineLayout;
+}
+
+wgpu::PipelineLayout wgpu::helper::createPipelineLayout(wgpu::Device device, const WGPUBindGroupLayout* bindGroupLayout, const char* label)
+{
+	WGPUPipelineLayoutDescriptor layoutDesc = {};
+	layoutDesc.nextInChain = nullptr;
+	layoutDesc.bindGroupLayoutCount = 2;
+	layoutDesc.bindGroupLayouts = bindGroupLayout;
+
+	wgpu::PipelineLayout pipelineLayout = {};
+	pipelineLayout.object = device.createPipelineLayout(&layoutDesc);
+	pipelineLayout.setLabel(label);
 
 	return pipelineLayout;
 }

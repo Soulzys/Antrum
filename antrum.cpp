@@ -200,6 +200,35 @@ M4& M4::operator*=(const M4& n)
 }
 
 
+GPURectangle Rectangle::toGPU() const
+{
+	GPURectangle r = {};
+
+	r.points[0] = { origin.x        , origin.y          }; // Top Left
+	r.points[1] = { origin.x        , origin.y + height }; // Bottom Left
+	r.points[2] = { origin.x + width, origin.y + height }; // Bottom Right
+	r.points[3] = r.points[0];  
+	r.points[4] = r.points[2];  
+	r.points[5] = { origin.x + width, origin.y }; // Top Right
+
+	return r;
+}
+
+Point Rectangle::getCenter() const
+{
+	Point p = {};
+	p.x = origin.x + width  / 2.0f;
+	p.y = origin.y + height / 2.0f;
+
+	return p;
+}
+
+Vec2<real32> Rectangle::getHalfSize() const
+{
+	return { width / 2.0f, height / 2.0f };
+}
+
+
 
 
 ParseNumberResult ParseNumber(const char* reader, DataType dataType, char endChar)
@@ -599,10 +628,13 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	shaderCode.length = file.contentSize;
 	storage->uiShaderModule = wgpu::helper::createShaderModule(storage->device, shaderCode, "UI Shader Module");
 
-	storage->gameBindGroupLayout = wgpu::helper::createBindGroupLayout(storage->device, sizeof(GameShaderUniform), "Game Bind Group Layout-san");
-	storage->uiBindGroupLayout = wgpu::helper::createBindGroupLayout(storage->device, sizeof(UIShaderUniform), "UI Bind Group Layout-san");
-	storage->gamePipelineLayout = wgpu::helper::createPipelineLayout(storage->device, storage->gameBindGroupLayout);
-	storage->uiPipelineLayout = wgpu::helper::createPipelineLayout(storage->device, storage->uiBindGroupLayout);
+	storage->gameBindGroupLayout = wgpu::helper::createGameBindGroupLayout(storage->device, sizeof(GameShaderUniform), "Game Bind Group Layout-san");
+	storage->uiBindGroupLayout = wgpu::helper::createUIBindGroupLayout(storage->device, sizeof(UIShaderUniform), "UI Bind Group Layout-san");
+	storage->globalBindGroupLayout = wgpu::helper::createGlobalBindGroupLayout(storage->device, sizeof(GlobalUniform), "Global Bind Group Layout-san");
+	storage->gamePipelineLayout = wgpu::helper::createPipelineLayout(storage->device, storage->gameBindGroupLayout, "Game Pipeline Layout-san");
+	storage->uiLayouts[0] = storage->uiBindGroupLayout.object;
+	storage->uiLayouts[1] = storage->globalBindGroupLayout.object;
+	storage->uiPipelineLayout = wgpu::helper::createPipelineLayout(storage->device, storage->uiLayouts, "UI Pipeline Layout-san");
 	storage->gamePipeline = wgpu::helper::createGameRenderPipeline(storage->device, storage->gameShaderModule, storage->surface.getFormat(storage->adapter), storage->gamePipelineLayout, "Game Pipeline-san");
 	storage->uiPipeline = wgpu::helper::createUIRenderPipeline(storage->device, storage->uiShaderModule, storage->surface.getFormat(storage->adapter), storage->uiPipelineLayout, "UI Pipeline-san");
 
@@ -694,29 +726,52 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	// UI
 	//
 
+	Rectangle r = {};
+	r.width = 1000.0f;
+	r.height = 400.0f;
+	r.origin = { 50.0f, 10.0f };
+
 	UIShaderUniform uiShaderUniform = {};
 	uiShaderUniform.color[0] = 1.0f;
 	uiShaderUniform.color[1] = 0.0f;
 	uiShaderUniform.color[2] = 0.0f;
 	uiShaderUniform.color[3] = 1.0f;
+	uiShaderUniform.radius = 4.0f;
+	//uiShaderUniform.center = { 0.0f, 0.0f };
+	//uiShaderUniform.halfSize = { 0.5f, 0.5f };
+	uiShaderUniform.center = r.getCenter();
+	uiShaderUniform.halfSize = r.getHalfSize();
 
 	storage->uiShaderUniform = uiShaderUniform;
+
+
+	GlobalUniform globalUniform = {};
+	globalUniform.windowSize = { (real32)WINDOW_WIDTH, (real32)WINDOW_HEIGHT };
+	storage->globalShaderUniform = globalUniform;
 	 
 	// Points buffer
-	GPURectangle rect = {};
-	rect.points[0] = {0.2f, 0.8f}; // Top Left
-	rect.points[1] = {0.8f, 0.8f}; // Top Right
-	rect.points[2] = {0.8f, 0.2f}; // Bottom Right
-	rect.points[3] = {0.2f, 0.2f}; // Bottom Left
-	bufferDesc.size = sizeof(Point) * 4;
+	GPURectangle rect = r.toGPU();
+	//rect.points[0] = {-0.5f, 0.5f}; // Top Left
+	//rect.points[1] = {0.5f, 0.5f}; // Top Right
+	//rect.points[2] = {0.5f, -0.5f}; // Bottom Right
+	//rect.points[3] = {-0.5f, -0.5f}; // Bottom Left
+	//rect.points[0] = {-300.f, 200.0f}; // Top Left
+	//rect.points[1] = {300.f, 200.0f}; // Top Right
+	//rect.points[2] = {300.f, -200.0f}; // Bottom Right
+	//rect.points[3] = {-300.f, -200.0f}; // Bottom Left
+	//rect.points[0] = { r.origin.x, r.origin.y }; // Top Left
+	//rect.points[1] = { r.origin.x, r.origin.y + r.height }; //  Bottom Left
+	//rect.points[2] = { r.origin.x + r.width, r.origin.y + r.height }; // Bottom Right
+	//rect.points[3] = { r.origin.x + r.width, r.origin.y }; // Top Right
+	bufferDesc.size = sizeof(GPURectangle);
 	bufferDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
 	storage->pointBuffer = storage->device.createBufferHelper(&bufferDesc, "Points Buffer");
 	storage->queue.writeBuffer(storage->pointBuffer, 0, &rect.points, bufferDesc.size);
 
-	bufferDesc.size = sizeof(uint16) * 6;
-	bufferDesc.usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst;
-	storage->rectangleIndexBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Indices Buffer");
-	storage->queue.writeBuffer(storage->rectangleIndexBuffer, 0, rect.indices, bufferDesc.size);
+	//bufferDesc.size = sizeof(uint16) * 6;
+	//bufferDesc.usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst;
+	//storage->rectangleIndexBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Indices Buffer");
+	//storage->queue.writeBuffer(storage->rectangleIndexBuffer, 0, rect.indices, bufferDesc.size);
 
 
 	//WGPUBufferDescriptor bufferDesc = {};
@@ -755,17 +810,17 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->gameUniformBuffer = storage->device.createBufferHelper(&bufferDesc, "Game Uniform Buffer");
 	storage->queue.writeBuffer(storage->gameUniformBuffer, 0, &storage->gameShaderUniform, sizeof(GameShaderUniform));
 
-	WGPUBindGroupEntry binding = {};
-	binding.nextInChain = nullptr;
-	binding.binding = 0; // The index of the binding
-	binding.buffer = storage->gameUniformBuffer.object; // The buffer it is bound to
-	binding.offset = 0; // A buffer can contain multiple uniforms
-	binding.size = sizeof(GameShaderUniform); // i.e. the size of the buffer
+	WGPUBindGroupEntry gameBinding = {};
+	gameBinding.nextInChain = nullptr;
+	gameBinding.binding = 0; // The index of the binding
+	gameBinding.buffer = storage->gameUniformBuffer.object;
+	gameBinding.offset = 0; // A buffer can contain multiple uniforms
+	gameBinding.size = sizeof(GameShaderUniform);
 	WGPUBindGroupDescriptor bindGroupDesc = {};
 	bindGroupDesc.nextInChain = nullptr;
 	bindGroupDesc.layout = storage->gameBindGroupLayout.object;
 	bindGroupDesc.entryCount = 1;
-	bindGroupDesc.entries = &binding;
+	bindGroupDesc.entries = &gameBinding;
 	storage->gameBindGroup = storage->device.createBindGroupHelper(&bindGroupDesc, "Game Bind group-san");
 
 
@@ -773,25 +828,47 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	// UI bindings
 	//
 
-	uniformBufferStride = CeilToNextMultiple((uint32)sizeof(UIShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
-	bufferDesc.size = uniformBufferStride + sizeof(UIShaderUniform);
+	//uniformBufferStride = CeilToNextMultiple((uint32)sizeof(UIShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
+	bufferDesc.size = /*uniformBufferStride + */ sizeof(UIShaderUniform);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
 	bufferDesc.mappedAtCreation = false;
 	storage->uiUniformBuffer = storage->device.createBufferHelper(&bufferDesc, "UI Uniform Buffer");
 	storage->queue.writeBuffer(storage->uiUniformBuffer, 0, &storage->uiShaderUniform, sizeof(UIShaderUniform));
 
-	binding = {};
-	binding.nextInChain = nullptr;
-	binding.binding = 0;
-	binding.buffer = storage->uiUniformBuffer.object;
-	binding.offset = 0;
-	binding.size = sizeof(UIShaderUniform);
+	bufferDesc.size = sizeof(GlobalUniform);
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+	bufferDesc.mappedAtCreation = false;
+	storage->globalUniformBuffer = storage->device.createBufferHelper(&bufferDesc, "Global Uniform Buffer");
+	storage->queue.writeBuffer(storage->globalUniformBuffer, 0, &storage->globalShaderUniform, sizeof(GlobalUniform));
+
+	WGPUBindGroupEntry uiEntry = {};
+	uiEntry.nextInChain = nullptr;
+	uiEntry.binding = 0;
+	uiEntry.buffer = storage->uiUniformBuffer.object;
+	uiEntry.offset = 0;
+	uiEntry.size = sizeof(UIShaderUniform);
+
 	bindGroupDesc = {};
 	bindGroupDesc.nextInChain = nullptr;
 	bindGroupDesc.layout = storage->uiBindGroupLayout.object;
 	bindGroupDesc.entryCount = 1;
-	bindGroupDesc.entries = &binding;
-	storage->uiBindGroup = storage->device.createBindGroupHelper(&bindGroupDesc, "UI Bind group-san");
+	bindGroupDesc.entries = &uiEntry;
+	storage->uiBindGroup = storage->device.createBindGroupHelper(&bindGroupDesc, "UI Bind Group-san");
+
+
+	WGPUBindGroupEntry globalEntry = {};
+	globalEntry.nextInChain = nullptr;
+	globalEntry.binding = 0;
+	globalEntry.buffer = storage->globalUniformBuffer.object;
+	globalEntry.offset = 0;
+	globalEntry.size = sizeof(GlobalUniform);
+
+	bindGroupDesc = {};
+	bindGroupDesc.nextInChain = nullptr;
+	bindGroupDesc.layout = storage->globalBindGroupLayout.object;
+	bindGroupDesc.entryCount = 1;
+	bindGroupDesc.entries = &globalEntry;
+	storage->globalBindGroup = storage->device.createBindGroupHelper(&bindGroupDesc, "Global Bind Group-san");
 }
 
 
@@ -982,9 +1059,22 @@ extern "C" GAME_UPDATE(Game_Update)
 	//uniformBufferStride = CeilToNextMultiple((uint32)sizeof(UIShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	uiRenderPass.setPipeline(wgpuStorage->uiPipeline);
 	uiRenderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
-	uiRenderPass.setIndexBuffer(wgpuStorage->rectangleIndexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->rectangleIndexBuffer.getSize());
-	uiRenderPass.setBindGroup(0, wgpuStorage->uiBindGroup, 1, &dynamicOffset);
-	uiRenderPass.drawIndexed(6, 1, 0, 0, 0);
+	//uiRenderPass.setIndexBuffer(wgpuStorage->rectangleIndexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->rectangleIndexBuffer.getSize());
+	uiRenderPass.setBindGroup(0, wgpuStorage->uiBindGroup, 0, &dynamicOffset);
+
+	// Window resizing
+	// >NOTE: as soon as we start resizing the window with a drag, Windows gets stuck within the WM_SIZE and never call gameUpdate()	
+	if (wgpuStorage->globalShaderUniform.windowSize.x != gameState->windowSize.x ||
+		wgpuStorage->globalShaderUniform.windowSize.y != gameState->windowSize.y)
+	{
+		wgpuStorage->globalShaderUniform.windowSize = gameState->windowSize;
+
+		wgpuStorage->queue.writeBuffer(wgpuStorage->globalUniformBuffer, 0,
+			&wgpuStorage->globalShaderUniform, sizeof(GlobalUniform));
+	}
+	uiRenderPass.setBindGroup(1, wgpuStorage->globalBindGroup, 0, &dynamicOffset);
+	uiRenderPass.draw(6, 1, 0, 0);
+	//uiRenderPass.drawIndexed(6, 1, 0, 0, 0);
 	uiRenderPass.end();
 	uiRenderPass.release();
 
