@@ -1,6 +1,8 @@
 struct PointInput
 {
 	@location(0) position: vec2f, 
+	@location(1) instancePosition: vec2f,
+	@location(2) instanceSize: vec2f,
 };
 
 struct PointOutput
@@ -50,11 +52,21 @@ fn vs_main(in: PointInput) -> PointOutput
 {
 	var out: PointOutput;
 
+	// NEW
+	let pixelPosition = in.position * in.instanceSize + in.instancePosition;
+
+	let clip_position_x = (pixelPosition.x / uni_global.windowSize.x) * 2.0 - 1.0;
+	let clip_position_y = 1.0 - (pixelPosition.y / uni_global.windowSize.y) * 2.0;
+
+	out.position = vec4f(clip_position_x, clip_position_y, 1.0, 1.0);
+	return out;
+
+
+
+
 	// Convert to clip space
 	let x = (in.position.x / uni_global.windowSize.x) * 2.0 - 1.0;
-	//let x = (in.position.x / 1200) * 2.0 - 1.0;
 	let y = 1.0 - (in.position.y / uni_global.windowSize.y) * 2.0;
-	//let y = 1.0 - (in.position.y / 800) * 2.0;
 
 	out.position = vec4f(x, y, 1.0, 1.0);
 	return out;

@@ -200,33 +200,40 @@ M4& M4::operator*=(const M4& n)
 }
 
 
-GPURectangle Rectangle::toGPU() const
-{
-	GPURectangle r = {};
-
-	r.points[0] = { origin.x        , origin.y          }; // Top Left
-	r.points[1] = { origin.x        , origin.y + height }; // Bottom Left
-	r.points[2] = { origin.x + width, origin.y + height }; // Bottom Right
-	r.points[3] = r.points[0];  
-	r.points[4] = r.points[2];  
-	r.points[5] = { origin.x + width, origin.y }; // Top Right
-
-	return r;
-}
-
-Point Rectangle::getCenter() const
-{
-	Point p = {};
-	p.x = origin.x + width  / 2.0f;
-	p.y = origin.y + height / 2.0f;
-
-	return p;
-}
-
-Vec2<real32> Rectangle::getHalfSize() const
-{
-	return { width / 2.0f, height / 2.0f };
-}
+//GPURectangle Rectangle::toGPU() const
+//{
+//	GPURectangle r = {};
+//
+//	//r.points[0] = { origin.x        , origin.y          }; // Top Left
+//	//r.points[1] = { origin.x        , origin.y + height }; // Bottom Left
+//	//r.points[2] = { origin.x + width, origin.y + height }; // Bottom Right
+//	//r.points[3] = r.points[0];  
+//	//r.points[4] = r.points[2];  
+//	//r.points[5] = { origin.x + width, origin.y }; // Top Right
+//
+//	r.points[0] = { 0.0f        , 0.0f }; // Top Left
+//	r.points[1] = { height        , origin.y + height }; // Bottom Left
+//	r.points[2] = { origin.x + width, origin.y + height }; // Bottom Right
+//	r.points[3] = r.points[0];
+//	r.points[4] = r.points[2];
+//	r.points[5] = { origin.x + width, origin.y }; // Top Right
+//
+//	return r;
+//}
+//
+//Point Rectangle::getCenter() const
+//{
+//	Point p = {};
+//	p.x = origin.x + width  / 2.0f;
+//	p.y = origin.y + height / 2.0f;
+//
+//	return p;
+//}
+//
+//Vec2<real32> Rectangle::getHalfSize() const
+//{
+//	return { width / 2.0f, height / 2.0f };
+//}
 
 
 
@@ -726,10 +733,15 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	// UI
 	//
 
-	Rectangle r = {};
-	r.width = 1000.0f;
-	r.height = 400.0f;
-	r.origin = { 50.0f, 10.0f };
+	//Rectangle r1 = {};
+	//r1.width = 500.0f;
+	//r1.height = 200.0f;
+	//r1.origin = { 50.0f, 200.0f };
+	//
+	//Rectangle r2 = {};
+	//r2.width = 500.0f;
+	//r2.height = 200.0f;
+	//r2.origin = { 600.0f, 200.0f };
 
 	UIShaderUniform uiShaderUniform = {};
 	uiShaderUniform.color[0] = 1.0f;
@@ -739,8 +751,8 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	uiShaderUniform.radius = 4.0f;
 	//uiShaderUniform.center = { 0.0f, 0.0f };
 	//uiShaderUniform.halfSize = { 0.5f, 0.5f };
-	uiShaderUniform.center = r.getCenter();
-	uiShaderUniform.halfSize = r.getHalfSize();
+	//uiShaderUniform.center = r1.getCenter();
+	//uiShaderUniform.halfSize = r1.getHalfSize();
 
 	storage->uiShaderUniform = uiShaderUniform;
 
@@ -748,9 +760,27 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	GlobalUniform globalUniform = {};
 	globalUniform.windowSize = { (real32)WINDOW_WIDTH, (real32)WINDOW_HEIGHT };
 	storage->globalShaderUniform = globalUniform;
+
+
+
+	GPURectangleModel recModel = {};
+
+	GPURectangleInstance rectangles[4] = {};
+	rectangles[0].position = { 50.0f, 100.0f };
+	rectangles[0].size     = { 400.0f, 150.0f };
+	rectangles[1].position = { 50.0f, 500.0f };
+	rectangles[1].size     = { 400.0f, 150.0f };
+	rectangles[2].position = { 500.0f, 100.0f };
+	rectangles[2].size     = { 400.0f, 150.0f };
+	rectangles[3].position = { 500.0f, 500.0f };
+	rectangles[3].size     = { 400.0f, 150.0f };
 	 
 	// Points buffer
-	GPURectangle rect = r.toGPU();
+	//GPURectangle rect[2] = {};
+	//rect[0] = r1.toGPU();
+	//rect[1] = r2.toGPU();
+	//GPUInstance rectInstance = { 50.0f, 100.0f };
+	
 	//rect.points[0] = {-0.5f, 0.5f}; // Top Left
 	//rect.points[1] = {0.5f, 0.5f}; // Top Right
 	//rect.points[2] = {0.5f, -0.5f}; // Bottom Right
@@ -763,10 +793,16 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	//rect.points[1] = { r.origin.x, r.origin.y + r.height }; //  Bottom Left
 	//rect.points[2] = { r.origin.x + r.width, r.origin.y + r.height }; // Bottom Right
 	//rect.points[3] = { r.origin.x + r.width, r.origin.y }; // Top Right
-	bufferDesc.size = sizeof(GPURectangle);
+	bufferDesc.size = sizeof(GPURectangleModel);
 	bufferDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-	storage->pointBuffer = storage->device.createBufferHelper(&bufferDesc, "Points Buffer");
-	storage->queue.writeBuffer(storage->pointBuffer, 0, &rect.points, bufferDesc.size);
+	storage->rectangleModelBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Model Buffer");
+	storage->queue.writeBuffer(storage->rectangleModelBuffer, 0, &recModel, bufferDesc.size);
+
+	bufferDesc.size = sizeof(GPURectangleInstance) * 4;
+	bufferDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+	storage->rectangleInstanceBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Instance Buffer");
+	storage->queue.writeBuffer(storage->rectangleInstanceBuffer, 0, &rectangles, bufferDesc.size);
+
 
 	//bufferDesc.size = sizeof(uint16) * 6;
 	//bufferDesc.usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst;
@@ -1058,7 +1094,8 @@ extern "C" GAME_UPDATE(Game_Update)
 
 	//uniformBufferStride = CeilToNextMultiple((uint32)sizeof(UIShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	uiRenderPass.setPipeline(wgpuStorage->uiPipeline);
-	uiRenderPass.setVertexBuffer(0, wgpuStorage->pointBuffer, 0, wgpuStorage->pointBuffer.getSize());
+	uiRenderPass.setVertexBuffer(0, wgpuStorage->rectangleModelBuffer, 0, wgpuStorage->rectangleModelBuffer.getSize());
+	uiRenderPass.setVertexBuffer(1, wgpuStorage->rectangleInstanceBuffer, 0, wgpuStorage->rectangleInstanceBuffer.getSize());
 	//uiRenderPass.setIndexBuffer(wgpuStorage->rectangleIndexBuffer, WGPUIndexFormat_Uint16, 0, wgpuStorage->rectangleIndexBuffer.getSize());
 	uiRenderPass.setBindGroup(0, wgpuStorage->uiBindGroup, 0, &dynamicOffset);
 
@@ -1073,7 +1110,7 @@ extern "C" GAME_UPDATE(Game_Update)
 			&wgpuStorage->globalShaderUniform, sizeof(GlobalUniform));
 	}
 	uiRenderPass.setBindGroup(1, wgpuStorage->globalBindGroup, 0, &dynamicOffset);
-	uiRenderPass.draw(6, 1, 0, 0);
+	uiRenderPass.draw(6, 4, 0, 0);
 	//uiRenderPass.drawIndexed(6, 1, 0, 0, 0);
 	uiRenderPass.end();
 	uiRenderPass.release();
@@ -1105,7 +1142,8 @@ extern "C" GAME_QUIT(Game_Quit)
 	storage->uiBindGroupLayout.release();
 	storage->vertexBuffer.release();
 	storage->indexBuffer.release();
-	storage->pointBuffer.release();
+	storage->rectangleInstanceBuffer.release();
+	storage->rectangleModelBuffer.release();
 	storage->gameUniformBuffer.release();
 	storage->uiUniformBuffer.release();
 }

@@ -224,21 +224,36 @@ struct Point
 	real32 y;
 };
 
-struct GPURectangle
+struct GPURectangleInstance
 {
-	Point points[6];
+	Point position;
+	Vec2<real32> size;
 };
 
-struct Rectangle
+struct GPURectangleModel
 {
-	GPURectangle toGPU() const;
-	Point getCenter() const;
-	Vec2<real32> getHalfSize() const;
+	Point points[6] = 
+	{
+		{-0.5f,  0.5f}, // Top left
+		{-0.5f, -0.5f}, // Bottom left 
+		{ 0.5f, -0.5f}, // Bottom right
 
-	Point  origin;
-	real32 width;
-	real32 height;
+		{-0.5f,  0.5f}, // Top left
+		{ 0.5f, -0.5f}, // Bottom right
+		{ 0.5f,  0.5f}, // Top right
+	};
 };
+
+//struct Rectangle
+//{
+//	GPURectangle toGPU() const;
+//	Point getCenter() const;
+//	Vec2<real32> getHalfSize() const;
+//
+//	Point  origin;
+//	real32 width;
+//	real32 height;
+//};
 
 
 
@@ -455,10 +470,11 @@ struct WebGPUStorage
 	wgpu::Buffer normalBuffer;
 	wgpu::Buffer indexBuffer;
 	wgpu::Buffer gameUniformBuffer;
-	wgpu::Buffer pointBuffer;
-	wgpu::Buffer rectangleIndexBuffer;
+	wgpu::Buffer rectangleModelBuffer;
+	wgpu::Buffer rectangleInstanceBuffer;
 	wgpu::Buffer uiUniformBuffer;
 	wgpu::Buffer globalUniformBuffer;
+	wgpu::Buffer instanceBuffer;
 
 	wgpu::Texture depthTexture;
 	wgpu::TextureView depthTextureView;

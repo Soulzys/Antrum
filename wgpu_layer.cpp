@@ -527,16 +527,37 @@ wgpu::RenderPipeline wgpu::helper::createGameRenderPipeline(wgpu::Device device,
 
 wgpu::RenderPipeline wgpu::helper::createUIRenderPipeline(wgpu::Device device, wgpu::ShaderModule shaderModule, WGPUTextureFormat textureFormat, wgpu::PipelineLayout pipelineLayout, const char* label)
 {
+	// Point Buffer (every rectangle's point position)
 	WGPUVertexAttribute pointAttribute = {};
 	pointAttribute.shaderLocation = 0;
 	pointAttribute.format = wgpu::VertexFormat::Float32x2;
 	pointAttribute.offset = 0;
 
-	WGPUVertexBufferLayout pointBufferLayout = {};
-	pointBufferLayout.attributeCount = 1;
-	pointBufferLayout.attributes = &pointAttribute;
-	pointBufferLayout.arrayStride = sizeof(Point);
-	pointBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
+	// Instance Buffer (every rectangle position)
+	WGPUVertexAttribute instanceAttributes[2] = {};
+	instanceAttributes[0].shaderLocation = 1;
+	instanceAttributes[0].format = wgpu::VertexFormat::Float32x2;
+	instanceAttributes[0].offset = 0;
+
+	instanceAttributes[1].shaderLocation = 2;
+	instanceAttributes[1].format = wgpu::VertexFormat::Float32x2;
+	instanceAttributes[1].offset = offsetof(GPURectangleInstance, size);
+
+
+	// And their associated layouts
+	WGPUVertexBufferLayout buffersLayout[2] = {};
+	buffersLayout[0].attributeCount = 1;
+	buffersLayout[0].attributes = &pointAttribute;
+	buffersLayout[0].arrayStride = sizeof(Point);
+	buffersLayout[0].stepMode = wgpu::VertexStepMode::Vertex;
+
+	buffersLayout[1].attributeCount = 2;
+	buffersLayout[1].attributes = instanceAttributes;
+	buffersLayout[1].arrayStride = sizeof(GPURectangleInstance);
+	buffersLayout[1].stepMode = wgpu::VertexStepMode::Instance;
+
+
+
 
 	// Pipeline stuff
 	//
@@ -566,8 +587,9 @@ wgpu::RenderPipeline wgpu::helper::createUIRenderPipeline(wgpu::Device device, w
 
 	WGPURenderPipelineDescriptor pipelineDesc = {};
 	pipelineDesc.nextInChain = nullptr;
-	pipelineDesc.vertex.bufferCount = 1;
-	pipelineDesc.vertex.buffers = &pointBufferLayout;
+	pipelineDesc.vertex.bufferCount = 2;
+	//pipelineDesc.vertex.buffers = &pointBufferLayout;
+	pipelineDesc.vertex.buffers = buffersLayout;
 	pipelineDesc.vertex.module = shaderModule.object;
 	pipelineDesc.vertex.entryPoint.data = "vs_main";
 	pipelineDesc.vertex.entryPoint.length = strlen(pipelineDesc.vertex.entryPoint.data);
