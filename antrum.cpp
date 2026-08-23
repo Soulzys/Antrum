@@ -733,15 +733,6 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	// UI
 	//
 
-	//Rectangle r1 = {};
-	//r1.width = 500.0f;
-	//r1.height = 200.0f;
-	//r1.origin = { 50.0f, 200.0f };
-	//
-	//Rectangle r2 = {};
-	//r2.width = 500.0f;
-	//r2.height = 200.0f;
-	//r2.origin = { 600.0f, 200.0f };
 
 	UIShaderUniform uiShaderUniform = {};
 	uiShaderUniform.color[0] = 1.0f;
@@ -749,10 +740,6 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	uiShaderUniform.color[2] = 0.0f;
 	uiShaderUniform.color[3] = 1.0f;
 	uiShaderUniform.radius = 4.0f;
-	//uiShaderUniform.center = { 0.0f, 0.0f };
-	//uiShaderUniform.halfSize = { 0.5f, 0.5f };
-	//uiShaderUniform.center = r1.getCenter();
-	//uiShaderUniform.halfSize = r1.getHalfSize();
 
 	storage->uiShaderUniform = uiShaderUniform;
 
@@ -775,24 +762,6 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	rectangles[3].position = { 500.0f, 500.0f };
 	rectangles[3].size     = { 400.0f, 150.0f };
 	 
-	// Points buffer
-	//GPURectangle rect[2] = {};
-	//rect[0] = r1.toGPU();
-	//rect[1] = r2.toGPU();
-	//GPUInstance rectInstance = { 50.0f, 100.0f };
-	
-	//rect.points[0] = {-0.5f, 0.5f}; // Top Left
-	//rect.points[1] = {0.5f, 0.5f}; // Top Right
-	//rect.points[2] = {0.5f, -0.5f}; // Bottom Right
-	//rect.points[3] = {-0.5f, -0.5f}; // Bottom Left
-	//rect.points[0] = {-300.f, 200.0f}; // Top Left
-	//rect.points[1] = {300.f, 200.0f}; // Top Right
-	//rect.points[2] = {300.f, -200.0f}; // Bottom Right
-	//rect.points[3] = {-300.f, -200.0f}; // Bottom Left
-	//rect.points[0] = { r.origin.x, r.origin.y }; // Top Left
-	//rect.points[1] = { r.origin.x, r.origin.y + r.height }; //  Bottom Left
-	//rect.points[2] = { r.origin.x + r.width, r.origin.y + r.height }; // Bottom Right
-	//rect.points[3] = { r.origin.x + r.width, r.origin.y }; // Top Right
 	bufferDesc.size = sizeof(GPURectangleModel);
 	bufferDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
 	storage->rectangleModelBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Model Buffer");
@@ -803,35 +772,6 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	storage->rectangleInstanceBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Instance Buffer");
 	storage->queue.writeBuffer(storage->rectangleInstanceBuffer, 0, &rectangles, bufferDesc.size);
 
-
-	//bufferDesc.size = sizeof(uint16) * 6;
-	//bufferDesc.usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst;
-	//storage->rectangleIndexBuffer = storage->device.createBufferHelper(&bufferDesc, "Rectangle Indices Buffer");
-	//storage->queue.writeBuffer(storage->rectangleIndexBuffer, 0, rect.indices, bufferDesc.size);
-
-
-	//WGPUBufferDescriptor bufferDesc = {};
-	//bufferDesc.nextInChain = nullptr;
-	//bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-	//bufferDesc.size = asset->vertices.getElementsSize();
-	//bufferDesc.size = (bufferDesc.size + 3) & ~3;
-	//bufferDesc.mappedAtCreation = false;
-	//storage->vertexBuffer = storage->device.createBufferHelper(&bufferDesc, "Vertex Buffer);
-	//storage->queue.writeBuffer(storage->vertexBuffer, 0, asset->vertices.dataPtr(), bufferDesc.size);
-
-	//bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-	//bufferDesc.size = asset->normals.getElementsSize();
-	//bufferDesc.size = (bufferDesc.size + 3) & ~3;
-	//bufferDesc.mappedAtCreation = false;
-	//storage->normalBuffer = storage->device.createBufferHelper(&bufferDesc, "Normal buffer");
-	//storage->queue.writeBuffer(storage->normalBuffer, 0, asset->normals.dataPtr(), bufferDesc.size);
-
-	//bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
-	//bufferDesc.size = asset->indexes.getElementsSize();
-	//bufferDesc.size = (bufferDesc.size + 3) & ~3; // From right to left, dummy
-	//bufferDesc.mappedAtCreation = false;
-	//storage->indexBuffer = storage->device.createBufferHelper(&bufferDesc, "Index buffer");
-	//storage->queue.writeBuffer(storage->indexBuffer, 0, asset->indexes.dataPtr(), bufferDesc.size);
 
 	WGPULimits supportedLimits = storage->adapter.getDefaultLimits();
 
@@ -864,7 +804,6 @@ void InitializeWebGPU(WebGPUStorage* storage, void* wndHandle, void* hInstance, 
 	// UI bindings
 	//
 
-	//uniformBufferStride = CeilToNextMultiple((uint32)sizeof(UIShaderUniform), (uint32)supportedLimits.minUniformBufferOffsetAlignment);
 	bufferDesc.size = /*uniformBufferStride + */ sizeof(UIShaderUniform);
 	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
 	bufferDesc.mappedAtCreation = false;
